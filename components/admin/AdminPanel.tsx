@@ -1430,6 +1430,14 @@ function AuditTab() {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    action: "all",
+    table: "all",
+    sort: "desc",
+    from: "",
+    to: "",
+  });
 
   const loadAudit = async () => {
     setLoading(true);
@@ -1448,6 +1456,62 @@ function AuditTab() {
     loadAudit();
   }, []);
 
+  const actions = useMemo(() => {
+    const values = new Set(rows.map((row) => row.action).filter(Boolean));
+    return Array.from(values).sort();
+  }, [rows]);
+
+  const tables = useMemo(() => {
+    const values = new Set(rows.map((row) => row.table_name).filter(Boolean));
+    return Array.from(values).sort();
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    let list = [...rows];
+    const term = filters.search.trim().toLowerCase();
+    if (term) {
+      list = list.filter((row) =>
+        [row.actor_email, row.action, row.table_name, row.record_id]
+          .map((value) => String(value ?? "").toLowerCase())
+          .some((value) => value.includes(term)),
+      );
+    }
+
+    if (filters.action !== "all") {
+      list = list.filter((row) => row.action === filters.action);
+    }
+
+    if (filters.table !== "all") {
+      list = list.filter((row) => row.table_name === filters.table);
+    }
+
+    const fromTs = filters.from ? new Date(`${filters.from}T00:00:00`).getTime() : null;
+    const toTs = filters.to ? new Date(`${filters.to}T23:59:59`).getTime() : null;
+    if (fromTs) {
+      list = list.filter((row) => new Date(row.created_at).getTime() >= fromTs);
+    }
+    if (toTs) {
+      list = list.filter((row) => new Date(row.created_at).getTime() <= toTs);
+    }
+
+    list.sort((a, b) => {
+      const left = new Date(a.created_at).getTime();
+      const right = new Date(b.created_at).getTime();
+      return filters.sort === "asc" ? left - right : right - left;
+    });
+
+    return list;
+  }, [rows, filters]);
+
+  const formatDateTime = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleString("vi-VN");
+  };
+
+  const resetFilters = () =>
+    setFilters({ search: "", action: "all", table: "all", sort: "desc", from: "", to: "" });
+
   return (
     <div className="admin-panel mt-30">
       <div className="admin-toolbar">
@@ -1460,6 +1524,62 @@ function AuditTab() {
             Làm mới
           </button>
         </div>
+      </div>
+
+      <div className="admin-form-grid mt-20">
+        <input
+          className="admin-input"
+          placeholder="Tìm theo email, hành động, bảng, ID"
+          value={filters.search}
+          onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
+        />
+        <select
+          className="admin-select"
+          value={filters.action}
+          onChange={(event) => setFilters((prev) => ({ ...prev, action: event.target.value }))}
+        >
+          <option value="all">Tất cả hành động</option>
+          {actions.map((action) => (
+            <option key={action} value={action}>
+              {action}
+            </option>
+          ))}
+        </select>
+        <select
+          className="admin-select"
+          value={filters.table}
+          onChange={(event) => setFilters((prev) => ({ ...prev, table: event.target.value }))}
+        >
+          <option value="all">Tất cả bảng</option>
+          {tables.map((table) => (
+            <option key={table} value={table}>
+              {table}
+            </option>
+          ))}
+        </select>
+        <input
+          className="admin-input"
+          type="date"
+          value={filters.from}
+          onChange={(event) => setFilters((prev) => ({ ...prev, from: event.target.value }))}
+        />
+        <input
+          className="admin-input"
+          type="date"
+          value={filters.to}
+          onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
+        />
+        <select
+          className="admin-select"
+          value={filters.sort}
+          onChange={(event) => setFilters((prev) => ({ ...prev, sort: event.target.value }))}
+        >
+          <option value="desc">Mới nhất</option>
+          <option value="asc">Cũ nhất</option>
+        </select>
+        <button className="btn btn-admin-outline" onClick={resetFilters} type="button">
+          Reset
+        </button>
       </div>
 
       {error ? <p className="admin-error mt-15">{error}</p> : null}
@@ -1481,14 +1601,14 @@ function AuditTab() {
                 <td colSpan={5}>Đang tải...</td>
               </tr>
             ) : null}
-            {!loading && !rows.length ? (
+            {!loading && !filtered.length ? (
               <tr>
                 <td colSpan={5}>Chưa có dữ liệu.</td>
               </tr>
             ) : null}
-            {rows.map((row) => (
+            {filtered.map((row) => (
               <tr key={row.id}>
-                <td>{formatDate(row.created_at)}</td>
+                <td>{formatDateTime(row.created_at)}</td>
                 <td>{row.actor_email ?? "-"}</td>
                 <td>{row.action}</td>
                 <td>{row.table_name}</td>

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
 import { logAudit } from "@/lib/audit";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 type UserRow = {
   id: string;
+  clerk_user_id: string | null;
   email: string;
   name: string | null;
   display_name: string | null;
@@ -26,6 +28,21 @@ const normalizeStatus = (value: unknown) => {
   return "active";
 };
 
+const syncClerkMetadata = async (clerkUserId: string | null, role: string, status: string) => {
+  if (!clerkUserId) return;
+  try {
+    const current = await clerkClient.users.getUser(clerkUserId);
+    const publicMetadata = {
+      ...(current.publicMetadata ?? {}),
+      role,
+      status,
+    };
+    await clerkClient.users.updateUser(clerkUserId, { publicMetadata });
+  } catch (error) {
+    console.error("Failed to sync Clerk metadata", error);
+  }
+};
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const currentUser = await getSessionUser();
@@ -42,7 +59,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const status = normalizeStatus(body?.status);
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, email, name, display_name, role, status, created_at, updated_at
+    `select id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,
@@ -69,7 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
          status = $3,
          updated_at = now()
      where id = $1
-     returning id, email, name, display_name, role, status, created_at, updated_at`,
+     returning id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at`,
     [id, nextRole, nextStatus],
   );
 
@@ -85,6 +102,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     before: existing,
     after: rows[0],
   });
+
+  await syncClerkMetadata(existing.clerk_user_id, nextRole, nextStatus);
 
   return NextResponse.json({ user: rows[0] });
 }
@@ -104,7 +123,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, email, name, display_name, role, status, created_at, updated_at
+    `select id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,
@@ -130,6 +149,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     before: existing,
     after: { ...existing, status: "blocked" },
   });
+
+  await syncClerkMetadata(existing.clerk_user_id, existing.role ?? "viewer", "blocked");
 
   return NextResponse.json({ ok: true });
 }

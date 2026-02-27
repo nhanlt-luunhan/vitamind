@@ -5,13 +5,27 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
 const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if ((isAdminRoute(req) || isAccountRoute(req)) && !userId) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
   if (isAdminRoute(req) && userId) {
+    const role = (sessionClaims as any)?.publicMetadata?.role;
+    const status = (sessionClaims as any)?.publicMetadata?.status;
+
+    if (role) {
+      const blocked = status === "blocked" || status === "disabled";
+      if (role === "admin" && !blocked) {
+        return NextResponse.next();
+      }
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL("/not-authorized", req.url));
+    }
+
     const secret = process.env.INTERNAL_API_SECRET;
     if (secret) {
       const checkUrl = new URL("/api/internal/admin-check", req.url);

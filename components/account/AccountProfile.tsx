@@ -1,6 +1,8 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui";
 
 export type AccountUser = {
@@ -24,7 +26,12 @@ const getInitial = (user: AccountUser) => {
   return source ? source[0].toUpperCase() : "U";
 };
 
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
 export function AccountProfile({ user }: Props) {
+  const router = useRouter();
+  const { user: clerkUser, isLoaded } = useUser();
   const [profile, setProfile] = useState({
     name: user.name ?? "",
     phone: user.phone ?? "",
@@ -38,6 +45,12 @@ export function AccountProfile({ user }: Props) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (clerkUser?.imageUrl) {
+      setAvatarUrl(clerkUser.imageUrl);
+    }
+  }, [clerkUser?.imageUrl]);
 
   const handleChange =
     (field: keyof typeof profile) =>
@@ -89,28 +102,37 @@ export function AccountProfile({ user }: Props) {
     setMessage(null);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    const response = await fetch("/api/account/avatar", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      setError(data?.error ?? "Không thể tải ảnh đại diện.");
+    if (!ALLOWED_TYPES.has(file.type)) {
+      setError("Định dạng ảnh không hỗ trợ.");
       setUploading(false);
       return;
     }
 
-    const data = await response.json();
-    if (data?.avatar_url) {
-      setAvatarUrl(data.avatar_url);
-      setMessage("Ảnh đại diện đã được cập nhật.");
+    if (file.size > MAX_AVATAR_SIZE) {
+      setError("Ảnh vượt quá 2MB.");
+      setUploading(false);
+      return;
     }
 
-    setUploading(false);
+    if (!isLoaded || !clerkUser) {
+      setError("Chưa sẵn sàng cập nhật avatar.");
+      setUploading(false);
+      return;
+    }
+
+    try {
+      await clerkUser.setProfileImage({ file });
+      await clerkUser.reload();
+      if (clerkUser.imageUrl) {
+        setAvatarUrl(clerkUser.imageUrl);
+      }
+      setMessage("Ảnh đại diện đã được cập nhật.");
+      router.refresh();
+    } catch (err) {
+      setError("Không thể tải ảnh đại diện.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
