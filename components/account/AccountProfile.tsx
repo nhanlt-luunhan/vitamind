@@ -1,0 +1,250 @@
+﻿"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui";
+
+export type AccountUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  bio: string | null;
+  location: string | null;
+  company: string | null;
+  website: string | null;
+  avatar_url: string | null;
+};
+
+type Props = {
+  user: AccountUser;
+};
+
+const getInitial = (user: AccountUser) => {
+  const source = user.name?.trim() || user.email?.trim();
+  return source ? source[0].toUpperCase() : "U";
+};
+
+export function AccountProfile({ user }: Props) {
+  const [profile, setProfile] = useState({
+    name: user.name ?? "",
+    phone: user.phone ?? "",
+    location: user.location ?? "",
+    company: user.company ?? "",
+    website: user.website ?? "",
+    bio: user.bio ?? "",
+  });
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url ?? "");
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange =
+    (field: keyof typeof profile) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setProfile((prev) => ({ ...prev, [field]: event.target.value }));
+    };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    setError(null);
+
+    const response = await fetch("/api/account/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profile),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error ?? "Không thể cập nhật tài khoản.");
+      setSaving(false);
+      return;
+    }
+
+    const data = await response.json();
+    const updated = data?.user as AccountUser | undefined;
+    if (updated) {
+      setProfile({
+        name: updated.name ?? "",
+        phone: updated.phone ?? "",
+        location: updated.location ?? "",
+        company: updated.company ?? "",
+        website: updated.website ?? "",
+        bio: updated.bio ?? "",
+      });
+    }
+
+    setMessage("Đã lưu thông tin tài khoản.");
+    setSaving(false);
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setMessage(null);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const response = await fetch("/api/account/avatar", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error ?? "Không thể tải ảnh đại diện.");
+      setUploading(false);
+      return;
+    }
+
+    const data = await response.json();
+    if (data?.avatar_url) {
+      setAvatarUrl(data.avatar_url);
+      setMessage("Ảnh đại diện đã được cập nhật.");
+    }
+
+    setUploading(false);
+  };
+
+  return (
+    <div className="row mt-40">
+      <div className="col-lg-4">
+        <div className="account-card">
+          <div className="account-avatar">
+            {avatarUrl ? (
+              <img className="account-avatar__img" src={avatarUrl} alt="Avatar" />
+            ) : (
+              <div className="account-avatar__fallback">{getInitial(user)}</div>
+            )}
+          </div>
+          <h4 className="color-white mb-5">{profile.name || "Chưa đặt tên"}</h4>
+          <p className="color-gray-500 mb-0">{user.email}</p>
+          <div className="account-upload mt-20">
+            <label className="btn btn-linear w-100">
+              <input
+                className="account-file"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={handleAvatarChange}
+              />
+              {uploading ? "Đang tải ảnh..." : "Tải ảnh đại diện"}
+            </label>
+            <p className="text-sm color-gray-500 mt-10">JPG/PNG/WebP/GIF, tối đa 2MB.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="col-lg-8">
+        <div className="account-card">
+          <h4 className="color-white mb-10">Thông tin cá nhân</h4>
+          <p className="text-sm color-gray-500 mb-20">
+            Cập nhật thông tin để hồ sơ luôn mới và dễ liên hệ.
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Họ và tên</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={profile.name}
+                    onChange={handleChange("name")}
+                    placeholder="Nguyễn Văn A"
+                  />
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Email</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={user.email}
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Số điện thoại</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={profile.phone}
+                    onChange={handleChange("phone")}
+                    placeholder="0901 234 567"
+                  />
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Khu vực</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={profile.location}
+                    onChange={handleChange("location")}
+                    placeholder="TP. Hồ Chí Minh"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Công ty</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={profile.company}
+                    onChange={handleChange("company")}
+                    placeholder="Tên công ty"
+                  />
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label className="color-gray-700 text-sm mb-10 d-block">Website</label>
+                  <input
+                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                    value={profile.website}
+                    onChange={handleChange("website")}
+                    placeholder="https://domain.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="color-gray-700 text-sm mb-10 d-block">Giới thiệu ngắn</label>
+              <textarea
+                className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                rows={4}
+                value={profile.bio}
+                onChange={handleChange("bio")}
+                placeholder="Chia sẻ ngắn về bạn hoặc công việc của bạn"
+              />
+            </div>
+
+            {message ? <p className="account-status success">{message}</p> : null}
+            {error ? <p className="account-status error">{error}</p> : null}
+
+            <div className="account-actions">
+              <Button unstyled className="btn btn-linear" type="submit" disabled={saving}>
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

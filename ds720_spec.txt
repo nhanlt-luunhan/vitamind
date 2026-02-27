@@ -1,0 +1,339 @@
+Product Specifications
+DS720+
+
+
+
+
+                         Last updated: Jan 6, 2023
+Hardware Specs
+CPU
+CPU Model                    Intel Celeron J4125
+CPU Quantity                 1
+CPU Architecture             64-bit
+CPU Frequency                4-core 2.0 (base) / 2.7 (burst) GHz
+Hardware Encryption Engine   v
+(AES-NI)
+Memory
+System Memory                10 GB DDR4 non-ECC
+Total Memory Slots           1
+Maximum Memory Capacity      6 GB (2 GB + 4 GB)
+                                Synology reserves the right to replace memory modules
+                                with the same or higher frequency based on supplier's
+                                product life cycle status. Rest assured that the
+                                compatibility and stability have been strictly verified
+                                with the same benchmark to ensure identical
+Notes                           performance.
+                                Please select Synology memory modules for optimum
+                                compatibility and reliability. Synology will not provide
+                                complete product warranty or technical support if non-
+                                Synology memory modules are used for memory
+                                expansion.
+Storage
+Drive Bays                   2
+Maximum Drive Bays with      7 (DX517 x 1)
+Expansion Unit
+M.2 Drive Slots              2 (NVMe)
+                                  3.5" SATA HDD
+Compatible Drive Type* (See       2.5" SATA HDD
+all supported drives)             2.5" SATA SSD
+                                  M.2 2280 NVMe SSD
+Hot Swappable Drive*          v
+                                  The hot swappable drive feature is not supported by
+                                  M.2 SSD slots.
+Notes                             "Compatible drive type" indicates drives that have been
+                                  tested to be compatible with Synology products. This
+                                  term does not indicate the maximum connection speed
+                                  of each drive bay.
+External Ports
+RJ-45 1GbE LAN Port           2 (with Link Aggregation / Failover support)
+USB 3.2 Gen 1 Port*           2
+eSATA Port                    1
+Notes                         The USB 3.0 standard was renamed to USB 3.2 Gen 1 by
+                              the USB Implementers Forum (USB-IF) in 2019.
+File System
+Internal Drives                  Btrfs
+                                 EXT4
+                                 Btrfs
+                                 EXT4
+                                 EXT3
+External Drives                  FAT
+                                 NTFS
+                                 HFS+
+                                 exFAT
+                              exFAT Access can be installed for free from Package
+Notes                         Center in DSM 7.0. In DSM 6.2 or earlier versions, exFAT
+                              Access needs to be purchased in Package Center.
+Appearance
+Size (Height x Width x Depth) 166 mm x 106 mm x 223 mm
+Weight                        1.51 kg
+Others
+System Fan                    92 mm x 92 mm x 1 pcs
+                                 Full-Speed Mode
+Fan Speed Mode                   Cool Mode
+                                 Quiet Mode
+Brightness Adjustable Front   v
+LED Indicators
+Power Recovery                v
+Noise Level*                  18.4 dB(A)
+Scheduled Power On / Off      v
+Wake on LAN / WAN             v
+Power Supply Unit / Adapter   65 W
+Redundant Power Supply        -
+AC Input Power Voltage        100V to 240V AC
+Power Frequency               50/60 Hz, Single Phase
+Power Consumption             16.44 W (Access)
+                              6.19 W (HDD Hibernation)
+British Thermal Unit          56.1 BTU/hr (Access)
+                              21.12 BTU/hr (HDD Hibernation)
+                                  Power consumption is measured when it is fully loaded
+                                  with Western Digital 1TB WD10EFRX hard drive(s).
+                                  Noise Level Testing Environment: Fully loaded with
+Notes                             Seagate 2TB ST2000VN000 hard drive(s) in the idle
+                                  state. Two G.R.A.S. Type 40AE microphones, each set
+                                  up 1 meter away from the Synology NAS at the front
+                                  and rear. Background noise: 16.49-17.51 dB(A);
+                                  Temperature: 24.25-25.75˚C; Humidity: 58.2-61.8%
+Temperature
+Operating Temperature         0°C to 40°C (32°F to 104°F)
+Storage Temperature               -20°C to 60°C (-5°F to 140°F)
+Relative Humidity                 5% to 95% RH
+Certification
+   FCC
+   CE
+   BSMI
+   EAC
+   CCC
+   KC
+   VCCI
+   RCM
+Warranty
+3-year hardware warranty, extendable to 5 years with EW201 or Extended Warranty Plus
+                                  Availability varies by region. Before purchasing, please
+                                  visit the official web pages of EW201/202 and Extended
+Notes                             Warranty Plus for a list of eligible regions.
+                                  The warranty period starts from the purchase date as
+                                  stated on your purchase receipt. (Learn more)
+Environment
+RoHS Compliant
+Packaging Content
+   Main Unit X 1
+   Accessory Pack X 1
+   AC Power Adapter X 1
+   AC Power Cord X 1
+   RJ-45 LAN Cable X 2
+   Quick Installation Guide X 1
+Optional Accessories
+   DDR4 non-ECC SODIMM: D4NESO-2666-4G
+   Expansion Units: DX517
+   3.5" SATA HDD: HAT5300
+   2.5" SATA SSD: SAT5210
+   M.2 2280 NVMe SSD: SNV3410
+   VisualStation: VS360HD
+   Surveillance Device License Pack
+Notes                           All memory modules will operate at the maximum
+                                frequency specified by the CPU manufacturer.
+
+
+Software Specs
+DSM Specifications
+Storage Management
+Maximum Single Volume Size* 108 TB
+Maximum Internal Volume     64
+Number
+SSD Read / Write Cache      v
+(White Paper)
+SSD TRIM                    v
+                               Synology Hybrid RAID
+                               Basic
+                               JBOD
+Supported RAID Type            RAID 0
+                               RAID 1
+                               RAID 5 (with Expansion Unit)
+                               RAID 6 (with Expansion Unit)
+                               RAID 10 (with Expansion Unit)
+                               Basic to RAID 1
+RAID Migration                 Basic to RAID 5 (with Expansion Unit)
+                               RAID 1 to RAID 5 (with Expansion Unit)
+                               RAID 5 to RAID 6 (with Expansion Unit)
+                                   Synology Hybrid RAID
+Volume Expansion with Larger       RAID 1
+HDDs                               RAID 5 (with Expansion Unit)
+                                   RAID 6 (with Expansion Unit)
+                                   RAID 10 (with Expansion Unit)
+                                   Synology Hybrid RAID
+Volume Expansion by Adding         JBOD (with Expansion Unit)
+a HDD                              RAID 5 (with Expansion Unit)
+                                   RAID 6 (with Expansion Unit)
+                                   Synology Hybrid RAID
+Global Hot Spare Supported         RAID 1 (with Expansion Unit)
+RAID Type                          RAID 5 (with Expansion Unit)
+                                   RAID 6 (with Expansion Unit)
+                                   RAID 10 (with Expansion Unit)
+                                   Usable capacity for each volume will be lower than the
+                                   maximum volume size and is dependent on the
+                                   filesystem and the amount of system metadata stored.
+Notes                              Actual maximum storage pool and volume sizes depend
+                                   on drive sizes used, the number of drive bays available,
+                                   and the RAID configuration.
+                                   Each internal volume (may consist of multiple drives) is
+                                   expandable up to 108TB.
+File Services
+File Protocol                  SMB/AFP/NFS/FTP/WebDAV
+Maximum Concurrent             500
+SMB/AFP/FTP Connections
+Maximum Concurrent
+SMB/AFP/FTP Connections        1,500
+(with RAM expansion)
+Windows Access Control List    v
+(ACL) Integration
+NFS Kerberos Authentication    v
+                                  Regarding data concerning tests with RAM expansion,
+                                  all memory slots are installed with the maximum
+                                  capacity of supported RAM.
+                                  The testing standard was based on the maximum
+Notes                             number of concurrent connections supported by this
+                                  model. During the testing, 25% of the connections were
+                                  used to transfer files concurrently. The transfer process
+                                  guaranteed that the connections were not interrupted;
+                                  the minimum transfer speed was not guaranteed.
+Account & Shared Folder
+Maximum Local User           2,048
+Accounts
+Maximum Local Groups         256
+Maximum Shared Folder        512
+Maximum Shared Folder Sync   8
+Tasks
+Hybrid Share
+Maximum Hybrid Share         10
+Folders
+High Availability
+Synology High Availability   v
+Log Center
+Syslog Events per Second     800
+Virtualization
+VMware vSphere with VAAI     v
+Windows Server 2016          v
+Windows Server 2019          v
+Citrix Ready                 v
+OpenStack                     v
+General Specifications
+                              SMB1 (CIFS), SMB2, SMB3, NFSv3, NFSv4, NFSv4.1, NFS
+Networking Protocols          Kerberized sessions, iSCSI, HTTP, HTTPs, FTP, SNMP,
+                              LDAP, CalDAV
+                                  Google Chrome
+Supported Browsers                Firefox
+                                  Microsoft Edge
+                                  Safari
+                              English, Deutsch, Français, Italiano, Español, Dansk, Norsk,
+Supported Language            Svenska, Nederlands, Русский, Polski, Magyar, Português
+                              do Brasil, Português Europeu, Türkçe, Český, ภาษาไทย, 日本
+                              語, 한국어, 繁體中文, 简体中文
+Notes                         For an updated list of supported browser versions, check
+                              the DSM Technical Specifications.
+
+Add-on Packages view the complete package list
+Antivirus by McAfee (Trial)
+v
+Central Management System
+v
+Synology Chat
+Maximum Users                 1,500
+Maximum Number of             100
+Concurrent Users
+                              When applicable, systems are tested configured with
+Notes                         maximum memory and set to allow the maximum number of
+                              connections.
+Document Viewer
+v
+Download Station
+Maximum Concurrent             80
+Download Tasks
+SAN Manager
+Maximum iSCSI Target           128
+Number
+Maximum LUN                    256
+LUN Clone/Snapshot,            v
+Windows ODX
+Notes                          iSCSI Manager has been renamed to SAN Manager in DSM
+                               7.0.
+Synology MailPlus / MailPlus Server
+Free Email Accounts        5 (Licenses required for additional accounts)
+Maximum Number of          100
+Concurrent Users
+Maximum Server Performance 1,224,000 emails per day, approx. 37GB
+                               Models with 2 bays and dual M.2 drive slots were
+                               installed with two SSDs for SSD cache.
+                               For tested models with expandable memory, the
+                               maximum amount of RAM was installed.
+Notes                          The performance of the mail system will slightly
+                               decrease in high-availability mode due to data
+                               synchronization between the two servers.
+                               Functions that were enabled in all of the tests above:
+                               anti-spam, anti-virus, DNSBL, greylist, content scan,
+                               full-text search (English only).
+Media Server
+DLNA Compliance                v
+Synology Photos
+Facial Recognition         v
+Snapshot Replication
+Maximum Snapshots per      1,024
+Shared Folder
+Maximum of System          65,536
+Snapshots
+Surveillance Station
+Maximum IP cam (Licenses   40 (including 2 Free License) (see all supported IP
+required)                  cameras)
+                           1200 FPS @ 720p (1280x720)
+                           800 FPS @ 1080p (1920x1080)
+Total FPS (H.264)          350 FPS @ 3M (2048x1536)
+                           280 FPS @ 5M (2591x1944)
+                           170 FPS @ 4K (3840x2160)
+                           1200 FPS @ 720p (1280x720)
+                           1200 FPS @ 1080p (1920x1080)
+Total FPS (H.265)          600 FPS @ 3M (2048x1536)
+                           480 FPS @ 5M (2591x1944)
+                           200 FPS @ 4K (3840x2160)
+                              Maximum IP cameras and FPS figures are tested with
+                              the device fully populated with drives and under a
+                              continuous recording setup.
+Notes                         Actual system capabilities may differ depending on
+                              system configuration, drive performance, number of
+                              features enabled, and if additional workloads are
+                              present.
+Synology Drive
+Recommended Number of      350 (the number of connections that can be maintained
+Concurrent Sync Clients    when the recommended number of hosted files was
+                           reached)
+Recommended Number of      5,000,000 (applies to files indexed or hosted by Synology
+Hosted Files               Drive. For file access through other standard protocols,
+                           refer to the File Services section above)
+                                  Exceeding the recommended numbers above will not
+                                  block application operations, but may result in longer
+                                  response time.
+                                  Utilizing SSD cache can significantly improve
+Notes                             performance.
+                                  For tested models with expandable memory, the
+                                  maximum amount of RAM was installed.
+                                  Btrfs file system and non-encrypted shared folders
+                                  were used during the aforementioned testing.
+Synology Office
+Maximum Users                1,200
+                                 Multiple files were opened for testing and each file was
+                                 edited by 30 users simultaneously.
+                                 For tested models with expandable memory, the
+Notes                            maximum amount of RAM was installed.
+                                 Client performance may affect maximum simultaneous
+                                 editing users. Client PCs used for testing: Intel Core i3-
+                                 3220 / 8GB RAM
+Video Station
+v
+Virtual Machine Manager
+Recommended Virtual          2 (Learn more)
+Machine Instances
+Recommended Virtual DSM      2 (including 1 Free License)
+Number (Licenses required)
+Notes                        The specifications vary depending on system configuration
+                             and memory size.
+VPN Server
+Maximum Connections          40
+
