@@ -5,6 +5,14 @@ alter table users
 alter table users
   alter column role set default 'viewer';
 
+alter table users
+  add column if not exists clerk_user_id text;
+
+alter table users
+  add column if not exists display_name text;
+
+create unique index if not exists idx_users_clerk_user_id on users(clerk_user_id);
+
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),
   name text not null,

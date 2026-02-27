@@ -32,8 +32,6 @@ services:
       POSTGRES_USER: "vitamind"
       POSTGRES_PASSWORD: "vitamind"
       POSTGRES_DB: "vitamind"
-    ports:
-      - "33542:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./docker/db-init:/docker-entrypoint-initdb.d:ro

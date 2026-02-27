@@ -10,6 +10,7 @@ type UserRow = {
   id: string;
   email: string;
   name: string | null;
+  display_name: string | null;
   role: string | null;
   status: string | null;
   created_at: string;
@@ -21,7 +22,8 @@ const normalizeStatus = (value: unknown) => {
   const status = String(value ?? "")
     .trim()
     .toLowerCase();
-  return status === "disabled" ? "disabled" : "active";
+  if (status === "blocked" || status === "disabled") return "blocked";
+  return "active";
 };
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,13 +38,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Dữ liệu không hợp lệ." }, { status: 400 });
   }
 
-  const email = body?.email?.toString().trim();
-  const name = body?.name?.toString().trim();
   const role = body?.role ? normalizeRole(body.role.toString().trim()) : undefined;
   const status = normalizeStatus(body?.status);
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, email, name, role, status, created_at, updated_at
+    `select id, email, name, display_name, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,
@@ -53,28 +53,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Không tìm thấy user." }, { status: 404 });
   }
 
-  if (id === currentUser?.id && status === "disabled") {
+  if (id === currentUser?.id && status === "blocked") {
     return NextResponse.json(
-      { error: "Không thể vô hiệu hóa tài khoản đang đăng nhập." },
+      { error: "Không thể khóa tài khoản đang đăng nhập." },
       { status: 400 },
     );
   }
 
-  const nextEmail = email?.length ? email : existing.email;
-  const nextName = name?.length ? name : existing.name;
-  const nextRole = role ?? existing.role;
+  const nextRole = role ?? existing.role ?? "viewer";
   const nextStatus = status ?? existing.status ?? "active";
 
   const { rows, error } = await query<UserRow>(
     `update users
-     set email = $2,
-         name = $3,
-         role = $4,
-         status = $5,
+     set role = $2,
+         status = $3,
          updated_at = now()
      where id = $1
-     returning id, email, name, role, status, created_at, updated_at`,
-    [id, nextEmail, nextName, nextRole, nextStatus],
+     returning id, email, name, display_name, role, status, created_at, updated_at`,
+    [id, nextRole, nextStatus],
   );
 
   if (error) {
@@ -102,13 +98,13 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   if (id === currentUser?.id) {
     return NextResponse.json(
-      { error: "Không thể xoá chính tài khoản đang đăng nhập." },
+      { error: "Không thể khóa tài khoản đang đăng nhập." },
       { status: 400 },
     );
   }
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, email, name, role, status, created_at, updated_at
+    `select id, email, name, display_name, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,
@@ -121,18 +117,18 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   await query(
     `update users
-     set status = 'disabled', updated_at = now()
+     set status = 'blocked', updated_at = now()
      where id = $1`,
     [id],
   );
 
   await logAudit({
     actorUserId: currentUser?.id ?? null,
-    action: "delete",
+    action: "block",
     tableName: "users",
     recordId: id,
     before: existing,
-    after: { ...existing, status: "disabled" },
+    after: { ...existing, status: "blocked" },
   });
 
   return NextResponse.json({ ok: true });

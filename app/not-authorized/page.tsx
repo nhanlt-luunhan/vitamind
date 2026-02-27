@@ -1,4 +1,3 @@
-import { SignUp } from "@clerk/nextjs";
 import { Layout } from "@/components/layout/Layout";
 
 export default function Page() {
@@ -9,12 +8,11 @@ export default function Page() {
           <div className="row">
             <div className="col-xl-1" />
             <div className="col-xl-10 col-lg-12">
-              <div className="row mt-70 justify-content-center">
-                <div className="col-lg-6">
-                  <div className="bg-gray-850 border-gray-800 bdrd16 p-4 p-md-5">
-                    <SignUp signInUrl="/sign-in" afterSignUpUrl="/account" />
-                  </div>
-                </div>
+              <div className="mt-70">
+                <h2 className="color-linear d-inline-block mb-10">Không có quyền truy cập</h2>
+                <p className="text-lg color-gray-500">
+                  Tài khoản của bạn chưa đủ quyền hoặc đang bị khóa.
+                </p>
               </div>
             </div>
           </div>

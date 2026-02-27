@@ -16,6 +16,9 @@ public/uploads
 # Local installers / large binaries
 public/assets/imgs/template/Git-*.exe
 
+# Clerk local config
+.clerk/
+
 # Misc
 *.tgz
 *.swp

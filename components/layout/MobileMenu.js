@@ -1,24 +1,20 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 const MobileMenu = ({ openClass }) => {
-  // State to track the active status and key
   const [isActive, setIsActive] = useState({
     status: false,
     key: "",
   });
 
-  // Function to handle toggling the active status based on the given key
   const handleToggle = (key) => {
-    // Check if the current key matches the active key in the state
     if (isActive.key === key) {
-      // If the current key matches, set the active status to false
       setIsActive({
         status: false,
       });
     } else {
-      // If the current key does not match, set the active status to true and update the key
       setIsActive({
         status: true,
         key,
@@ -56,7 +52,7 @@ const MobileMenu = ({ openClass }) => {
                 <nav className="mt-15">
                   <ul className="mobile-menu font-heading">
                     <li>
-                      <Link href="/">Trang chá»§</Link>
+                      <Link href="/">Trang chủ</Link>
                     </li>
                     <li
                       className={isActive.key == 2 ? "has-children active" : "has-children"}
@@ -65,22 +61,22 @@ const MobileMenu = ({ openClass }) => {
                       <span className="menu-expand">
                         <i className="fi-rr-caret-down"></i>
                       </span>
-                      <Link href="/blog">ChuyÃªn má»¥c</Link>
+                      <Link href="/blog">Chuyên mục</Link>
                       <ul className={isActive.key == 2 ? "sub-menu d-block" : "sub-menu d-none"}>
                         <li>
-                          <Link href="/blog">ChuyÃªn má»¥c 1</Link>
+                          <Link href="/blog">Chuyên mục 1</Link>
                         </li>
                         <li>
-                          <Link href="/blog">ChuyÃªn má»¥c 2</Link>
+                          <Link href="/blog">Chuyên mục 2</Link>
                         </li>
                         <li>
-                          <Link href="/blog">ChuyÃªn má»¥c 3</Link>
+                          <Link href="/blog">Chuyên mục 3</Link>
                         </li>
                         <li>
-                          <Link href="/blog">ChuyÃªn má»¥c 4</Link>
+                          <Link href="/blog">Chuyên mục 4</Link>
                         </li>
                         <li>
-                          <Link href="/blog">ChuyÃªn má»¥c 5</Link>
+                          <Link href="/blog">Chuyên mục 5</Link>
                         </li>
                       </ul>
                     </li>
@@ -91,16 +87,16 @@ const MobileMenu = ({ openClass }) => {
                       <span className="menu-expand">
                         <i className="fi-rr-caret-down"></i>
                       </span>
-                      <Link href="/blog">BÃ i viáº¿t</Link>
+                      <Link href="/blog">Bài viết</Link>
                       <ul className={isActive.key == 3 ? "sub-menu d-block" : "sub-menu d-none"}>
                         <li>
                           <Link href="/category/raspberry-pi">Raspberry Pi</Link>
                         </li>
                         <li>
-                          <Link href="/blog/2">BÃ i viáº¿t 2</Link>
+                          <Link href="/blog/2">Bài viết 2</Link>
                         </li>
                         <li>
-                          <Link href="/blog/3">BÃ i viáº¿t 3</Link>
+                          <Link href="/blog/3">Bài viết 3</Link>
                         </li>
                       </ul>
                     </li>
@@ -112,22 +108,22 @@ const MobileMenu = ({ openClass }) => {
                         <i className="fi-rr-caret-down"></i>
                       </span>
                       <Link className="color-gray-500" href="/shop">
-                        Dá»± Ã¡n
+                        Dự án
                       </Link>
                       <ul className={isActive.key == 5 ? "sub-menu d-block" : "sub-menu d-none"}>
                         <li>
                           <Link className="color-gray-500" href="/shop">
-                            Dá»± Ã¡n cá»§a tÃ´i
+                            Dự án của tôi
                           </Link>
                         </li>
                         <li>
                           <Link className="color-gray-500" href="/shop">
-                            Dá»± Ã¡n cá»§a tÃ´i 2
+                            Dự án của tôi 2
                           </Link>
                         </li>
                         <li>
                           <Link className="color-gray-500" href="/shop">
-                            Chi tiáº¿t dá»± Ã¡n
+                            Chi tiết dự án
                           </Link>
                         </li>
                       </ul>
@@ -142,23 +138,33 @@ const MobileMenu = ({ openClass }) => {
                       <Link href="/blog">Trang</Link>
                       <ul className={isActive.key == 4 ? "sub-menu d-block" : "sub-menu d-none"}>
                         <li>
-                          <Link href="/blog">Giá»›i thiá»‡u</Link>
+                          <Link href="/blog">Giới thiệu</Link>
                         </li>
                         <li>
-                          <Link href="/blog">BÃ i viáº¿t tÃ¡c giáº£</Link>
+                          <Link href="/blog">Bài viết tác giả</Link>
                         </li>
                         <li>
-                          <Link href="/blog">LiÃªn há»‡</Link>
+                          <Link href="/blog">Liên hệ</Link>
                         </li>
                         <li>
-                          <Link href="/blog">Káº¿t quáº£ tÃ¬m kiáº¿m</Link>
+                          <Link href="/blog">Kết quả tìm kiếm</Link>
                         </li>
-                        <li>
-                          <Link href="/login">ÄÄƒng nháº­p</Link>
-                        </li>
-                        <li>
-                          <Link href="/login">ÄÄƒng kÃ½</Link>
-                        </li>
+                        <SignedOut>
+                          <li>
+                            <Link href="/sign-in">Đăng nhập</Link>
+                          </li>
+                          <li>
+                            <Link href="/sign-up">Đăng ký</Link>
+                          </li>
+                        </SignedOut>
+                        <SignedIn>
+                          <li>
+                            <Link href="/account">Tài khoản</Link>
+                          </li>
+                          <li>
+                            <Link href="/logout">Đăng xuất</Link>
+                          </li>
+                        </SignedIn>
                         <li>
                           <Link href="/admin">Quản trị</Link>
                         </li>
@@ -168,55 +174,57 @@ const MobileMenu = ({ openClass }) => {
                       </ul>
                     </li>
                     <li>
-                      <Link href="/blog">LiÃªn há»‡</Link>
+                      <Link href="/blog">Liên hệ</Link>
                     </li>
                   </ul>
                 </nav>
               </div>
-              <div className="mobile-account border-gray-800">
-                <div className="mobile-header-top bg-gray-900">
-                  <div className="user-account">
-                    <Link href="/account">
-                      <Image
-                        width={48}
-                        height={48}
-                        src="/assets/imgs/template/ava.jpg"
-                        alt="GenZ"
-                      />
-                    </Link>
-                    <div className="content">
-                      <h6 className="user-name color-white">
-                        Xin chÃ o<span className="color-white"> Steven!</span>
-                      </h6>
-                      <p className="font-xs text-muted">Báº¡n cÃ³ 3 tin nháº¯n má»›i</p>
+              <SignedIn>
+                <div className="mobile-account border-gray-800">
+                  <div className="mobile-header-top bg-gray-900">
+                    <div className="user-account">
+                      <Link href="/account">
+                        <Image
+                          width={48}
+                          height={48}
+                          src="/assets/imgs/template/ava.jpg"
+                          alt="GenZ"
+                        />
+                      </Link>
+                      <div className="content">
+                        <h6 className="user-name color-white">
+                          Xin chào<span className="color-white">!</span>
+                        </h6>
+                        <p className="font-xs text-muted">Quản lý tài khoản của bạn</p>
+                      </div>
                     </div>
                   </div>
+                  <ul className="mobile-menu">
+                    <li>
+                      <Link href="/account">Hồ sơ</Link>
+                    </li>
+                    <li>
+                      <Link href="/account">Bài đã lưu</Link>
+                    </li>
+                    <li>
+                      <Link href="/account">Thêm bài viết</Link>
+                    </li>
+                    <li>
+                      <Link href="/account">Mục yêu thích</Link>
+                    </li>
+                    <li>
+                      <Link href="/account">Cài đặt tài khoản</Link>
+                    </li>
+                    <li>
+                      <Link href="/logout">Đăng xuất</Link>
+                    </li>
+                  </ul>
                 </div>
-                <ul className="mobile-menu">
-                  <li>
-                    <Link href="/account">Há»“ sÆ¡</Link>
-                  </li>
-                  <li>
-                    <Link href="/account">BÃ i Ä‘Ã£ lÆ°u</Link>
-                  </li>
-                  <li>
-                    <Link href="/account">ThÃªm bÃ i viáº¿t</Link>
-                  </li>
-                  <li>
-                    <Link href="/account">Má»¥c yÃªu thÃ­ch</Link>
-                  </li>
-                  <li>
-                    <Link href="/account">CÃ i Ä‘áº·t tÃ i khoáº£n</Link>
-                  </li>
-                  <li>
-                    <Link href="/logout">ÄÄƒng xuáº¥t</Link>
-                  </li>
-                </ul>
-              </div>
+              </SignedIn>
               <div className="site-copyright color-gray-400 mt-30">
-                Báº£n quyá»n 2026 Â© Genz - Máº«u blog cÃ¡ nhÃ¢n.
+                Bản quyền 2026 © Genz - Mẫu blog cá nhân.
                 <br />
-                Thiáº¿t káº¿ bá»Ÿi
+                Thiết kế bởi
                 <Link href="http://alithemes.com" target="_blank">
                   &nbsp; AliThemes
                 </Link>

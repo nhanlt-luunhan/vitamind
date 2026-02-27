@@ -1,26 +1,20 @@
-﻿import path from "path";
-import crypto from "crypto";
-import { mkdir, writeFile } from "fs/promises";
 import { NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
-const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
-
-const getExtension = (name: string) => {
-  const ext = path.extname(name || "").toLowerCase();
-  return ALLOWED_EXT.has(ext) ? ext : "";
-};
 
 export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!user.clerk_user_id) {
+    return NextResponse.json({ error: "Missing Clerk user" }, { status: 400 });
   }
 
   const formData = await request.formData();
@@ -38,23 +32,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ảnh vượt quá 2MB." }, { status: 400 });
   }
 
-  const ext = getExtension(file.name) || ".png";
-  const fileName = `${user.id}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
-  await mkdir(uploadDir, { recursive: true });
+  const updated = await clerkClient.users.updateUserProfileImage(user.clerk_user_id, { file });
+  const avatarUrl = (updated as any).imageUrl ?? (updated as any).image_url ?? null;
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, fileName), buffer);
+  if (avatarUrl) {
+    await query(
+      `update users
+       set avatar_url = $2,
+           updated_at = now()
+       where id = $1`,
+      [user.id, avatarUrl],
+    );
+  }
 
-  const url = `/uploads/avatars/${fileName}`;
-  await query(
-    `update users
-     set avatar_url = $2,
-         updated_at = now()
-     where id = $1`,
-    [user.id, url],
-  );
-
-  return NextResponse.json({ avatar_url: url });
+  return NextResponse.json({ avatar_url: avatarUrl });
 }
-

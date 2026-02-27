@@ -3,7 +3,7 @@
 - Language: TypeScript
 - UI: Tailwind + Shadcn
 - State: Server Actions
-- Auth: Custom (email/password + Postgres sessions)
+- Auth: Clerk (session) + Postgres RBAC/profile
 
 # Coding Rules
 - Prefer server components

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { ThemeSwitch } from "@/components/elements/SwitchButton";
 import { ButtonClient } from "@/components/ui";
 
@@ -163,12 +164,12 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                         </Link>
                       </li>
                       <li>
-                        <Link className="color-gray-500" href="/login">
+                        <Link className="color-gray-500" href="/sign-in">
                           Đăng nhập
                         </Link>
                       </li>
                       <li>
-                        <Link className="color-gray-500" href="/login">
+                        <Link className="color-gray-500" href="/sign-up">
                           Đăng ký
                         </Link>
                       </li>
@@ -236,15 +237,31 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                   </Link>
                 </div>
               </div>
-              <ButtonClient
-                asChild
-                unstyled
-                className="btn btn-linear d-none d-sm-inline-block hover-up hover-shadow"
-              >
-                <Link href="/account" prefetch={false}>
-                  Tài khoản
-                </Link>
-              </ButtonClient>
+              <SignedOut>
+                <ButtonClient
+                  asChild
+                  unstyled
+                  className="btn btn-linear d-none d-sm-inline-block hover-up hover-shadow"
+                >
+                  <Link href="/sign-in" prefetch={false}>
+                    Đăng nhập
+                  </Link>
+                </ButtonClient>
+              </SignedOut>
+              <SignedIn>
+                <div className="d-none d-sm-flex align-items-center gap-2">
+                  <ButtonClient
+                    asChild
+                    unstyled
+                    className="btn btn-linear hover-up hover-shadow"
+                  >
+                    <Link href="/account" prefetch={false}>
+                      Tài khoản
+                    </Link>
+                  </ButtonClient>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              </SignedIn>
             </div>
           </div>
         </div>

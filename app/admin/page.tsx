@@ -1,11 +1,11 @@
 ﻿import { Layout } from "@/components/layout/Layout";
 import { AdminPanel } from "@/components/admin/AdminPanel";
-import { requireUser } from "@/lib/auth/admin-auth";
+import { requireAdmin } from "@/lib/auth/admin-auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const user = await requireUser();
+  const user = await requireAdmin();
 
   return (
     <Layout>

@@ -1,53 +1,54 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { query } from "@/lib/db/admin-db";
+import { syncClerkUserById } from "@/lib/auth/clerk-sync";
 
 export type SessionUser = {
   id: string;
+  clerk_user_id: string | null;
   email: string;
   name: string | null;
+  display_name: string | null;
   role: string | null;
   status: string | null;
+  avatar_url: string | null;
 };
 
-async function getUserFromLegacySession(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("vitamind_session")?.value;
-  if (!token) return null;
-
+async function fetchUserByClerkId(clerkUserId: string): Promise<SessionUser | null> {
   const { rows } = await query<SessionUser>(
-    `
-      select u.id, u.email, u.name, u.role, u.status
-      from user_sessions s
-      join users u on u.id = s.user_id
-      where s.token = $1
-        and s.expires_at > now()
-      limit 1
-    `,
-    [token],
+    `select id, clerk_user_id, email, name, display_name, role, status, avatar_url
+     from users
+     where clerk_user_id = $1
+     limit 1`,
+    [clerkUserId],
   );
-
-  const legacy = rows[0] ?? null;
-  if (legacy?.status && legacy.status !== "active") {
-    return null;
-  }
-  return legacy;
+  return rows[0] ?? null;
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
-  return getUserFromLegacySession();
+  const { userId } = await auth();
+  if (!userId) return null;
+  let user = await fetchUserByClerkId(userId);
+  if (!user) {
+    await syncClerkUserById(userId);
+    user = await fetchUserByClerkId(userId);
+  }
+  if (user?.status && user.status !== "active") {
+    return null;
+  }
+  return user;
 }
 
 export async function requireAdmin() {
   const user = await getSessionUser();
   if (!user) {
-    redirect("/login");
+    redirect("/sign-in");
   }
   if (user.status && user.status !== "active") {
-    redirect("/login");
+    redirect("/not-authorized");
   }
   if (user.role && user.role !== "admin") {
-    redirect("/login");
+    redirect("/not-authorized");
   }
   return user;
 }
@@ -55,10 +56,10 @@ export async function requireAdmin() {
 export async function requireUser() {
   const user = await getSessionUser();
   if (!user) {
-    redirect("/login");
+    redirect("/sign-in");
   }
   if (user.status && user.status !== "active") {
-    redirect("/login");
+    redirect("/not-authorized");
   }
   return user;
 }

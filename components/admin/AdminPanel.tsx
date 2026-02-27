@@ -15,8 +15,10 @@ type UserRow = {
   id: string;
   email: string;
   name: string | null;
+  display_name: string | null;
   role: string | null;
   status: string | null;
+  avatar_url: string | null;
   created_at: string;
   updated_at: string | null;
 };
@@ -71,6 +73,15 @@ type MediaRow = {
   meta: any;
   created_at: string;
   updated_at: string | null;
+};
+
+type AuditRow = {
+  id: string;
+  actor_email: string | null;
+  action: string;
+  table_name: string;
+  record_id: string | null;
+  created_at: string;
 };
 
 const roleRank = {
@@ -138,9 +149,9 @@ export function AdminPanel({ user }: { user: SessionUser }) {
   const canEdit = roleRank[role] >= roleRank.editor;
   const canView = roleRank[role] >= roleRank.viewer;
 
-  const [activeTab, setActiveTab] = useState<"users" | "products" | "orders" | "blog" | "media">(
-    "users",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "users" | "products" | "orders" | "blog" | "media" | "audit"
+  >("users");
 
   const tabs = [
     { key: "users", label: "Người dùng", visible: canAdmin },
@@ -148,6 +159,7 @@ export function AdminPanel({ user }: { user: SessionUser }) {
     { key: "orders", label: "Đơn hàng", visible: canView },
     { key: "blog", label: "Blog", visible: canView },
     { key: "media", label: "Media", visible: canView },
+    { key: "audit", label: "Audit", visible: canAdmin },
   ].filter((tab) => tab.visible);
 
   useEffect(() => {
@@ -176,6 +188,7 @@ export function AdminPanel({ user }: { user: SessionUser }) {
       {activeTab === "orders" ? <OrdersTab canEdit={canAdmin} /> : null}
       {activeTab === "blog" ? <BlogTab canEdit={canEdit} /> : null}
       {activeTab === "media" ? <MediaTab canEdit={canEdit} /> : null}
+      {activeTab === "audit" && canAdmin ? <AuditTab /> : null}
 
       {!canView ? (
         <div className="admin-panel mt-30">
@@ -192,7 +205,6 @@ function UsersTab({ canManage }: { canManage: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<UserRow | null>(null);
-  const [form, setForm] = useState({ email: "", name: "", role: "viewer", status: "active" });
 
   const loadUsers = async () => {
     setLoading(true);
@@ -215,7 +227,7 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     if (!search.trim()) return users;
     const term = search.toLowerCase();
     return users.filter((user) =>
-      [user.email, user.name, user.role, user.status].some((value) =>
+      [user.email, user.name, user.display_name, user.role, user.status].some((value) =>
         String(value ?? "")
           .toLowerCase()
           .includes(term),
@@ -223,34 +235,11 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     );
   }, [users, search]);
 
-  const handleCreate = async () => {
-    setError(null);
-    try {
-      const payload = {
-        email: form.email,
-        name: form.name,
-        role: form.role,
-        status: form.status,
-      };
-      const data = await fetchJson("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      setUsers((prev) => [data.user, ...prev]);
-      setForm({ email: "", name: "", role: "viewer", status: "active" });
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
   const handleSave = async () => {
     if (!editing) return;
     setError(null);
     try {
       const payload = {
-        email: editing.email,
-        name: editing.name,
         role: editing.role,
         status: editing.status,
       };
@@ -266,13 +255,13 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     }
   };
 
-  const handleDisable = async (id: string) => {
-    if (!confirm("Vô hiệu hóa user này?")) return;
+  const handleBlock = async (id: string) => {
+    if (!confirm("Khoá user này?")) return;
     setError(null);
     try {
       await fetchJson(`/api/admin/users/${id}`, { method: "DELETE" });
       setUsers((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, status: "disabled" } : item)),
+        prev.map((item) => (item.id === id ? { ...item, status: "blocked" } : item)),
       );
     } catch (err) {
       setError((err as Error).message);
@@ -292,7 +281,7 @@ function UsersTab({ canManage }: { canManage: boolean }) {
       <div className="admin-toolbar">
         <div>
           <h4 className="color-white mb-5">Người dùng</h4>
-          <p className="text-sm color-gray-500">Tạo, phân quyền và quản lý trạng thái tài khoản.</p>
+          <p className="text-sm color-gray-500">Phân quyền và quản lý trạng thái tài khoản.</p>
         </div>
         <div className="admin-toolbar__actions">
           <input
@@ -307,47 +296,13 @@ function UsersTab({ canManage }: { canManage: boolean }) {
         </div>
       </div>
 
-      <div className="admin-form-grid mt-20">
-        <input
-          className="admin-input"
-          placeholder="Email"
-          value={form.email}
-          onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-        />
-        <input
-          className="admin-input"
-          placeholder="Tên"
-          value={form.name}
-          onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-        />
-        <select
-          className="admin-select"
-          value={form.role}
-          onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value }))}
-        >
-          <option value="admin">Admin</option>
-          <option value="editor">Editor</option>
-          <option value="viewer">Viewer</option>
-        </select>
-        <select
-          className="admin-select"
-          value={form.status}
-          onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
-        >
-          <option value="active">Active</option>
-          <option value="disabled">Disabled</option>
-        </select>
-        <Button unstyled className="btn btn-linear" type="button" onClick={handleCreate}>
-          Thêm user
-        </Button>
-      </div>
-
       {error ? <p className="admin-error mt-15">{error}</p> : null}
 
       <div className="admin-table-wrapper mt-20">
         <table className="table admin-table">
           <thead>
             <tr>
+              <th>Avatar</th>
               <th>Email</th>
               <th>Tên</th>
               <th>Role</th>
@@ -359,48 +314,29 @@ function UsersTab({ canManage }: { canManage: boolean }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>Đang tải...</td>
+                <td colSpan={7}>Đang tải...</td>
               </tr>
             ) : null}
             {!loading && !filtered.length ? (
               <tr>
-                <td colSpan={6}>Chưa có dữ liệu.</td>
+                <td colSpan={7}>Chưa có dữ liệu.</td>
               </tr>
             ) : null}
             {filtered.map((row) => {
               const isEditing = editing?.id === row.id;
+                  const displayName = row.display_name ?? row.name ?? "-";
+                  const statusLabel = row.status === "disabled" ? "blocked" : row.status ?? "active";
               return (
                 <tr key={row.id}>
                   <td>
-                    {isEditing ? (
-                      <input
-                        className="admin-input"
-                        value={editing?.email ?? ""}
-                        onChange={(event) =>
-                          setEditing((prev) =>
-                            prev ? { ...prev, email: event.target.value } : prev,
-                          )
-                        }
-                      />
+                    {row.avatar_url ? (
+                      <img className="admin-media-thumb" src={row.avatar_url} alt="avatar" />
                     ) : (
-                      row.email
+                      <span className="admin-badge">User</span>
                     )}
                   </td>
-                  <td>
-                    {isEditing ? (
-                      <input
-                        className="admin-input"
-                        value={editing?.name ?? ""}
-                        onChange={(event) =>
-                          setEditing((prev) =>
-                            prev ? { ...prev, name: event.target.value } : prev,
-                          )
-                        }
-                      />
-                    ) : (
-                      (row.name ?? "-")
-                    )}
-                  </td>
+                  <td>{row.email}</td>
+                  <td>{displayName}</td>
                   <td>
                     {isEditing ? (
                       <select
@@ -424,7 +360,11 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                     {isEditing ? (
                       <select
                         className="admin-select"
-                        value={editing?.status ?? "active"}
+                        value={
+                          editing?.status === "disabled"
+                            ? "blocked"
+                            : editing?.status ?? "active"
+                        }
                         onChange={(event) =>
                           setEditing((prev) =>
                             prev ? { ...prev, status: event.target.value } : prev,
@@ -432,10 +372,10 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                         }
                       >
                         <option value="active">Active</option>
-                        <option value="disabled">Disabled</option>
+                        <option value="blocked">Blocked</option>
                       </select>
                     ) : (
-                      (row.status ?? "active")
+                      statusLabel
                     )}
                   </td>
                   <td>{formatDate(row.created_at)}</td>
@@ -464,10 +404,10 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                         </button>
                         <button
                           className="btn btn-admin-outline"
-                          onClick={() => handleDisable(row.id)}
+                          onClick={() => handleBlock(row.id)}
                           type="button"
                         >
-                          Vô hiệu
+                          Khoá
                         </button>
                       </>
                     )}
@@ -1479,6 +1419,82 @@ function MediaTab({ canEdit }: { canEdit: boolean }) {
                 </tr>
               );
             })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AuditTab() {
+  const [rows, setRows] = useState<AuditRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadAudit = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchJson("/api/admin/audit");
+      setRows(data.audit || []);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAudit();
+  }, []);
+
+  return (
+    <div className="admin-panel mt-30">
+      <div className="admin-toolbar">
+        <div>
+          <h4 className="color-white mb-5">Audit log</h4>
+          <p className="text-sm color-gray-500">Theo dõi các thay đổi quan trọng trong admin.</p>
+        </div>
+        <div className="admin-toolbar__actions">
+          <button className="btn btn-admin-outline" onClick={loadAudit} type="button">
+            Làm mới
+          </button>
+        </div>
+      </div>
+
+      {error ? <p className="admin-error mt-15">{error}</p> : null}
+
+      <div className="admin-table-wrapper mt-20">
+        <table className="table admin-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Người thao tác</th>
+              <th>Hành động</th>
+              <th>Bảng</th>
+              <th>ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5}>Đang tải...</td>
+              </tr>
+            ) : null}
+            {!loading && !rows.length ? (
+              <tr>
+                <td colSpan={5}>Chưa có dữ liệu.</td>
+              </tr>
+            ) : null}
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>{formatDate(row.created_at)}</td>
+                <td>{row.actor_email ?? "-"}</td>
+                <td>{row.action}</td>
+                <td>{row.table_name}</td>
+                <td>{row.record_id ?? "-"}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

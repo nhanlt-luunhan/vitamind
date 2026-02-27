@@ -27,6 +27,10 @@ docker compose up -d db
 3. Create `.env.local` from `.env.example` and set:
 
 - `DATABASE_URL`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `CLERK_WEBHOOK_SIGNING_SECRET`
+- `INTERNAL_API_SECRET`
 
 4. Run dev server:
 
@@ -44,6 +48,20 @@ App will be available at `http://localhost:3333`.
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
+
+Postgres is not exposed publicly in production; only the app container can reach it.
+
+## Clerk Webhook
+
+Configure Clerk webhooks to point at:
+
+- `POST /api/webhooks/clerk`
+
+Events:
+
+- `user.created`
+- `user.updated`
+- `user.deleted`
 
 ## Notes
 
