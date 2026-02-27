@@ -134,7 +134,8 @@ export async function upsertClerkUser(payload: ClerkUserPayload): Promise<DbUser
 }
 
 export async function syncClerkUserById(clerkUserId: string) {
-  const user = await clerkClient.users.getUser(clerkUserId);
+  const client = await clerkClient();
+  const user = await client.users.getUser(clerkUserId);
   return upsertClerkUser({
     id: user.id,
     emailAddresses: user.emailAddresses,

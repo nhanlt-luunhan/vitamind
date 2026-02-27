@@ -31,13 +31,14 @@ const normalizeStatus = (value: unknown) => {
 const syncClerkMetadata = async (clerkUserId: string | null, role: string, status: string) => {
   if (!clerkUserId) return;
   try {
-    const current = await clerkClient.users.getUser(clerkUserId);
+  const client = await clerkClient();
+  const current = await client.users.getUser(clerkUserId);
     const publicMetadata = {
       ...(current.publicMetadata ?? {}),
       role,
       status,
     };
-    await clerkClient.users.updateUser(clerkUserId, { publicMetadata });
+  await client.users.updateUser(clerkUserId, { publicMetadata });
   } catch (error) {
     console.error("Failed to sync Clerk metadata", error);
   }

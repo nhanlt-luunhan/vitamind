@@ -76,13 +76,14 @@ export async function PUT(request: Request) {
   const website = normalizeText(body.website);
 
   const { firstName, lastName } = splitName(name);
-  const currentClerk = await clerkClient.users.getUser(user.clerk_user_id);
+  const client = await clerkClient();
+  const currentClerk = await client.users.getUser(user.clerk_user_id);
   const nextPublicMetadata = {
     ...(currentClerk.publicMetadata ?? {}),
     phone: phone ?? null,
   };
 
-  await clerkClient.users.updateUser(user.clerk_user_id, {
+  await client.users.updateUser(user.clerk_user_id, {
     firstName: firstName ?? undefined,
     lastName: lastName ?? undefined,
     publicMetadata: nextPublicMetadata,
