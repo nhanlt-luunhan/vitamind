@@ -12,9 +12,14 @@ declare module "papaparse" {
     header?: boolean;
     skipEmptyLines?: boolean | "greedy";
     dynamicTyping?: boolean;
+    complete?: (result: ParseResult<T>) => void;
+    error?: (error: ParseError) => void;
   };
 
-  export function parse<T = unknown>(input: string, config?: ParseConfig<T>): ParseResult<T>;
+  export function parse<T = unknown>(
+    input: string | File | Blob,
+    config?: ParseConfig<T>
+  ): ParseResult<T>;
 
   const Papa: {
     parse: typeof parse;
