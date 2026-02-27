@@ -1,0 +1,22 @@
+name: deploy-synology
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Synology
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SYNO_HOST }}
+          username: ${{ secrets.SYNO_USER }}
+          key: ${{ secrets.SYNO_SSH_KEY }}
+          port: ${{ secrets.SYNO_PORT }}
+          script: |
+            set -e
+            cd /volume1/docker/vitamind
+            git pull
+            docker compose -f docker-compose.prod.yml up -d --build
