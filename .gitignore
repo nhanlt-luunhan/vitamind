@@ -13,8 +13,15 @@ public/uploads
 # Next.js build output
 .out
 
+# Local UI template reference
+lahomes-nextjs-real-admin-account/
+
+# Reports / artifacts
+docs/lighthouse-*
+
 # Local installers / large binaries
 public/assets/imgs/template/Git-*.exe
+*.rar
 
 # Clerk local config
 .clerk/
