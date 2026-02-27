@@ -13,6 +13,9 @@ public/uploads
 # Next.js build output
 .out
 
+# Local installers / large binaries
+public/assets/imgs/template/Git-*.exe
+
 # Misc
 *.tgz
 *.swp

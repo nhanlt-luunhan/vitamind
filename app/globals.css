@@ -238,13 +238,14 @@ p {
 
 .blog-article-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 32px;
   align-items: start;
 }
 
 .blog-article-main {
   min-width: 0;
+  grid-column: 2;
 }
 
 .blog-step-heading {
@@ -252,6 +253,12 @@ p {
   gap: 16px;
   align-items: flex-start;
   scroll-margin-top: 120px;
+}
+
+.content-detail h2.blog-step-heading {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .blog-step-index {
@@ -278,6 +285,11 @@ p {
   position: sticky;
   top: 120px;
   padding-left: 6px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  margin: 0;
+  grid-column: 1;
 }
 
 .blog-toc__title {
@@ -388,6 +400,11 @@ p {
     order: -1;
     margin-bottom: 24px;
     padding-left: 0;
+    grid-column: auto;
+  }
+
+  .blog-article-main {
+    grid-column: auto;
   }
 
   .blog-toc__title {

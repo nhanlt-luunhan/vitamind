@@ -157,6 +157,7 @@ export default async function BlogPage({ params }: PageProps) {
               ) : null}
 
               <div className="blog-article-layout mt-40">
+                <BlogToc items={post.toc} />
                 <div className="blog-article-main">
                   <div
                     className="content-detail border-gray-800 text-lg"
@@ -178,7 +179,6 @@ export default async function BlogPage({ params }: PageProps) {
                     </div>
                   ) : null}
                 </div>
-                <BlogToc items={post.toc} />
               </div>
             </div>
           </div>
