@@ -27,23 +27,28 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     const secret = process.env.INTERNAL_API_SECRET;
-    if (secret) {
-      const checkUrl = new URL("/api/internal/admin-check", req.url);
-      const res = await fetch(checkUrl, {
-        method: "POST",
-        headers: {
-          "x-internal-secret": secret,
-          "x-clerk-user-id": userId,
-        },
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        if (req.nextUrl.pathname.startsWith("/api/")) {
-          return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-        return NextResponse.redirect(new URL("/not-authorized", req.url));
+    if (!secret) {
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+      return NextResponse.redirect(new URL("/not-authorized", req.url));
+    }
+
+    const checkUrl = new URL("/api/internal/admin-check", req.url);
+    const res = await fetch(checkUrl, {
+      method: "POST",
+      headers: {
+        "x-internal-secret": secret,
+        "x-clerk-user-id": userId,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
   }
 
