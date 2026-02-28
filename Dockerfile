@@ -9,7 +9,7 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN if [ -f .env.docker ]; then set -a && . ./.env.docker && set +a; fi; \
+RUN if [ -f .env.docker ]; then cp .env.docker .env.production; fi; \
     npm run build
 
 FROM node:20-alpine AS runner
