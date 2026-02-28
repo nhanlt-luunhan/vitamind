@@ -59,6 +59,8 @@ Nếu muốn dùng màn hình Adminer chỉ dành cho admin bên trong app, hãy
 - `CLERK_WEBHOOK_SIGNING_SECRET`
 - `INTERNAL_API_SECRET`
 
+File `.env.docker.local` phải luôn tồn tại trên Synology, kể cả khi bạn tạm thời chưa điền biến nào.
+
 3. Nếu Synology của bạn đang có `.env.docker` cũ chứa secret và file đó từng được track trong git, hãy chạy một lần quy trình chuyển đổi sau trước khi `git pull`:
 
 ```bash
