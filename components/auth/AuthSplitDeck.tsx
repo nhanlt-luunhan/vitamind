@@ -248,29 +248,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
     <div className={styles.page}>
       <div className={styles.canvas}>
         <section className={`${styles.stage} ${mode === "sign-up" ? styles.stageSignUp : ""}`}>
-          <header className={styles.stageHeader}>
-            <Link href="/" className={styles.brand}>
-              Vitamind
-            </Link>
-
-            <div className={styles.switcher} role="tablist" aria-label="Chuyển đổi xác thực">
-              <button
-                type="button"
-                className={`${styles.switcherButton} ${mode === "sign-in" ? styles.switcherButtonActive : ""}`}
-                onClick={() => switchMode("sign-in")}
-              >
-                Đăng nhập
-              </button>
-              <button
-                type="button"
-                className={`${styles.switcherButton} ${mode === "sign-up" ? styles.switcherButtonActive : ""}`}
-                onClick={() => switchMode("sign-up")}
-              >
-                Tạo tài khoản
-              </button>
-            </div>
-          </header>
-
           <div className={styles.stack}>
             <div className={styles.wipe} aria-hidden="true" />
 
@@ -296,6 +273,14 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   </p>
                 </div>
               </div>
+
+              <button
+                type="button"
+                className={`${styles.edgeToggle} ${styles.edgeToggleSignUp}`}
+                onClick={() => switchMode("sign-up")}
+              >
+                <span className={styles.edgeToggleLabel}>Tạo tài khoản</span>
+              </button>
 
               <div className={styles.signInGrid}>
                 <form className={styles.form} onSubmit={handlePasswordSignIn}>
@@ -393,6 +378,14 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   </p>
                 </div>
               </div>
+
+              <button
+                type="button"
+                className={`${styles.edgeToggle} ${styles.edgeToggleSignIn}`}
+                onClick={() => switchMode("sign-in")}
+              >
+                <span className={styles.edgeToggleLabel}>Đăng nhập</span>
+              </button>
 
               <div className={styles.signUpGrid}>
                 <div>
@@ -528,7 +521,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   <button type="button" className={styles.ghostButton} onClick={() => switchMode("sign-in")}>
                     Mở màn đăng nhập
                   </button>
-                  <Link href="/blog">Xem bài viết</Link>
                 </div>
               </footer>
             </section>

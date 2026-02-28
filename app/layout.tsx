@@ -2,6 +2,8 @@
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
+import "@/public/assets/css/vendors/boxicons.css";
+import "@/public/assets/css/vendors/remixicon.css";
 import "@/public/assets/css/style.trim.css";
 import "./globals.css";
 
@@ -63,7 +65,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
-        url: "/assets/imgs/template/favicon.svg",
+        url: "/assets/imgs/template/vitamind-night.svg",
         alt: siteName,
       },
     ],
@@ -72,12 +74,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/assets/imgs/template/favicon.svg"],
+    images: ["/assets/imgs/template/vitamind-night.svg"],
   },
   icons: {
-    icon: "/assets/imgs/template/favicon.svg",
-    shortcut: "/assets/imgs/template/favicon.svg",
-    apple: "/assets/imgs/template/favicon.svg",
+    icon: "/assets/imgs/template/favicon.png",
+    shortcut: "/assets/imgs/template/favicon.png",
+    apple: "/assets/imgs/template/favicon.png",
   },
 };
 

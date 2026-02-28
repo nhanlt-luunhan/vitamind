@@ -9,16 +9,21 @@ const BrandLogo = ({ href = "/", variant = "header", compact = false, className 
 
   return (
     <Link className={classes} href={href} aria-label="Vitamind">
-      <Image
-        className={styles.mark}
-        src="/assets/imgs/template/LOGO FAVICON_LARGE.png"
-        alt="Vitamind"
-        width={36}
-        height={36}
-      />
-      <span className={styles.wordmark}>
-        <span className={styles.title}>Vitamind</span>
-        <span className={styles.subtitle}>Blog cong nghe</span>
+      <span className={styles.frame} aria-hidden="true">
+        <Image
+          className={`${styles.brand} ${styles.brandNight}`}
+          src="/assets/imgs/template/vitamind-night.svg"
+          alt=""
+          width={473}
+          height={87}
+        />
+        <Image
+          className={`${styles.brand} ${styles.brandDay}`}
+          src="/assets/imgs/template/vitamind-day.svg"
+          alt=""
+          width={473}
+          height={87}
+        />
       </span>
     </Link>
   );

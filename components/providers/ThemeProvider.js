@@ -2,25 +2,56 @@
 import { createContext, useState, useEffect, useContext } from "react";
 
 const ThemeContext = createContext();
+const STORAGE_KEY = "theme";
+
+const normalizeThemeMode = (value) => {
+  if (value === "day" || value === "night" || value === "system") {
+    return value;
+  }
+  return "system";
+};
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
+  const [themeMode, setThemeMode] = useState("system");
+  const [systemPrefersDark, setSystemPrefersDark] = useState(true);
 
-  // Load the theme from localStorage when the component mounts
   useEffect(() => {
-    const currentTheme = localStorage.getItem("theme");
-    setIsDarkMode(currentTheme ? currentTheme === "night" : true);
+    const currentTheme = normalizeThemeMode(localStorage.getItem(STORAGE_KEY));
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const applySystemTheme = () => setSystemPrefersDark(mediaQuery.matches);
+
+    setThemeMode(currentTheme);
+    applySystemTheme();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", applySystemTheme);
+      return () => mediaQuery.removeEventListener("change", applySystemTheme);
+    }
+
+    mediaQuery.addListener(applySystemTheme);
+    return () => mediaQuery.removeListener(applySystemTheme);
   }, []);
 
-  // Apply the theme class to the document element based on isDarkMode state
+  const resolvedTheme = themeMode === "system" ? (systemPrefersDark ? "night" : "day") : themeMode;
+  const isDarkMode = resolvedTheme === "night";
+
   useEffect(() => {
     document.documentElement.classList.toggle("theme-night", isDarkMode);
     document.documentElement.classList.toggle("theme-day", !isDarkMode);
-    localStorage.setItem("theme", isDarkMode ? "night" : "day");
-  }, [isDarkMode]);
+    localStorage.setItem(STORAGE_KEY, themeMode);
+  }, [isDarkMode, themeMode]);
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, setIsDarkMode }}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider
+      value={{
+        isDarkMode,
+        resolvedTheme,
+        themeMode,
+        setThemeMode,
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
   );
 };
 

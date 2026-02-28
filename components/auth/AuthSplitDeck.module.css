@@ -15,7 +15,7 @@
 .stage {
   position: relative;
   width: 100%;
-  padding: 22px;
+  padding: 18px;
   border: 1px solid var(--auth-stage-border);
   border-radius: 34px;
   background: var(--auth-stage-bg);
@@ -34,77 +34,15 @@
   pointer-events: none;
 }
 
-.stageHeader {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--surface-panel-strong);
-  color: var(--surface-text-strong);
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.switcher {
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 6px;
-  border-radius: 999px;
-  background: var(--surface-panel-soft);
-}
-
-.switcherButton {
-  min-height: 42px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--surface-text-muted);
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background 0.22s ease,
-    color 0.22s ease,
-    transform 0.22s ease;
-}
-
-.switcherButton:hover {
-  color: var(--surface-text-strong);
-}
-
-.switcherButtonActive {
-  background: var(--surface-panel-strong);
-  color: #0f172a;
-  box-shadow: var(--frame-shadow);
-}
-
 .stack {
   position: relative;
-  display: grid;
-  min-height: 700px;
+  min-height: 740px;
 }
 
 .panel {
-  position: relative;
-  z-index: 1;
-  grid-area: 1 / 1;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: grid;
   gap: 28px;
   padding: 36px;
@@ -128,33 +66,53 @@
 }
 
 .panelActive {
+  z-index: 2;
+  width: calc(100% - 86px);
   opacity: 1;
   filter: none;
   transform: translateX(0) scale(1);
   pointer-events: auto;
 }
 
+.signInPanel.panelActive {
+  left: 0;
+}
+
+.signUpPanel.panelActive {
+  right: 0;
+}
+
 .signInPanel.panelInactive {
-  opacity: 0.18;
-  transform: translateX(90px) scale(0.97);
-  filter: saturate(0.72);
-  pointer-events: none;
+  right: 0;
 }
 
 .signUpPanel.panelInactive {
-  opacity: 0.18;
-  transform: translateX(-90px) scale(0.97);
-  filter: saturate(0.72);
+  left: 0;
+}
+
+.panelInactive {
+  z-index: 1;
+  width: 72px;
+  padding: 16px 10px;
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.panelInactive > :not(.edgeToggle) {
+  opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 
 .wipe {
   position: absolute;
-  top: 18px;
-  bottom: 18px;
-  left: 18px;
-  z-index: 3;
-  width: calc(50% - 18px);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  width: calc(100% - 86px);
   border-radius: 24px;
   background: var(--auth-wipe-bg);
   box-shadow:
@@ -166,7 +124,58 @@
 }
 
 .stageSignUp .wipe {
-  transform: translateX(calc(100% + 18px));
+  transform: translateX(86px);
+}
+
+.edgeToggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--frame-border);
+  border-radius: 999px;
+  background: var(--surface-panel-soft);
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.edgeToggle:hover {
+  transform: translateY(-1px);
+  background: var(--surface-panel-strong);
+}
+
+.panelInactive .edgeToggle {
+  inset: 12px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 20px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.panelInactive .edgeToggle:hover {
+  transform: none;
+  background: transparent;
+}
+
+.panelInactive .edgeToggleLabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.82);
 }
 
 .panelTop {
@@ -461,15 +470,6 @@
     border-radius: 26px;
   }
 
-  .stageHeader {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .brand {
-    justify-content: center;
-  }
-
   .stack {
     min-height: 0;
   }
@@ -479,13 +479,22 @@
   }
 
   .panel {
-    grid-area: auto;
+    position: relative;
     padding: 24px 20px;
     border-radius: 24px;
   }
 
+  .panelActive {
+    width: 100%;
+  }
+
   .panelInactive {
     display: none;
+  }
+
+  .edgeToggle {
+    top: 18px;
+    right: 18px;
   }
 
   .panelTop,
@@ -501,16 +510,6 @@
 }
 
 @media (max-width: 640px) {
-  .switcher {
-    width: 100%;
-  }
-
-  .switcherButton {
-    min-height: 40px;
-    padding: 0 12px;
-    font-size: 0.9rem;
-  }
-
   .panelIntro h1 {
     font-size: clamp(1.75rem, 10vw, 2.45rem);
   }
@@ -535,6 +534,12 @@
   .secondaryButton,
   .ghostButton {
     width: 100%;
+  }
+
+  .edgeToggle {
+    position: static;
+    width: fit-content;
+    margin-bottom: 4px;
   }
 
   .footerLinks {

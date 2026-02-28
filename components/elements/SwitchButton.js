@@ -1,24 +1,44 @@
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 const ThemeSwitch = () => {
-  const { isDarkMode, setIsDarkMode } = useTheme(true);
-
-  // Function to toggle the theme
-  const switchTheme = () => {
-    setIsDarkMode((prevMode) => !prevMode);
-  };
+  const { themeMode, setThemeMode } = useTheme();
+  const options = [
+    {
+      value: "day",
+      label: "Sáng",
+      title: "Luôn dùng nền sáng",
+      icon: "fi-rr-sun",
+    },
+    {
+      value: "night",
+      label: "Tối",
+      title: "Luôn dùng nền tối",
+      icon: "fi-rr-moon",
+    },
+    {
+      value: "system",
+      label: "Theo hệ thống",
+      title: "Theo giao diện hệ thống",
+      icon: "fi-rr-screen",
+    },
+  ];
 
   return (
-    <div className="switch-button">
-      <div className="form-check form-switch">
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id="flexSwitchCheckChecked"
-          checked={isDarkMode}
-          onChange={switchTheme}
-        />
-      </div>
+    <div className="theme-switch" role="group" aria-label="Chọn giao diện hiển thị">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={`theme-switch__option${themeMode === option.value ? " is-active" : ""}`}
+          onClick={() => setThemeMode(option.value)}
+          aria-pressed={themeMode === option.value}
+          title={option.title}
+          aria-label={option.label}
+        >
+          <i className={option.icon} aria-hidden="true" />
+          <span className="theme-switch__sr">{option.label}</span>
+        </button>
+      ))}
     </div>
   );
 };

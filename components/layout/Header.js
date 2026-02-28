@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import { ThemeSwitch } from "@/components/elements/SwitchButton";
 import { ButtonClient } from "@/components/ui";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
@@ -714,9 +713,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                       </div>
                     </>
                   ) : null}
-                </div>
-                <div className={styles.themeControl}>
-                  <ThemeSwitch />
                 </div>
                 <SignedOut>
                   <div className={`${styles.authSlot} d-none d-sm-flex`}>

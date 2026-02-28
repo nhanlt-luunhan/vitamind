@@ -1,30 +1,30 @@
 # Vitamind
 
-Blog + admin dashboard built with Next.js (App Router) and PostgreSQL.
+Blog và trang quản trị được xây dựng bằng Next.js (App Router) và PostgreSQL.
 
-## Prerequisites
+## Yêu cầu môi trường
 
 - Node.js 20 LTS
 - npm 9+
-- Docker Desktop (optional, for local Postgres)
+- Docker Desktop (không bắt buộc, dùng cho Postgres local)
 
-The repo includes `.nvmrc` so both Windows and macOS can use the same Node version.
+Repo đã có `.nvmrc` để Windows và macOS dùng cùng một phiên bản Node.
 
-## Local Development (Windows/macOS)
+## Chạy local (Windows/macOS)
 
-1. Install dependencies:
+1. Cài dependency:
 
 ```bash
 npm install
 ```
 
-2. Start Postgres (optional, recommended):
+2. Khởi động Postgres local (khuyến nghị):
 
 ```bash
 docker compose up -d db
 ```
 
-3. If you run the app with `npm run dev`, create `.env.local` from `.env.example` and set local development values:
+3. Nếu chạy app bằng `npm run dev`, tạo `.env.local` từ `.env.example` rồi điền các giá trị local:
 
 - `DATABASE_URL`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_test_...`)
@@ -33,33 +33,33 @@ docker compose up -d db
 - `INTERNAL_API_SECRET`
 - `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
 
-4. Run dev server:
+4. Chạy server local:
 
 ```bash
 npm run dev
 ```
 
-App will be available at `http://localhost:3333`.
+App sẽ chạy tại `http://localhost:3333`.
 
-Clerk local development should use a separate development/test instance from production.
-Do not reuse `pk_live` / `sk_live` in `.env.local`.
+Clerk cho local phải dùng instance kiểm thử riêng, tách biệt với môi trường chạy thật.
+Không dùng lại `pk_live` / `sk_live` trong `.env.local`.
 
-If you run the app with Docker in development, create `.env.dev.docker` from `.env.dev.docker.example`.
-Do not point `docker-compose.dev.yml` at `.env.docker`, because that file is for production.
-If you want the admin-only Adminer dashboard inside the app, set `ADMINER_INTERNAL_URL` for the current runtime.
+Nếu chạy app bằng Docker ở môi trường development, tạo `.env.dev.docker` từ `.env.dev.docker.example`.
+Không cho `docker-compose.dev.yml` dùng `.env.docker`, vì file đó dành cho production.
+Nếu muốn dùng màn hình Adminer chỉ dành cho admin bên trong app, hãy cấu hình `ADMINER_INTERNAL_URL` đúng với môi trường đang chạy.
 
-## Production (Synology Docker)
+## Triển khai trên Synology Docker
 
-1. Keep shared non-secret production values in `.env.docker`.
+1. Giữ các cấu hình production không nhạy cảm trong `.env.docker`.
 
-2. Create `.env.docker.local` from `.env.docker.local.example` on Synology and put secrets there:
+2. Trên Synology, tạo `.env.docker.local` từ `.env.docker.local.example` rồi đặt các secret thật vào file đó:
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
 - `CLERK_SECRET_KEY` (`sk_live_...`)
 - `CLERK_WEBHOOK_SIGNING_SECRET`
 - `INTERNAL_API_SECRET`
 
-3. If your Synology already has an older tracked `.env.docker` with secrets, run this one-time migration before pulling new code:
+3. Nếu Synology của bạn đang có `.env.docker` cũ chứa secret và file đó từng được track trong git, hãy chạy một lần quy trình chuyển đổi sau trước khi `git pull`:
 
 ```bash
 cp .env.docker .env.docker.local
@@ -67,28 +67,28 @@ git checkout -- .env.docker
 git pull origin main
 ```
 
-4. Build and run:
+4. Build và chạy:
 
 ```bash
 docker compose up -d --build
 ```
 
-Postgres is not exposed publicly in production; only the app container can reach it.
+Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
 
-## Clerk Webhook
+## Webhook Clerk
 
-Configure Clerk webhooks to point at:
+Cấu hình Clerk webhook trỏ vào:
 
 - `POST /api/webhooks/clerk`
 
-Events:
+Các event cần bật:
 
 - `user.created`
 - `user.updated`
 - `user.deleted`
 
-## Notes
+## Ghi chú
 
-- `.env.local` and `.env` are ignored by git.
-- If you change Node version, update `.nvmrc` and `package.json` engines.
-- `references/lahomes/` giu cac file tham chieu gon tu template Lahomes. Thu muc goc `Lahomes-Nextjs_v2.0/` chi dung local va khong con duoc dua len git.
+- `.env.local` và `.env` được bỏ khỏi git.
+- Nếu đổi phiên bản Node, hãy cập nhật `.nvmrc` và `package.json` phần `engines`.
+- `references/lahomes/` giữ lại bộ file tham chiếu gọn từ Lahomes. Thư mục gốc `Lahomes-Nextjs_v2.0/` chỉ dùng local và không còn được đưa lên git.

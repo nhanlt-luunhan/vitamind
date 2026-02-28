@@ -225,20 +225,15 @@
   height: 30px;
 }
 
-.themeControl :global(.switch-button) {
+.themeControl :global(.theme-switch) {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   margin: 0;
 }
 
-.themeControl :global(.switch-button .form-switch) {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-}
-
-.themeControl :global(.switch-button .form-check-input) {
-  margin-top: 0;
+.themeControl :global(.theme-switch:focus-visible) {
+  outline: none;
 }
 
 .authSlot {

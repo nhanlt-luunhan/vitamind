@@ -1,79 +1,54 @@
 .root {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
   text-decoration: none;
   color: #e8eef8;
 }
 
-.mark {
-  width: 2.25rem;
+.frame {
+  position: relative;
+  display: block;
   height: 2.25rem;
-  object-fit: contain;
+  aspect-ratio: 473.48 / 87.2;
   flex-shrink: 0;
 }
 
-.wordmark {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  line-height: 1;
+.brand {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  flex-shrink: 0;
+  transition: opacity 0.18s ease;
 }
 
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  color: currentColor;
+.brandDay {
+  opacity: 0;
 }
 
-.subtitle {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(232, 238, 248, 0.58);
+:global(.theme-day) .brandDay {
+  opacity: 1;
+}
+
+:global(.theme-day) .brandNight {
+  opacity: 0;
 }
 
 .header {
   color: #e8eef8;
 }
 
-:global(.theme-day) .header {
-  color: #33425f;
-}
-
-:global(.theme-day) .header .subtitle {
-  color: rgba(51, 66, 95, 0.62);
-}
-
 .dark {
   color: #eef4ff;
 }
 
-.dark .subtitle {
-  color: rgba(238, 244, 255, 0.62);
-}
-
-.compact .mark {
-  width: 1.8rem;
-  height: 1.8rem;
-}
-
-.compact .title {
-  font-size: 1.7rem;
-}
-
-.compact .subtitle {
-  font-size: 0.62rem;
+.compact .frame {
+  height: 1.9rem;
 }
 
 @media (max-width: 991px) {
-  .title {
-    font-size: 1.65rem;
-  }
-
-  .subtitle {
-    font-size: 0.6rem;
+  .frame {
+    height: 2rem;
   }
 }

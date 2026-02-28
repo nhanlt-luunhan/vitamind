@@ -1,8 +1,8 @@
-# Lahomes Reference
+# Tham chiếu Lahomes
 
-Thu muc nay giu lai mot bo tham chieu gon tu Lahomes de doi chieu layout, auth va he thong mau khi phat trien Vitamind.
+Thư mục này giữ lại một bộ tham chiếu gọn từ Lahomes để đối chiếu layout, auth và hệ thống màu khi phát triển Vitamind.
 
-Nguon goc local:
+Nguồn gốc local:
 
 - `Lahomes-Nextjs_v2.0/Lahomes/TS/src/app/(admin)/layout.tsx`
 - `Lahomes-Nextjs_v2.0/Lahomes/TS/src/components/layout/TopNavigationBar/`
@@ -12,11 +12,11 @@ Nguon goc local:
 - `Lahomes-Nextjs_v2.0/Lahomes/TS/src/assets/scss/config/`
 - `Lahomes-Nextjs_v2.0/Lahomes/TS/src/assets/scss/structure/`
 
-Quy uoc:
+Quy ước:
 
-- `references/lahomes/admin/`: shell va layout admin
-- `references/lahomes/layout/`: top bar va vertical navigation
-- `references/lahomes/auth/`: mau sign-in/sign-up
-- `references/lahomes/styles/`: bien mau, dark mode, topbar, sidebar
+- `references/lahomes/admin/`: shell và layout admin
+- `references/lahomes/layout/`: top bar và vertical navigation
+- `references/lahomes/auth/`: mẫu sign-in/sign-up
+- `references/lahomes/styles/`: biến màu, dark mode, topbar, sidebar
 
-Thu muc nay chi de tham khao. Khong import truc tiep vao Vitamind production.
+Thư mục này chỉ dùng để tham khảo. Không import trực tiếp vào Vitamind production.

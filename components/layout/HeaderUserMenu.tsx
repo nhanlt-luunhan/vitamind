@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { ThemeSwitch } from "@/components/elements/SwitchButton";
 import styles from "./HeaderUserMenu.module.css";
 
 type AccountSession = {
@@ -133,6 +134,10 @@ export function HeaderUserMenu() {
                 <span className={styles.linkLabel}>{item.label}</span>
               </Link>
             ))}
+          </div>
+
+          <div className={styles.themeSection}>
+            <ThemeSwitch />
           </div>
 
           <button

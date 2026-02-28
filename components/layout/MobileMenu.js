@@ -188,7 +188,7 @@ const MobileMenu = ({ openClass }) => {
                           <Image
                             width={48}
                             height={48}
-                            src="/assets/imgs/template/LOGO FAVICON_LARGE.png"
+                            src="/assets/imgs/template/favicon.png"
                             alt="Vitamind"
                           />
                         )}

@@ -3,28 +3,9 @@
 import { useEffect } from "react";
 import Script from "next/script";
 
+const ZALO_STORAGE_KEY = "vitamind:zalo-open";
 const ZALO_ROOT_SELECTOR =
   '.zalo-chat-widget, iframe[src*="zalo"], [class*="zalo-chat"], [id*="zalo-chat"]';
-
-const clearZaloSurfaces = () => {
-  const nodes = document.querySelectorAll(`${ZALO_ROOT_SELECTOR}, .zalo-chat-widget *`);
-
-  nodes.forEach((node) => {
-    if (node instanceof HTMLElement) {
-      node.style.background = "transparent";
-      node.style.backgroundColor = "transparent";
-      node.style.boxShadow = "none";
-      node.style.border = "0";
-    }
-
-    if (node instanceof HTMLIFrameElement) {
-      node.style.background = "transparent";
-      node.style.backgroundColor = "transparent";
-      node.style.boxShadow = "none";
-      node.style.border = "0";
-    }
-  });
-};
 
 const isVisibleNode = (node) => {
   if (!(node instanceof HTMLElement) && !(node instanceof HTMLIFrameElement)) {
@@ -40,65 +21,92 @@ const isVisibleNode = (node) => {
   return rect.width > 0 && rect.height > 0;
 };
 
-const hasExpandedZaloPanel = () => {
-  const nodes = document.querySelectorAll(ZALO_ROOT_SELECTOR);
+const isExpandedNode = (node) => {
+  if (!isVisibleNode(node)) return false;
+  const rect = node.getBoundingClientRect();
+  return rect.width >= 260 || rect.height >= 260;
+};
 
-  return Array.from(nodes).some((node) => {
-    if (!(node instanceof HTMLElement) && !(node instanceof HTMLIFrameElement)) {
-      return false;
+const isLauncherNode = (node) => {
+  if (!isVisibleNode(node)) return false;
+  const rect = node.getBoundingClientRect();
+  return rect.width <= 120 && rect.height <= 120;
+};
+
+const clearZaloSurfaces = () => {
+  const nodes = document.querySelectorAll(
+    '.zalo-chat-widget, iframe[src*="zalo"], [class*="zalo-chat"], [id*="zalo-chat"]',
+  );
+
+  nodes.forEach((node) => {
+    if (node instanceof HTMLElement || node instanceof HTMLIFrameElement) {
+      node.style.background = "transparent";
+      node.style.backgroundColor = "transparent";
+      node.style.boxShadow = "none";
+      node.style.border = "0";
     }
-
-    if (!isVisibleNode(node)) return false;
-
-    const rect = node.getBoundingClientRect();
-    return rect.width >= 180 || rect.height >= 180;
   });
 };
 
-const closeZaloChat = () => {
-  const closeSelectors = [
-    '[class*="zalo-chat"] [aria-label*="Đóng"]',
-    '[class*="zalo-chat"] [aria-label*="Close"]',
-    '[class*="zalo-chat"] [title*="Đóng"]',
-    '[class*="zalo-chat"] [title*="Close"]',
-    '[class*="zalo-chat"] button[class*="close"]',
-    '[id*="zalo-chat"] [aria-label*="Đóng"]',
-    '[id*="zalo-chat"] [aria-label*="Close"]',
-    '[id*="zalo-chat"] button[class*="close"]',
-  ];
+const hasExpandedZaloPanel = () => {
+  const nodes = document.querySelectorAll(ZALO_ROOT_SELECTOR);
+  return Array.from(nodes).some((node) => isExpandedNode(node));
+};
 
-  for (const selector of closeSelectors) {
-    const button = document.querySelector(selector);
-    if (button instanceof HTMLElement && isVisibleNode(button)) {
-      button.click();
-      return;
-    }
+const getLauncherNode = () => {
+  const nodes = Array.from(document.querySelectorAll(ZALO_ROOT_SELECTOR)).filter((node) =>
+    isLauncherNode(node),
+  );
+
+  return nodes[0] instanceof HTMLElement || nodes[0] instanceof HTMLIFrameElement ? nodes[0] : null;
+};
+
+const rememberOpenState = () => {
+  window.localStorage.setItem(ZALO_STORAGE_KEY, "1");
+};
+
+const shouldKeepOpen = () => window.localStorage.getItem(ZALO_STORAGE_KEY) === "1";
+
+const ensureZaloOpen = () => {
+  if (!shouldKeepOpen() || hasExpandedZaloPanel()) return;
+
+  const launcher = getLauncherNode();
+  if (launcher instanceof HTMLElement || launcher instanceof HTMLIFrameElement) {
+    launcher.click();
   }
+};
 
-  const largeNodes = document.querySelectorAll(ZALO_ROOT_SELECTOR);
+const scheduleEnsureZaloOpen = () => {
+  if (!shouldKeepOpen()) return;
 
-  largeNodes.forEach((node) => {
-    if (!(node instanceof HTMLElement) && !(node instanceof HTMLIFrameElement)) {
-      return;
-    }
+  let attempts = 0;
+  const tick = () => {
+    clearZaloSurfaces();
+    ensureZaloOpen();
 
-    if (!isVisibleNode(node)) return;
+    if (hasExpandedZaloPanel() || attempts >= 6) return;
 
-    const rect = node.getBoundingClientRect();
-    if (rect.width >= 180 || rect.height >= 180) {
-      node.style.opacity = "0";
-      node.style.pointerEvents = "none";
-      node.style.visibility = "hidden";
-    }
-  });
+    attempts += 1;
+    window.setTimeout(tick, 450);
+  };
+
+  window.setTimeout(tick, 180);
 };
 
 const ZaloChatWidget = () => {
   useEffect(() => {
     clearZaloSurfaces();
+    scheduleEnsureZaloOpen();
 
     const observer = new MutationObserver(() => {
       clearZaloSurfaces();
+
+      if (hasExpandedZaloPanel()) {
+        rememberOpenState();
+        return;
+      }
+
+      scheduleEnsureZaloOpen();
     });
 
     observer.observe(document.body, {
@@ -108,17 +116,7 @@ const ZaloChatWidget = () => {
       attributeFilter: ["style", "class"],
     });
 
-    const handleKeyDown = () => {
-      if (!hasExpandedZaloPanel()) return;
-      closeZaloChat();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -135,7 +133,10 @@ const ZaloChatWidget = () => {
         id="zalo-sdk"
         src="https://sp.zalo.me/plugins/sdk.js"
         strategy="afterInteractive"
-        onLoad={clearZaloSurfaces}
+        onLoad={() => {
+          clearZaloSurfaces();
+          scheduleEnsureZaloOpen();
+        }}
       />
     </>
   );
