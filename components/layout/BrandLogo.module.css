@@ -1,0 +1,79 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #e8eef8;
+}
+
+.mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  line-height: 1;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: currentColor;
+}
+
+.subtitle {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(232, 238, 248, 0.58);
+}
+
+.header {
+  color: #e8eef8;
+}
+
+:global(.theme-day) .header {
+  color: #33425f;
+}
+
+:global(.theme-day) .header .subtitle {
+  color: rgba(51, 66, 95, 0.62);
+}
+
+.dark {
+  color: #eef4ff;
+}
+
+.dark .subtitle {
+  color: rgba(238, 244, 255, 0.62);
+}
+
+.compact .mark {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.compact .title {
+  font-size: 1.7rem;
+}
+
+.compact .subtitle {
+  font-size: 0.62rem;
+}
+
+@media (max-width: 991px) {
+  .title {
+    font-size: 1.65rem;
+  }
+
+  .subtitle {
+    font-size: 0.6rem;
+  }
+}

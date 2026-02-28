@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { SignedIn, SignedOut, SignOutButton, useUser } from "@clerk/nextjs";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const MobileMenu = ({ openClass }) => {
   const [isActive, setIsActive] = useState({
@@ -36,14 +37,7 @@ const MobileMenu = ({ openClass }) => {
         <div className="mobile-header-wrapper-inner">
           <div className="mobile-header-content-area">
             <div className="mobile-logo border-gray-800">
-              <Link className="d-flex" href="/">
-                <Image
-                  width={194}
-                  height={36}
-                  alt="Vitamind"
-                  src="/assets/imgs/template/LOGO-H-VITAMIND.png"
-                />
-              </Link>
+              <BrandLogo variant="dark" compact />
             </div>
             <div className="perfect-scroll">
               <div className="mobile-menu-wrap mobile-header-border">
@@ -188,12 +182,16 @@ const MobileMenu = ({ openClass }) => {
                   <div className="mobile-header-top bg-gray-900">
                     <div className="user-account">
                       <Link href="/account">
-                        <Image
-                          width={48}
-                          height={48}
-                          src="/assets/imgs/template/ava.jpg"
-                          alt="Vitamind"
-                        />
+                        {user?.imageUrl ? (
+                          <img width={48} height={48} src={user.imageUrl} alt="Vitamind" />
+                        ) : (
+                          <Image
+                            width={48}
+                            height={48}
+                            src="/assets/imgs/template/LOGO FAVICON_LARGE.png"
+                            alt="Vitamind"
+                          />
+                        )}
                       </Link>
                       <div className="content">
                         <h6 className="user-name color-white">

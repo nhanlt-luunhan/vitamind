@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
-        url: "/assets/imgs/template/LOGO-H-VITAMIND.png",
+        url: "/assets/imgs/template/favicon.svg",
         alt: siteName,
       },
     ],
@@ -72,12 +72,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/assets/imgs/template/LOGO-H-VITAMIND.png"],
+    images: ["/assets/imgs/template/favicon.svg"],
   },
   icons: {
     icon: "/assets/imgs/template/favicon.svg",
     shortcut: "/assets/imgs/template/favicon.svg",
-    apple: "/assets/imgs/template/FAVICON_LARGE.png",
+    apple: "/assets/imgs/template/favicon.svg",
   },
 };
 

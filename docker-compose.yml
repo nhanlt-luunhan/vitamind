@@ -6,7 +6,10 @@ services:
     ports:
       - "3333:3333"
     env_file:
-      - .env.docker
+      - path: .env.docker
+        required: true
+      - path: .env.docker.local
+        required: false
     environment:
       NODE_ENV: "production"
       PORT: "3333"

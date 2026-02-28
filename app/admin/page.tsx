@@ -103,8 +103,8 @@ export default async function Page({ searchParams }: PageProps) {
           <span className={shellStyles.topEyebrow}>Bảng điều khiển</span>
           <h1 className={shellStyles.topTitle}>Tổng quan vận hành và phân quyền</h1>
           <p className={shellStyles.topDescription}>
-            Giao diện quản trị được tách riêng theo hướng Lahomes: sidebar có cấu trúc rõ
-            ràng, khung tổng quan ở trên và khu workbench cho thao tác chuyên sâu.
+            Giao diện quản trị được tách riêng với sidebar rõ ràng, khung tổng quan ở trên và
+            khu workbench cho thao tác chuyên sâu.
           </p>
         </div>
         <div className={shellStyles.topActions}>

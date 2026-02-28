@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ThemeSwitch } from "@/components/elements/SwitchButton";
 import { ButtonClient } from "@/components/ui";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import styles from "./Header.module.css";
 
@@ -435,14 +436,7 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
         <div className="container">
           <div className="main-header">
             <div className="header-logo">
-              <Link className="d-flex" href="/">
-                <Image
-                  width={194}
-                  height={36}
-                  alt="Vitamind"
-                  src="/assets/imgs/template/LOGO-H-VITAMIND.png"
-                />
-              </Link>
+              <BrandLogo />
             </div>
             <div className="header-nav">
               <nav

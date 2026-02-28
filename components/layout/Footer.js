@@ -1,6 +1,6 @@
 ﻿import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const Footer = () => {
   return (
@@ -10,14 +10,9 @@ const Footer = () => {
           <div className="footer-1 bg-gray-850 border-gray-800">
             <div className="row">
               <div className="col-lg-4 mb-30">
-                <Link className="wow animate__animated animate__fadeInUp" href="/">
-                  <Image
-                    width={194}
-                    height={36}
-                    src="/assets/imgs/template/LOGO-H-VITAMIND.png"
-                    alt="Vitamind"
-                  />
-                </Link>
+                <div className="wow animate__animated animate__fadeInUp">
+                  <BrandLogo variant="dark" />
+                </div>
                 <p className="mb-20 mt-20 text-sm color-gray-500 wow animate__animated animate__fadeInUp">
                   Vitamind chia sẻ bài viết thực tế về Raspberry Pi, tự động hóa gia đình, thiết bị
                   cảm biến và các dự án công nghệ có thể triển khai ngay.

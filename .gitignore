@@ -3,6 +3,7 @@ node_modules
 .env
 .env.*
 !.env.docker
+!.env.docker.local.example
 !.env.example
 !.env.dev.docker.example
 *.log

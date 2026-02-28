@@ -3,6 +3,7 @@ import Image from "next/image";
 import data from "@/content/blogData2";
 import comments from "@/content/commentsData";
 import gallery from "@/content/galleryData";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const Sidebar = ({ openClass }) => {
   return (
@@ -76,14 +77,7 @@ const Sidebar = ({ openClass }) => {
         </div>
         <div className="box-sidebar bg-gray-850 border-gray-800">
           <div className="head-sidebar">
-            <Link href="/">
-              <Image
-                width={194}
-                height={36}
-                src="/assets/imgs/template/LOGO-H-VITAMIND.png"
-                alt="Vitamind"
-              />
-            </Link>
+            <BrandLogo variant="dark" compact />
             <h6 className="color-gray-700">Theo dõi chúng tôi trên Instagram</h6>
           </div>
           <div className="content-sidebar">

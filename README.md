@@ -50,17 +50,27 @@ If you want the admin-only Adminer dashboard inside the app, set `ADMINER_INTERN
 
 ## Production (Synology Docker)
 
-1. Update `.env.docker` with production values:
+1. Keep shared non-secret production values in `.env.docker`.
 
-- `SITE_URL=https://app.vitamind.com.vn`
+2. Create `.env.docker.local` from `.env.docker.local.example` on Synology and put secrets there:
+
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
 - `CLERK_SECRET_KEY` (`sk_live_...`)
-- `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
-- `ADMINER_INTERNAL_URL=http://adminer:8080`
-2. Build and run:
+- `CLERK_WEBHOOK_SIGNING_SECRET`
+- `INTERNAL_API_SECRET`
+
+3. If your Synology already has an older tracked `.env.docker` with secrets, run this one-time migration before pulling new code:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+cp .env.docker .env.docker.local
+git checkout -- .env.docker
+git pull origin main
+```
+
+4. Build and run:
+
+```bash
+docker compose up -d --build
 ```
 
 Postgres is not exposed publicly in production; only the app container can reach it.
