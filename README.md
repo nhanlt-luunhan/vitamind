@@ -81,3 +81,4 @@ Events:
 
 - `.env.local` and `.env` are ignored by git.
 - If you change Node version, update `.nvmrc` and `package.json` engines.
+- `references/lahomes/` giu cac file tham chieu gon tu template Lahomes. Thu muc goc `Lahomes-Nextjs_v2.0/` chi dung local va khong con duoc dua len git.

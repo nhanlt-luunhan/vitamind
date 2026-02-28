@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "Lahomes-Nextjs_v2.0",
+    "references/lahomes",
     "tsconfig.tsbuildinfo"
   ]
 }
