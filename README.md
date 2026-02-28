@@ -50,28 +50,12 @@ Nếu muốn dùng màn hình Adminer chỉ dành cho admin bên trong app, hãy
 
 ## Triển khai trên Synology Docker
 
-1. Giữ các cấu hình production không nhạy cảm trong `.env.docker`.
+1. Giữ toàn bộ cấu hình production, bao gồm cả secret nếu bạn chấp nhận đồng bộ từ Mac sang Synology, trong `.env.docker`.
 
-2. Trên Synology, tạo `.env.docker.local` từ `.env.docker.local.example` rồi đặt các secret thật vào file đó:
-
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
-- `CLERK_SECRET_KEY` (`sk_live_...`)
-- `CLERK_WEBHOOK_SIGNING_SECRET`
-- `INTERNAL_API_SECRET`
-
-File `.env.docker.local` phải luôn tồn tại trên Synology, kể cả khi bạn tạm thời chưa điền biến nào.
-
-3. Nếu Synology của bạn đang có `.env.docker` cũ chứa secret và file đó từng được track trong git, hãy chạy một lần quy trình chuyển đổi sau trước khi `git pull`:
+2. Trên Synology, chỉ cần `git pull` để nhận `.env.docker` mới rồi build và chạy:
 
 ```bash
-cp .env.docker .env.docker.local
-git checkout -- .env.docker
 git pull origin main
-```
-
-4. Build và chạy:
-
-```bash
 docker compose up -d --build
 ```
 
