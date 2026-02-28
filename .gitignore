@@ -32,3 +32,4 @@ public/assets/imgs/template/Git-*.exe
 # Misc
 *.tgz
 *.swp
+tsconfig.tsbuildinfo
