@@ -24,7 +24,7 @@ npm install
 docker compose up -d db
 ```
 
-3. Create `.env.local` from `.env.example` and set local development values:
+3. If you run the app with `npm run dev`, create `.env.local` from `.env.example` and set local development values:
 
 - `DATABASE_URL`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_test_...`)
@@ -43,6 +43,9 @@ App will be available at `http://localhost:3333`.
 
 Clerk local development should use a separate development/test instance from production.
 Do not reuse `pk_live` / `sk_live` in `.env.local`.
+
+If you run the app with Docker in development, create `.env.dev.docker` from `.env.dev.docker.example`.
+Do not point `docker-compose.dev.yml` at `.env.docker`, because that file is for production.
 
 ## Production (Synology Docker)
 
