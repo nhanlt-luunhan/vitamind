@@ -46,6 +46,7 @@ Do not reuse `pk_live` / `sk_live` in `.env.local`.
 
 If you run the app with Docker in development, create `.env.dev.docker` from `.env.dev.docker.example`.
 Do not point `docker-compose.dev.yml` at `.env.docker`, because that file is for production.
+If you want the admin-only Adminer dashboard inside the app, set `ADMINER_INTERNAL_URL` for the current runtime.
 
 ## Production (Synology Docker)
 
@@ -55,6 +56,7 @@ Do not point `docker-compose.dev.yml` at `.env.docker`, because that file is for
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
 - `CLERK_SECRET_KEY` (`sk_live_...`)
 - `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
+- `ADMINER_INTERNAL_URL=http://adminer:8080`
 2. Build and run:
 
 ```bash

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)", "/adminer(.*)"]);
 const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
 const internalApiBaseUrl =
   process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;

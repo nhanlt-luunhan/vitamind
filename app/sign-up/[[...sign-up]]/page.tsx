@@ -12,7 +12,7 @@ export default function Page() {
               <div className="row mt-70 justify-content-center">
                 <div className="col-lg-6">
                   <div className="bg-gray-850 border-gray-800 bdrd16 p-4 p-md-5">
-                    <SignUp signInUrl="/sign-in" afterSignUpUrl="/account" />
+                    <SignUp signInUrl="/sign-in" afterSignUpUrl="/" />
                   </div>
                 </div>
               </div>

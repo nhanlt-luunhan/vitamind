@@ -71,7 +71,7 @@ services:
     image: adminer
     profiles: ["tools"]
     ports:
-      - "33808:8080"
+      - "127.0.0.1:33808:8080"
     depends_on:
       - db
     restart: unless-stopped

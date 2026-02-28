@@ -1,4 +1,5 @@
-﻿import { Layout } from "@/components/layout/Layout";
+﻿import Link from "next/link";
+import { Layout } from "@/components/layout/Layout";
 import { AdminPanel } from "@/components/admin/AdminPanel";
 import { requireAdmin } from "@/lib/auth/admin-auth";
 
@@ -26,6 +27,11 @@ export default async function Page() {
                 <p className="text-lg color-gray-500">
                   Quản lý dữ liệu nghiệp vụ, phân quyền và nội dung.
                 </p>
+                <div className="mt-20">
+                  <Link className="btn btn-linear" href="/admin/database">
+                    Mo dashboard Adminer
+                  </Link>
+                </div>
               </div>
 
               <AdminPanel user={user} />
@@ -36,4 +42,3 @@ export default async function Page() {
     </Layout>
   );
 }
-
