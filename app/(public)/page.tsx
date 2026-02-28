@@ -21,7 +21,7 @@ export default function Home() {
                   <RecentPosts />
                 </div>
                 <div className="col-lg-4">
-                  <Sidebar openClass="" />
+                  <Sidebar />
                 </div>
               </div>
           </div>

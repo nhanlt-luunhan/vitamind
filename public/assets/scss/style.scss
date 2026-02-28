@@ -56,14 +56,8 @@ TABLE CONTENT
 'layout/spacing';
 // Page-specific styles
 @import 'pages/homepage1',
-'pages/homepage2',
-'pages/homepage3',
-'pages/contact',
-'pages/login',
 'pages/404',
-'pages/about',
-'pages/single',
-'pages/travel-tips';
+'pages/single';
 // Responsive
 @import 'layout/responsive';
 @import 'layout/dark';

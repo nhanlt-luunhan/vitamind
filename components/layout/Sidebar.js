@@ -1,109 +1,105 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import Image from "next/image";
-import data from "@/content/blogData2";
-import comments from "@/content/commentsData";
-import gallery from "@/content/galleryData";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { getHomeFeed, formatPostDate } from "@/lib/blog/home";
 
-const Sidebar = ({ openClass }) => {
+const FALLBACK_IMAGE = "/assets/imgs/page/healthy/img.png";
+
+const Sidebar = async () => {
+  const { posts, categories, tags } = await getHomeFeed();
+  const latestPosts = posts.slice(0, 4);
+
   return (
-    <>
-      <div className="sidebar">
-        <div className="box-sidebar bg-gray-850 border-gray-800">
-          <div className="head-sidebar wow animate__animated animate__fadeIn">
-            <h5 className="line-bottom">Bài viết nổi bật</h5>
-          </div>
-          <div className="content-sidebar">
-            <div className="list-posts">
-              {data.slice(0, 5).map((item, i) => (
-                <div
-                  className="item-post wow animate__animated animate__fadeIn"
-                  data-wow-delay={`${i / 10}s`}
-                  key={i}
-                >
-                  <div className="image-post">
-                    <Link href={`/blog/${item.id}`}>
-                      <Image
-                        width={64}
-                        height={64}
-                        src={`/assets/imgs/page/healthy/${item.img}`}
-                        alt="Vitamind"
-                      />
-                    </Link>
-                  </div>
-                  <div className="info-post border-gray-800">
-                    <Link href={`/blog/${item.id}`}>
-                      <h6 className="color-white">{item.title}</h6>
-                    </Link>
-                    <span className="color-gray-700">{item.duration} phút đọc</span>
-                    <ul className="d-inline-block">
-                      <li className="color-gray-700">{item.date}</li>
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+    <div className="sidebar">
+      <div className="box-sidebar bg-gray-850 border-gray-800">
+        <div className="head-sidebar wow animate__animated animate__fadeIn">
+          <h5 className="line-bottom">Bài viết mới</h5>
         </div>
-        <div className="box-sidebar bg-gray-850 border-gray-800">
-          <div className="head-sidebar wow animate__animated animate__fadeIn">
-            <h5 className="line-bottom">Bình luận mới nhất</h5>
-          </div>
-          <div className="content-sidebar">
-            <div className="list-comments">
-              {comments.slice(0, 3).map((item, i) => (
-                <div
-                  className="item-comment border-gray-800 wow animate__animated animate__fadeIn"
-                  data-wow-delay={`${i / 10}s`}
-                  key={i}
-                >
-                  <p className="color-gray-500 mb-20">“{item.content}”</p>
-                  <div className="box-author-small">
+        <div className="content-sidebar">
+          <div className="list-posts">
+            {latestPosts.map((post, index) => (
+              <div
+                className="item-post wow animate__animated animate__fadeIn"
+                data-wow-delay={`${index / 10}s`}
+                key={post.slug}
+              >
+                <div className="image-post">
+                  <Link href={`/blog/${post.slug}`}>
                     <Image
-                      width={32}
-                      height={32}
-                      src={`/assets/imgs/page/homepage1/${item.authorAvata}`}
-                      alt="Vitamind"
-                    />
-                    <div className="author-info">
-                      <span className="d-block color-gray-700 text-sm">{item.authorName}</span>
-                      <span className="color-gray-700 text-xs">{item.date}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="box-sidebar bg-gray-850 border-gray-800">
-          <div className="head-sidebar">
-            <BrandLogo variant="dark" compact />
-            <h6 className="color-gray-700">Theo dõi chúng tôi trên Instagram</h6>
-          </div>
-          <div className="content-sidebar">
-            <div className="row mt-30 mb-10">
-              {gallery.slice(0, 9).map((item, i) => (
-                <div
-                  className="col-sm-4 col-4 mb-20 wow animate__animated animate__fadeIn"
-                  data-wow-delay={`${i / 10}s`}
-                  key={i}
-                >
-                  <Link href={`${item.link}`}>
-                    <Image
-                      width={80}
-                      height={80}
-                      className="bdrd-8"
-                      src={`/assets/imgs/page/homepage1/${item.img}`}
-                      alt="Vitamind"
+                      width={64}
+                      height={64}
+                      src={post.cover_image ?? FALLBACK_IMAGE}
+                      alt={post.title}
                     />
                   </Link>
                 </div>
+                <div className="info-post border-gray-800">
+                  <Link href={`/blog/${post.slug}`}>
+                    <h6 className="color-white">{post.title}</h6>
+                  </Link>
+                  <span className="color-gray-700">{post.author ?? "Vitamind"}</span>
+                  <ul className="d-inline-block">
+                    <li className="color-gray-700">{formatPostDate(post.created_at)}</li>
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="box-sidebar bg-gray-850 border-gray-800">
+        <div className="head-sidebar wow animate__animated animate__fadeIn">
+          <h5 className="line-bottom">Chuyên mục</h5>
+        </div>
+        <div className="content-sidebar">
+          <div className="list-posts">
+            {categories.slice(0, 6).map((category, index) => (
+              <div
+                className="item-post wow animate__animated animate__fadeIn"
+                data-wow-delay={`${index / 10}s`}
+                key={category.slug}
+              >
+                <div className="info-post border-gray-800">
+                  <Link href={category.href}>
+                    <h6 className="color-white">{category.title}</h6>
+                  </Link>
+                  <span className="color-gray-700">{category.postCount} bài viết</span>
+                  <ul className="d-inline-block">
+                    <li className="color-gray-700">{category.latestTitle}</li>
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {tags.length > 0 ? (
+        <div className="box-sidebar bg-gray-850 border-gray-800">
+          <div className="head-sidebar">
+            <BrandLogo variant="dark" compact />
+            <h6 className="color-gray-700">Từ khóa nổi bật</h6>
+          </div>
+          <div className="content-sidebar">
+            <div className="row mt-30 mb-10">
+              {tags.slice(0, 8).map((tag, index) => (
+                <div
+                  className="col-sm-6 col-6 mb-20 wow animate__animated animate__fadeIn"
+                  data-wow-delay={`${index / 10}s`}
+                  key={tag.label}
+                >
+                  <div className="btn btn-tags bg-gray-900 border-gray-800 w-100 text-start">
+                    <span className="color-gray-500">#{tag.label}</span>
+                    <small className="d-block color-gray-700 mt-5">{tag.count} bài</small>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </div>
-      </div>
-    </>
+      ) : null}
+    </div>
   );
 };
 

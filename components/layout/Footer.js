@@ -147,11 +147,9 @@ const Footer = () => {
                       className="d-inline-block mr-30 wow animate__animated animate__fadeIn"
                       data-wow-delay=".0s"
                     >
-                      <Link
-                        className="icon-socials icon-twitter color-gray-500"
-                        href="https://twitter.com"
-                      >
-                        Twitter
+                      <Link className="footer-social-link color-gray-500" href="https://twitter.com">
+                        <i className="ri-twitter-x-line" aria-hidden="true" />
+                        <span>Twitter</span>
                       </Link>
                     </div>
                     <div
@@ -159,10 +157,11 @@ const Footer = () => {
                       data-wow-delay=".2s"
                     >
                       <Link
-                        className="icon-socials icon-linked color-gray-500"
+                        className="footer-social-link color-gray-500"
                         href="https://www.linkedin.com"
                       >
-                        LinkedIn
+                        <i className="ri-linkedin-line" aria-hidden="true" />
+                        <span>LinkedIn</span>
                       </Link>
                     </div>
                     <div
@@ -170,10 +169,11 @@ const Footer = () => {
                       data-wow-delay=".4s"
                     >
                       <Link
-                        className="icon-socials icon-insta color-gray-500"
+                        className="footer-social-link color-gray-500"
                         href="https://www.instagram.com"
                       >
-                        Instagram
+                        <i className="ri-instagram-line" aria-hidden="true" />
+                        <span>Instagram</span>
                       </Link>
                     </div>
                   </div>

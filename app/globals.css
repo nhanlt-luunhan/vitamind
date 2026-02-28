@@ -260,6 +260,17 @@ iframe[src*="zalo"],
     box-shadow 0.22s ease;
 }
 
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-social-link i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .theme-switch:hover,
 .theme-switch:focus-visible {
   border-color: var(--surface-highlight-strong);
