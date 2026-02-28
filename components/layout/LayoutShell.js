@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createBodyScrollLock, lockBodyScroll, unlockBodyScroll } from "@/lib/dom/bodyScrollLock";
 import { Header } from "@/components/layout/Header";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 
 const LayoutShell = () => {
   const [openClass, setOpenClass] = useState("");
+  const bodyScrollLockRef = useRef(createBodyScrollLock());
 
   const handleOpen = () => {
     document.body.classList.add("mobile-menu-active");
@@ -18,6 +20,16 @@ const LayoutShell = () => {
       setOpenClass("");
     }
   };
+
+  useEffect(() => {
+    if (!openClass) return undefined;
+
+    lockBodyScroll(bodyScrollLockRef.current);
+
+    return () => {
+      unlockBodyScroll(bodyScrollLockRef.current);
+    };
+  }, [openClass]);
 
   return (
     <>

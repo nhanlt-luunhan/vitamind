@@ -35,9 +35,9 @@ const BackToTop = () => {
   return (
     <>
       {isVisible && (
-        <a id="scrollUp" onClick={scrollToTop} style={{ position: "fixed", zIndex: 2147483647 }}>
+        <button id="scrollUp" type="button" onClick={scrollToTop} aria-label="Cuộn lên đầu trang">
           <i className="fi-rr-arrow-small-up" />
-        </a>
+        </button>
       )}
     </>
   );

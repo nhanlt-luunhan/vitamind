@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = post.description ?? "";
 
   return {
-    title: post.title,
+    title: "VITAMIND",
     description,
     alternates: {
       canonical: canonicalUrl,

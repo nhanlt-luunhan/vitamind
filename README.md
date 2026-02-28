@@ -47,6 +47,8 @@ Không dùng lại `pk_live` / `sk_live` trong `.env.local`.
 Nếu chạy app bằng Docker ở môi trường development, tạo `.env.dev.docker` từ `.env.dev.docker.example`.
 Không cho `docker-compose.dev.yml` dùng `.env.docker`, vì file đó dành cho production.
 Nếu muốn dùng màn hình Adminer chỉ dành cho admin bên trong app, hãy cấu hình `ADMINER_INTERNAL_URL` đúng với môi trường đang chạy.
+Nếu chạy sau reverse proxy hoặc trong Portainer/Synology, không dùng `INTERNAL_API_BASE_URL=http://127.0.0.1:3333` cho middleware admin.
+Hãy để app tự dùng origin của request, hoặc đặt `INTERNAL_API_BASE_URL` thành domain/public origin thực tế của app.
 
 ## Triển khai trên Synology Docker
 
@@ -60,6 +62,25 @@ docker compose up -d --build
 ```
 
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
+
+### Quy tắc xử lý lỗi build trên Synology
+
+- Nếu thấy warning:
+  - `buildx: failed to read current commit information with git rev-parse --is-inside-work-tree`
+  thì không kết luận ngay đây là lỗi chính. Đây thường chỉ là warning từ buildx.
+- Luôn đọc tiếp phần lỗi thật ở bước:
+  - `npm run build`
+- Nếu build báo:
+  - `@clerk/clerk-react: Missing publishableKey`
+  thì kiểm tra ngay `.env.docker` trên Synology có đủ:
+  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  - `CLERK_SECRET_KEY`
+  - `CLERK_WEBHOOK_SIGNING_SECRET`
+  - `INTERNAL_API_SECRET`
+- Dockerfile của dự án đã chuẩn hóa theo quy tắc:
+  - copy `.env.docker` sang `.env.production`
+  - rồi mới chạy `next build`
+- Không đổi tên `docker-compose.yml`, vì Synology đang đọc đúng file này.
 
 ## Webhook Clerk
 

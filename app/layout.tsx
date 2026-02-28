@@ -41,17 +41,14 @@ const beVietnam = localFont({
 });
 
 const siteUrl = getSiteUrl();
-const siteName = "Vitamind";
-const siteTitle = "Vitamind - Blog cá nhân";
+const siteName = "VITAMIND";
+const siteTitle = "VITAMIND";
 const siteDescription =
   "Chia sẻ bài viết, dự án Raspberry Pi, tự động hóa và các sản phẩm công nghệ thực tế.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: {
-    default: siteTitle,
-    template: `%s | ${siteName}`,
-  },
+  title: siteTitle,
   description: siteDescription,
   alternates: {
     canonical: "/",
@@ -77,9 +74,9 @@ export const metadata: Metadata = {
     images: ["/assets/imgs/template/vitamind-night.svg"],
   },
   icons: {
-    icon: "/assets/imgs/template/favicon.png",
-    shortcut: "/assets/imgs/template/favicon.png",
-    apple: "/assets/imgs/template/favicon.png",
+    icon: "/assets/imgs/template/favicon.png?v=20260228-2",
+    shortcut: "/assets/imgs/template/favicon.png?v=20260228-2",
+    apple: "/assets/imgs/template/favicon.png?v=20260228-2",
   },
 };
 

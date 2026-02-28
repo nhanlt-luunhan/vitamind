@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,35 +14,6 @@ type Props = {
 };
 
 const postAuthPath = "/auth/continue";
-
-const signInNotes = [
-  {
-    title: "Về thẳng đúng nơi cần làm việc",
-    text: "Tài khoản thường quay về trang chủ. Tài khoản quản trị đi thẳng vào khu điều hành.",
-  },
-  {
-    title: "Giữ nhịp thao tác gọn",
-    text: "Không dùng widget mặc định, chỉ giữ các trường và thao tác cần thiết bằng tiếng Việt.",
-  },
-];
-
-const signUpNotes = [
-  {
-    label: "01",
-    title: "Tạo hồ sơ cơ bản",
-    text: "Khởi tạo tên hiển thị, email và mật khẩu trong cùng một nhịp giao diện.",
-  },
-  {
-    label: "02",
-    title: "Xác minh email",
-    text: "Nếu hệ thống yêu cầu, mã xác minh sẽ được gửi về email ngay sau khi tạo tài khoản.",
-  },
-  {
-    label: "03",
-    title: "Bổ sung hồ sơ",
-    text: "Sau khi vào hệ thống, bạn có thể cập nhật số điện thoại, Gmail liên hệ và GID.",
-  },
-];
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (
@@ -69,11 +41,34 @@ async function resolveSignInIdentifier(identifier: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Không thể kiểm tra email hoặc GID lúc này.");
+    throw new Error("Không thể kiểm tra email lúc này.");
   }
 
   const data = (await response.json()) as { identifier?: string };
   return (data.identifier ?? identifier).trim();
+}
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 10.2v3.9h5.4c-.2 1.3-1.5 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.4l2.5-2.4C16.6 3.5 14.5 2.6 12 2.6 6.9 2.6 2.8 6.7 2.8 11.8S6.9 21 12 21c6.9 0 9.1-4.8 9.1-7.3 0-.5 0-.9-.1-1.3H12Z"
+      />
+      <path
+        fill="#34A853"
+        d="M2.8 7.3l3.2 2.4c.9-2.7 3.3-4.6 6-4.6 1.8 0 3 .8 3.7 1.4l2.5-2.4C16.6 3.5 14.5 2.6 12 2.6 8.1 2.6 4.7 4.8 2.8 7.3Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M12 21c2.4 0 4.5-.8 6-2.3l-2.8-2.2c-.8.5-1.8.9-3.2.9-3.8 0-5.2-2.5-5.4-3.8l-3.3 2.5C5.1 18.7 8.3 21 12 21Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M21.1 13.7c0-.5 0-.9-.1-1.3H12v3.9h5.4c-.3 1.3-1.2 2.4-2.5 3.1l2.8 2.2c1.7-1.6 3.4-4.5 3.4-7.9Z"
+      />
+    </svg>
+  );
 }
 
 export function AuthSplitDeck({ initialMode }: Props) {
@@ -83,6 +78,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp();
 
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [rememberPassword, setRememberPassword] = useState(false);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -111,6 +107,8 @@ export function AuthSplitDeck({ initialMode }: Props) {
     setSignInError(null);
     setSignUpError(null);
     setSignUpMessage(null);
+    setVerifying(false);
+    setVerificationCode("");
 
     const nextPath = nextMode === "sign-in" ? "/sign-in" : "/sign-up";
     if (pathname !== nextPath) {
@@ -192,7 +190,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerifying(true);
-      setSignUpMessage("Mã xác minh đã được gửi đến email của bạn.");
+      setSignUpMessage("Mã xác minh đã được gửi tới email của bạn.");
     } catch (error) {
       setSignUpError(getErrorMessage(error, "Không thể tạo tài khoản lúc này."));
     } finally {
@@ -208,9 +206,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
     setSignUpError(null);
 
     try {
-      const result = await signUp.attemptEmailAddressVerification({
-        code: verificationCode,
-      });
+      const result = await signUp.attemptEmailAddressVerification({ code: verificationCode });
 
       if (result.status === "complete") {
         await setActiveSignUp({ session: result.createdSessionId });
@@ -244,288 +240,212 @@ export function AuthSplitDeck({ initialMode }: Props) {
     }
   };
 
+  const isSignIn = mode === "sign-in";
+  const title = isSignIn ? "Đăng nhập" : verifying ? "Xác minh email" : "Tạo tài khoản";
+  const subtitle = isSignIn
+    ? "Nhập email và mật khẩu để truy cập vào hệ thống."
+    : verifying
+      ? "Nhập mã xác minh đã được gửi về email của bạn."
+      : "Tạo tài khoản mới. Chỉ mất chưa đến một phút.";
+
   return (
     <div className={styles.page}>
-      <div className={styles.canvas}>
-        <section className={`${styles.stage} ${mode === "sign-up" ? styles.stageSignUp : ""}`}>
-          <div className={styles.stack}>
-            <div className={styles.wipe} aria-hidden="true" />
+      <div className={styles.shell}>
+        <section className={styles.card}>
+          <div className={styles.logoWrap}>
+            <Link href="/" className={styles.logoLink}>
+              <Image src="/assets/imgs/template/vitamind-day.svg" alt="Vitamind" width={160} height={30} />
+            </Link>
+          </div>
 
-            <section
-              className={`${styles.panel} ${styles.signInPanel} ${mode === "sign-in" ? styles.panelActive : styles.panelInactive}`}
-              aria-hidden={mode !== "sign-in"}
-            >
-              <div className={styles.panelTop}>
-                <div className={styles.panelIntro}>
-                  <span className={styles.panelBadge}>Đăng nhập</span>
-                  <h1>Quay lại hệ thống bằng đúng tài khoản của bạn.</h1>
-                  <p>
-                    Luồng đăng nhập được rút gọn theo tiếng Việt, giữ đúng vai trò tài khoản và đưa
-                    bạn tới nơi cần làm việc ngay sau khi xác thực.
-                  </p>
-                </div>
+          <h2 className={styles.title}>{title}</h2>
+          <p className={styles.subtitle}>{subtitle}</p>
 
-                <div className={styles.panelSideNote}>
-                  <strong>Đúng vai trò, đúng điểm đến.</strong>
-                  <p>
-                    Người dùng thường về trang chủ. Tài khoản quản trị sẽ đi vào khu điều hành sau
-                    bước xác thực thành công.
-                  </p>
-                </div>
-              </div>
+          <div className={styles.formWrap}>
+            {isSignIn ? (
+              <form className={styles.form} onSubmit={handlePasswordSignIn}>
+                <label className={styles.field}>
+                  <span>Email</span>
+                  <input
+                    type="email"
+                    autoComplete="username"
+                    value={signInEmail}
+                    onChange={(event) => setSignInEmail(event.target.value)}
+                    placeholder="Nhập email"
+                    required
+                  />
+                </label>
 
-              <button
-                type="button"
-                className={`${styles.edgeToggle} ${styles.edgeToggleSignUp}`}
-                onClick={() => switchMode("sign-up")}
-              >
-                <span className={styles.edgeToggleLabel}>Tạo tài khoản</span>
-              </button>
-
-              <div className={styles.signInGrid}>
-                <form className={styles.form} onSubmit={handlePasswordSignIn}>
-                  <label className={styles.field}>
-                    <span>Email đăng nhập hoặc GID</span>
-                    <input
-                      type="text"
-                      autoComplete="username"
-                      value={signInEmail}
-                      onChange={(event) => setSignInEmail(event.target.value)}
-                      placeholder="ban@vitamind.com hoặc 5015114132"
-                      required
-                    />
-                  </label>
-
-                  <label className={styles.field}>
-                    <span>Mật khẩu</span>
-                    <input
-                      type="password"
-                      autoComplete="current-password"
-                      value={signInPassword}
-                      onChange={(event) => setSignInPassword(event.target.value)}
-                      placeholder="Nhập mật khẩu"
-                      required
-                    />
-                  </label>
-
-                  {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
-
-                  <button
-                    type="submit"
-                    className={styles.primaryButton}
-                    disabled={!signInLoaded || signInSubmitting}
-                  >
-                    {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-                  </button>
-
-                  <div className={styles.divider}>
-                    <span>hoặc</span>
-                  </div>
-
+                <div className={styles.passwordHead}>
+                  <span>Mật khẩu</span>
                   <button
                     type="button"
-                    className={styles.secondaryButton}
+                    className={styles.textLink}
+                    onClick={() => setSignInError("Tính năng quên mật khẩu sẽ được bật ở bước tiếp theo.")}
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={signInPassword}
+                  onChange={(event) => setSignInPassword(event.target.value)}
+                  placeholder="Nhập mật khẩu"
+                  required
+                />
+
+                <label className={styles.checkRow}>
+                  <input
+                    type="checkbox"
+                    checked={rememberPassword}
+                    onChange={(event) => setRememberPassword(event.target.checked)}
+                  />
+                  <span>Lưu mật khẩu</span>
+                </label>
+
+                {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
+
+                <button
+                  type="submit"
+                  className={styles.primaryButton}
+                  disabled={!signInLoaded || signInSubmitting}
+                >
+                  {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+                </button>
+
+                <p className={styles.divider}>Hoặc đăng nhập với</p>
+
+                <div className={styles.socialRow}>
+                  <button
+                    type="button"
+                    className={styles.socialButton}
                     onClick={handleGoogleSignIn}
                     disabled={!signInLoaded || signInOauthLoading}
+                    aria-label="Đăng nhập với Google"
                   >
-                    <span className={styles.secondaryIcon}>G</span>
-                    {signInOauthLoading ? "Đang mở Google..." : "Tiếp tục với Google"}
+                    <GoogleMark />
                   </button>
-                </form>
-
-                <div className={styles.cardRail}>
-                  {signInNotes.map((item) => (
-                    <article key={item.title} className={styles.miniCard}>
-                      <h3>{item.title}</h3>
-                      <p>{item.text}</p>
-                    </article>
-                  ))}
                 </div>
-              </div>
+              </form>
+            ) : (
+              <>
+                {!verifying ? (
+                  <form className={styles.form} onSubmit={handleCreateAccount}>
+                    <label className={styles.field}>
+                      <span>Họ và tên</span>
+                      <input
+                        type="text"
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                        placeholder="Nhập họ và tên"
+                        required
+                      />
+                    </label>
 
-              <footer className={styles.authFooter}>
-                <p className={styles.footerText}>
-                  Chưa có tài khoản? Chuyển sang tạo tài khoản mới mà không rời trang này.
-                </p>
-                <div className={styles.footerLinks}>
-                  <button type="button" className={styles.ghostButton} onClick={() => switchMode("sign-up")}>
-                    Mở màn tạo tài khoản
-                  </button>
-                  <Link href="/">Về trang chủ</Link>
-                </div>
-              </footer>
-            </section>
+                    <label className={styles.field}>
+                      <span>Email</span>
+                      <input
+                        type="email"
+                        autoComplete="email"
+                        value={signUpEmail}
+                        onChange={(event) => setSignUpEmail(event.target.value)}
+                        placeholder="Nhập email"
+                        required
+                      />
+                    </label>
 
-            <section
-              className={`${styles.panel} ${styles.signUpPanel} ${mode === "sign-up" ? styles.panelActive : styles.panelInactive}`}
-              aria-hidden={mode !== "sign-up"}
-            >
-              <div className={styles.panelTop}>
-                <div className={styles.panelIntro}>
-                  <span className={`${styles.panelBadge} ${styles.panelBadgeAccent}`}>Tạo tài khoản</span>
-                  <h1>Tạo hồ sơ mới trong một lớp giao diện riêng.</h1>
-                  <p>
-                    Màn đăng ký dùng nhịp bố cục khác với đăng nhập, nhưng vẫn nằm trong cùng khung
-                    và chuyển qua lại bằng wipe transition.
-                  </p>
-                </div>
+                    <label className={styles.field}>
+                      <span>Mật khẩu</span>
+                      <input
+                        type="password"
+                        autoComplete="new-password"
+                        value={signUpPassword}
+                        onChange={(event) => setSignUpPassword(event.target.value)}
+                        placeholder="Tạo mật khẩu"
+                        required
+                      />
+                    </label>
 
-                <div className={styles.panelSideNote}>
-                  <strong>Khởi tạo gọn, bổ sung sau.</strong>
-                  <p>
-                    Sau khi vào hệ thống, bạn có thể chỉnh tên hiển thị, Gmail liên hệ, số điện
-                    thoại và GID trong phần tài khoản.
-                  </p>
-                </div>
-              </div>
+                    {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
+                    {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
 
-              <button
-                type="button"
-                className={`${styles.edgeToggle} ${styles.edgeToggleSignIn}`}
-                onClick={() => switchMode("sign-in")}
-              >
-                <span className={styles.edgeToggleLabel}>Đăng nhập</span>
-              </button>
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={!signUpLoaded || signUpSubmitting}
+                    >
+                      {signUpSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+                    </button>
 
-              <div className={styles.signUpGrid}>
-                <div>
-                  {!verifying ? (
-                    <form className={styles.form} onSubmit={handleCreateAccount}>
-                      <div className={styles.signUpFields}>
-                        <label className={`${styles.field} ${styles.fieldFull}`}>
-                          <span>Họ và tên</span>
-                          <input
-                            type="text"
-                            autoComplete="name"
-                            value={fullName}
-                            onChange={(event) => setFullName(event.target.value)}
-                            placeholder="Lưu Nhân"
-                            required
-                          />
-                        </label>
+                    <p className={styles.divider}>Hoặc đăng ký với</p>
 
-                        <label className={styles.field}>
-                          <span>Email liên hệ</span>
-                          <input
-                            type="email"
-                            autoComplete="email"
-                            value={signUpEmail}
-                            onChange={(event) => setSignUpEmail(event.target.value)}
-                            placeholder="ban@vitamind.com"
-                            required
-                          />
-                        </label>
-
-                        <label className={styles.field}>
-                          <span>Mật khẩu</span>
-                          <input
-                            type="password"
-                            autoComplete="new-password"
-                            value={signUpPassword}
-                            onChange={(event) => setSignUpPassword(event.target.value)}
-                            placeholder="Tạo mật khẩu mới"
-                            required
-                          />
-                        </label>
-                      </div>
-
-                      {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
-                      {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
-
-                      <button
-                        type="submit"
-                        className={styles.primaryButton}
-                        disabled={!signUpLoaded || signUpSubmitting}
-                      >
-                        {signUpSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
-                      </button>
-
-                      <div className={styles.divider}>
-                        <span>hoặc</span>
-                      </div>
-
+                    <div className={styles.socialRow}>
                       <button
                         type="button"
-                        className={styles.secondaryButton}
+                        className={styles.socialButton}
                         onClick={handleGoogleSignUp}
                         disabled={!signUpLoaded || signUpOauthLoading}
+                        aria-label="Đăng ký với Google"
                       >
-                        <span className={styles.secondaryIcon}>G</span>
-                        {signUpOauthLoading ? "Đang mở Google..." : "Đăng ký với Google"}
+                        <GoogleMark />
                       </button>
-                    </form>
-                  ) : (
-                    <form className={styles.form} onSubmit={handleVerifyEmail}>
-                      <label className={`${styles.field} ${styles.fieldFull}`}>
-                        <span>Mã xác minh email</span>
-                        <input
-                          type="text"
-                          value={verificationCode}
-                          onChange={(event) => setVerificationCode(event.target.value)}
-                          placeholder="Nhập 6 chữ số"
-                          required
-                        />
-                      </label>
+                    </div>
+                  </form>
+                ) : (
+                  <form className={styles.form} onSubmit={handleVerifyEmail}>
+                    <label className={styles.field}>
+                      <span>Mã xác minh</span>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(event) => setVerificationCode(event.target.value)}
+                        placeholder="Nhập 6 chữ số"
+                        required
+                      />
+                    </label>
 
-                      {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
-                      {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
+                    {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
+                    {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
 
-                      <button
-                        type="submit"
-                        className={styles.primaryButton}
-                        disabled={!signUpLoaded || signUpSubmitting}
-                      >
-                        {signUpSubmitting ? "Đang xác minh..." : "Xác minh và tiếp tục"}
-                      </button>
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={!signUpLoaded || signUpSubmitting}
+                    >
+                      {signUpSubmitting ? "Đang xác minh..." : "Xác minh và tiếp tục"}
+                    </button>
 
-                      <button
-                        type="button"
-                        className={styles.ghostButton}
-                        onClick={() => {
-                          setVerifying(false);
-                          setVerificationCode("");
-                          setSignUpError(null);
-                        }}
-                      >
-                        Dùng email khác
-                      </button>
-                    </form>
-                  )}
-                </div>
-
-                <aside className={styles.cardRail}>
-                  {verifying ? (
-                    <article className={styles.statusCard}>
-                      <span className={styles.panelBadge}>Xác minh</span>
-                      <h3>Kiểm tra hộp thư của bạn</h3>
-                      <p>
-                        Nếu chưa thấy email, kiểm tra thư rác hoặc quay lại dùng địa chỉ khác để tạo
-                        mã xác minh mới.
-                      </p>
-                    </article>
-                  ) : (
-                    signUpNotes.map((item) => (
-                      <article key={item.title} className={styles.miniCard}>
-                        <span className={styles.panelBadge}>{item.label}</span>
-                        <h3>{item.title}</h3>
-                        <p>{item.text}</p>
-                      </article>
-                    ))
-                  )}
-                </aside>
-              </div>
-
-              <footer className={styles.authFooter}>
-                <p className={styles.footerText}>Đã có tài khoản? Quay lại đăng nhập mà không rời nhịp giao diện này.</p>
-                <div className={styles.footerLinks}>
-                  <button type="button" className={styles.ghostButton} onClick={() => switchMode("sign-in")}>
-                    Mở màn đăng nhập
-                  </button>
-                </div>
-              </footer>
-            </section>
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setVerifying(false);
+                        setVerificationCode("");
+                        setSignUpError(null);
+                      }}
+                    >
+                      Dùng email khác
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
           </div>
         </section>
+
+        <p className={styles.footerLine}>
+          {isSignIn ? "Bạn chưa có tài khoản?" : "Đã có tài khoản?"}
+          <button
+            type="button"
+            className={styles.footerLink}
+            onClick={() => switchMode(isSignIn ? "sign-up" : "sign-in")}
+          >
+            {isSignIn ? "Tạo mới" : "Đăng nhập"}
+          </button>
+        </p>
       </div>
     </div>
   );

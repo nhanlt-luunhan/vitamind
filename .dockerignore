@@ -28,3 +28,5 @@ yarn-error.log*
 Dockerfile
 docker-compose.yml
 docker-compose.synology.yml
+references
+Lahomes-Nextjs_v2.0

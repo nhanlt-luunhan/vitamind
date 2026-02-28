@@ -9,8 +9,10 @@ const Layout = ({ children }) => {
       <LayoutShell />
       <main className="main">{children}</main>
       <Footer />
-      <BackToTop />
-      <ZaloChatWidget />
+      <div className="floating-actions" aria-label="Quick actions">
+        <ZaloChatWidget />
+        <BackToTop />
+      </div>
     </>
   );
 };

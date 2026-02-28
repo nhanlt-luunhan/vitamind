@@ -177,8 +177,8 @@
 }
 
 .iconButton {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 1px solid var(--frame-border);
   border-radius: 999px;
@@ -188,22 +188,23 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  line-height: 0;
   transition:
-    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.22s ease,
     background 0.22s ease,
     box-shadow 0.3s ease,
     color 0.22s ease;
-  box-shadow: var(--frame-shadow);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .iconButton:hover,
 .iconButton:focus-visible {
-  color: var(--surface-text-strong);
-  border-color: var(--surface-highlight-strong);
-  background: var(--surface-panel-strong);
-  transform: translateY(-1px) scale(1.02);
-  box-shadow: var(--frame-shadow-strong);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.18);
   outline: none;
 }
 
@@ -216,6 +217,8 @@
 .icon {
   width: 14px;
   height: 14px;
+  display: block;
+  flex: 0 0 auto;
 }
 
 .themeControl {
@@ -367,26 +370,37 @@
 }
 
 .searchClose {
-  min-width: auto;
-  height: 30px;
-  padding: 0 4px 0 12px;
-  border: 0;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
   color: var(--surface-text-muted);
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   transition:
-    opacity 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.22s ease,
     color 0.2s ease;
 }
 
 .searchClose:hover,
 .searchClose:focus-visible {
-  color: var(--surface-text-strong);
-  opacity: 1;
+  color: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
   outline: none;
+}
+
+.searchClose svg {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .searchResults {

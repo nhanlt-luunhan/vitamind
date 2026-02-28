@@ -27,6 +27,7 @@
 - Prefer server components; add `"use client"` only when required.
 - No default exports for components.
 - Use async/await.
+- Before changing App Router/auth/cache behavior, read `docs/NEXTJS_RULES.md`.
 
 ## Workflow
 - Write a UI spec before implementation.

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ButtonClient } from "@/components/ui";
+import { createBodyScrollLock, lockBodyScroll, unlockBodyScroll } from "@/lib/dom/bodyScrollLock";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import styles from "./Header.module.css";
@@ -194,6 +195,7 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
   const searchInputRef = useRef(null);
   const closeTimerRef = useRef(null);
   const navCloseTimerRef = useRef(null);
+  const bodyScrollLockRef = useRef(createBodyScrollLock());
 
   const openSearch = () => {
     if (isNavMounted) {
@@ -295,9 +297,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
   useEffect(() => {
     if (!isSearchMounted) return undefined;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const handleClickOutside = (event) => {
       if (!searchRef.current?.contains(event.target)) {
         closeSearch();
@@ -311,19 +310,28 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
     };
 
     const focusTimer = window.setTimeout(() => {
-      searchInputRef.current?.focus();
+      searchInputRef.current?.focus({ preventScroll: true });
     }, 120);
 
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isSearchMounted]);
+
+  useEffect(() => {
+    if (!isSearchMounted && !isNavMounted) return undefined;
+
+    lockBodyScroll(bodyScrollLockRef.current);
+
+    return () => {
+      unlockBodyScroll(bodyScrollLockRef.current);
+    };
+  }, [isNavMounted, isSearchMounted]);
 
   useEffect(() => {
     return () => {
@@ -339,9 +347,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
   useEffect(() => {
     if (!isNavMounted) return undefined;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         closeNavPanel();
@@ -351,7 +356,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isNavMounted]);
@@ -606,8 +610,20 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                               type="button"
                               className={styles.searchClose}
                               onClick={closeSearch}
+                              aria-label="Đóng tìm kiếm"
                             >
-                              Đóng
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M6 6l12 12" />
+                                <path d="M18 6 6 18" />
+                              </svg>
                             </button>
                           </div>
 
