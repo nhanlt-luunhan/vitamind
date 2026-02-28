@@ -9,8 +9,12 @@ type ProfileRow = {
   id: string;
   clerk_user_id: string | null;
   email: string;
+  contact_email: string | null;
   name: string | null;
   display_name: string | null;
+  gid: string | null;
+  role: string | null;
+  status: string | null;
   phone: string | null;
   bio: string | null;
   location: string | null;
@@ -21,6 +25,13 @@ type ProfileRow = {
 
 const normalizeText = (value: unknown) => {
   const text = String(value ?? "").trim();
+  return text.length ? text : null;
+};
+
+const normalizeGid = (value: unknown) => {
+  const text = String(value ?? "")
+    .trim()
+    .toUpperCase();
   return text.length ? text : null;
 };
 
@@ -40,7 +51,7 @@ export async function GET() {
   }
 
   const { rows } = await query<ProfileRow>(
-    `select id, clerk_user_id, email, name, display_name, phone, bio, location, company, website, avatar_url
+    `select id, clerk_user_id, email, contact_email, name, display_name, gid, role, status, phone, bio, location, company, website, avatar_url
      from users
      where id = $1
      limit 1`,
@@ -69,18 +80,51 @@ export async function PUT(request: Request) {
   }
 
   const name = normalizeText(body.name);
+  const contactEmail = normalizeText(body.contactEmail);
   const phone = normalizeText(body.phone);
+  const gid = normalizeGid(body.gid);
   const bio = normalizeText(body.bio);
   const location = normalizeText(body.location);
   const company = normalizeText(body.company);
   const website = normalizeText(body.website);
 
   const { firstName, lastName } = splitName(name);
+
+  const { rows, error } = await query<ProfileRow>(
+    `update users
+     set name = $2,
+         display_name = $3,
+         contact_email = $4,
+         phone = $5,
+         gid = $6,
+         bio = $7,
+         location = $8,
+         company = $9,
+         website = $10,
+         updated_at = now()
+     where id = $1
+     returning id, clerk_user_id, email, contact_email, name, display_name, gid, role, status, phone, bio, location, company, website, avatar_url`,
+    [user.id, name, name, contactEmail, phone, gid, bio, location, company, website],
+  );
+
+  if (error) {
+    if (error.includes("idx_users_gid_unique") || error.includes("duplicate key")) {
+      return NextResponse.json({ error: "GID này đã được sử dụng." }, { status: 400 });
+    }
+    return NextResponse.json({ error }, { status: 400 });
+  }
+
+  if (!rows[0]) {
+    return NextResponse.json({ error: "Không cập nhật được tài khoản." }, { status: 500 });
+  }
+
   const client = await clerkClient();
   const currentClerk = await client.users.getUser(user.clerk_user_id);
   const nextPublicMetadata = {
     ...(currentClerk.publicMetadata ?? {}),
     phone: phone ?? null,
+    gid: gid ?? null,
+    contactEmail: contactEmail ?? null,
   };
 
   await client.users.updateUser(user.clerk_user_id, {
@@ -88,25 +132,6 @@ export async function PUT(request: Request) {
     lastName: lastName ?? undefined,
     publicMetadata: nextPublicMetadata,
   });
-
-  const { rows } = await query<ProfileRow>(
-    `update users
-     set name = $2,
-         display_name = $3,
-         phone = $4,
-         bio = $5,
-         location = $6,
-         company = $7,
-         website = $8,
-         updated_at = now()
-     where id = $1
-     returning id, clerk_user_id, email, name, display_name, phone, bio, location, company, website, avatar_url`,
-    [user.id, name, name, phone, bio, location, company, website],
-  );
-
-  if (!rows[0]) {
-    return NextResponse.json({ error: "Không cập nhật được tài khoản." }, { status: 500 });
-  }
 
   return NextResponse.json({ user: rows[0] });
 }

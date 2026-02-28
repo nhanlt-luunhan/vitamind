@@ -8,17 +8,16 @@ const Hero1 = () => {
         <div className="row align-items-end">
           <div className="col-lg-6 pt-100">
             <span className="text-sm-bold color-gray-600 wow animate__animated animate__fadeInUp">
-              Xin chào mọi người!
+              Chào mừng đến với Vitamind
             </span>
             <h1 className="color-gray-50 mt-20 mb-20 wow animate__animated animate__fadeInUp">
-              Mình là Brian Clark
+              Raspberry Pi, tự động hóa và những dự án làm được ngay
             </h1>
             <div className="row">
               <div className="col-lg-9">
                 <p className="text-base color-gray-600 wow animate__animated animate__fadeInUp">
-                  Tôi sử dụng chuyển động như một chiều thứ ba để đơn giản hóa trải nghiệm và dẫn
-                  dắt tương tác. Tôi không thêm hiệu ứng chỉ để đẹp hơn, mà để tạo nên ý nghĩa và
-                  nhịp điệu.
+                  Vitamind tập trung vào hướng dẫn thực chiến, cấu hình gọn và sản phẩm phù hợp cho
+                  người làm Raspberry Pi, Home Assistant, server mini và hệ thống cảm biến tại nhà.
                 </p>
               </div>
             </div>
@@ -44,7 +43,7 @@ const Hero1 = () => {
                 width={327}
                 height={490}
                 src="/assets/imgs/page/homepage1/banner.png"
-                alt="Genz"
+                alt="Vitamind"
                 priority
                 sizes="(max-width: 768px) 70vw, 327px"
               />
@@ -53,7 +52,7 @@ const Hero1 = () => {
                   width={20}
                   height={20}
                   src="/assets/imgs/template/pattern-1.svg"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
               </div>
               <div className="pattern-2">
@@ -61,7 +60,7 @@ const Hero1 = () => {
                   width={30}
                   height={30}
                   src="/assets/imgs/template/pattern-2.svg"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
               </div>
               <div className="pattern-3">
@@ -69,7 +68,7 @@ const Hero1 = () => {
                   width={30}
                   height={30}
                   src="/assets/imgs/template/pattern-3.svg"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
               </div>
               <div className="pattern-4">
@@ -77,7 +76,7 @@ const Hero1 = () => {
                   width={30}
                   height={30}
                   src="/assets/imgs/template/pattern-4.svg"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
               </div>
             </div>

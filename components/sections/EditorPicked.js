@@ -24,7 +24,7 @@ const EditorPicked = () => {
                       width={484}
                       height={300}
                       src={`/assets/imgs/page/healthy/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                   </Link>
                 </div>
@@ -52,7 +52,7 @@ const EditorPicked = () => {
                           width={48}
                           height={48}
                           src="/assets/imgs/page/homepage1/author.png"
-                          alt="Genz"
+                          alt="Vitamind"
                         />
                         <div className="author-info">
                           <h6 className="color-gray-700">{item.authorname}</h6>
@@ -83,7 +83,7 @@ const EditorPicked = () => {
                       width={300}
                       height={270}
                       src={`/assets/imgs/page/healthy/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                   </Link>
                 </div>
@@ -111,7 +111,7 @@ const EditorPicked = () => {
                           width={48}
                           height={48}
                           src="/assets/imgs/page/homepage1/author3.png"
-                          alt="Genz"
+                          alt="Vitamind"
                         />
                         <div className="author-info">
                           <h6 className="color-gray-700">{item.authorname}</h6>
@@ -144,7 +144,7 @@ const EditorPicked = () => {
         </Button>
       </div>
       <div className="text-center mb-80 mt-50 wow animate__animated animate__pulse">
-        <Image width={825} height={160} src="/assets/imgs/page/homepage4/banner-3.png" alt="Genz" />
+        <Image width={825} height={160} src="/assets/imgs/page/homepage4/banner-3.png" alt="Vitamind" />
       </div>
     </>
   );

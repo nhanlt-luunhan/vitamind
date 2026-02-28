@@ -13,6 +13,7 @@ type UserRow = {
   email: string;
   name: string | null;
   display_name: string | null;
+  gid: string | null;
   role: string | null;
   status: string | null;
   created_at: string;
@@ -60,7 +61,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const status = normalizeStatus(body?.status);
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at
+    `select id, clerk_user_id, email, name, display_name, gid, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,
@@ -87,7 +88,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
          status = $3,
          updated_at = now()
      where id = $1
-     returning id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at`,
+     returning id, clerk_user_id, email, name, display_name, gid, role, status, created_at, updated_at`,
     [id, nextRole, nextStatus],
   );
 
@@ -124,7 +125,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   const { rows: existingRows } = await query<UserRow>(
-    `select id, clerk_user_id, email, name, display_name, role, status, created_at, updated_at
+    `select id, clerk_user_id, email, name, display_name, gid, role, status, created_at, updated_at
      from users
      where id = $1
      limit 1`,

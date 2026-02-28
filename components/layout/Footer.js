@@ -11,19 +11,24 @@ const Footer = () => {
             <div className="row">
               <div className="col-lg-4 mb-30">
                 <Link className="wow animate__animated animate__fadeInUp" href="/">
-                  <Image width={116} height={36} src="/assets/imgs/template/logo.svg" alt="Genz" />
+                  <Image
+                    width={194}
+                    height={36}
+                    src="/assets/imgs/template/LOGO-H-VITAMIND.png"
+                    alt="Vitamind"
+                  />
                 </Link>
                 <p className="mb-20 mt-20 text-sm color-gray-500 wow animate__animated animate__fadeInUp">
-                  Một đoạn mô tả ngắn về blog, chia sẻ câu chuyện, cảm hứng và những bài viết mới
-                  mỗi tuần.
+                  Vitamind chia sẻ bài viết thực tế về Raspberry Pi, tự động hóa gia đình, thiết bị
+                  cảm biến và các dự án công nghệ có thể triển khai ngay.
                 </p>
                 <h6 className="color-white mb-5 wow animate__animated animate__fadeInUp">
                   Địa chỉ
                 </h6>
                 <p className="text-sm color-gray-500 wow animate__animated animate__fadeInUp">
-                  123 Đường Chính
+                  Việt Nam
                   <br />
-                  Hà Nội, Việt Nam
+                  Làm việc linh hoạt từ xa
                 </p>
               </div>
               <div className="col-lg-4 mb-30">
@@ -35,32 +40,32 @@ const Footer = () => {
                     <ul className="menu-footer">
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Hành động
+                          Raspberry Pi
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Kinh doanh
+                          Tự động hóa
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Phiêu lưu
+                          Server mini
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Canada
+                          Home Assistant
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Mỹ
+                          Cảm biến
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Khám phá
+                          Nhật ký kỹ thuật
                         </Link>
                       </li>
                     </ul>
@@ -69,32 +74,32 @@ const Footer = () => {
                     <ul className="menu-footer">
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Động vật
+                          Bài viết mới
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Nha khoa
+                          Chuyên mục
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Sinh học
+                          Sản phẩm
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
                         <Link className="color-gray-500" href="/blog">
-                          Thiết kế
+                          Trang tài khoản
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
-                        <Link className="color-gray-500" href="/blog">
-                          Bữa sáng
+                        <Link className="color-gray-500" href="/sign-in">
+                          Đăng nhập
                         </Link>
                       </li>
                       <li className="wow animate__animated animate__fadeInUp">
-                        <Link className="color-gray-500" href="/blog">
-                          Tráng miệng
+                        <Link className="color-gray-500" href="/sign-up">
+                          Đăng ký
                         </Link>
                       </li>
                     </ul>
@@ -138,11 +143,7 @@ const Footer = () => {
               <div className="row">
                 <div className="col-lg-5 text-center text-lg-start">
                   <p className="text-base color-white wow animate__animated animate__fadeIn">
-                    © 2026 Thiết kế bởi
-                    <Link className="copyright" href="http://alithemes.com" target="_blank">
-                      {" "}
-                      AliThemes.com
-                    </Link>
+                    © 2026 Vitamind. Nội dung và giao diện được phát triển cho hệ thống riêng.
                   </p>
                 </div>
                 <div className="col-lg-7 text-center text-lg-end">

@@ -39,7 +39,7 @@ const ImageSlider = () => {
               width={1075}
               height={485}
               src={`/assets/imgs/page/portfolio/${item.img}`}
-              alt="Genz"
+              alt="Vitamind"
             />
           </SwiperSlide>
         ))}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignOutButton, useUser } from "@clerk/nextjs";
 
 const MobileMenu = ({ openClass }) => {
   const [isActive, setIsActive] = useState({
@@ -22,6 +22,12 @@ const MobileMenu = ({ openClass }) => {
     }
   };
 
+  const { user } = useUser();
+  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
+  const role =
+    typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : null;
+  const isAdmin = role === "admin" || primaryEmail === "nhanlt.luunhan@gmail.com";
+
   return (
     <>
       <div
@@ -32,18 +38,10 @@ const MobileMenu = ({ openClass }) => {
             <div className="mobile-logo border-gray-800">
               <Link className="d-flex" href="/">
                 <Image
-                  width={116}
+                  width={194}
                   height={36}
-                  className="logo-night"
-                  alt="GenZ"
-                  src="/assets/imgs/template/logo.svg"
-                />
-                <Image
-                  width={116}
-                  height={36}
-                  className="d-none logo-day"
-                  alt="GenZ"
-                  src="/assets/imgs/template/logo-day.svg"
+                  alt="Vitamind"
+                  src="/assets/imgs/template/LOGO-H-VITAMIND.png"
                 />
               </Link>
             </div>
@@ -159,15 +157,21 @@ const MobileMenu = ({ openClass }) => {
                         </SignedOut>
                         <SignedIn>
                           <li>
-                            <Link href="/account">Tài khoản</Link>
-                          </li>
-                          <li>
-                            <Link href="/logout">Đăng xuất</Link>
+                            <SignOutButton redirectUrl="/">
+                              <button type="button">Đăng xuất</button>
+                            </SignOutButton>
                           </li>
                         </SignedIn>
-                        <li>
-                          <Link href="/admin">Quản trị</Link>
-                        </li>
+                        {isAdmin ? (
+                          <>
+                            <li>
+                              <Link href="/admin">Quản trị</Link>
+                            </li>
+                            <li>
+                              <Link href="/admin/database">Cơ sở dữ liệu</Link>
+                            </li>
+                          </>
+                        ) : null}
                         <li>
                           <Link href="/page-404">Trang 404</Link>
                         </li>
@@ -188,7 +192,7 @@ const MobileMenu = ({ openClass }) => {
                           width={48}
                           height={48}
                           src="/assets/imgs/template/ava.jpg"
-                          alt="GenZ"
+                          alt="Vitamind"
                         />
                       </Link>
                       <div className="content">
@@ -215,19 +219,28 @@ const MobileMenu = ({ openClass }) => {
                     <li>
                       <Link href="/account">Cài đặt tài khoản</Link>
                     </li>
+                    {isAdmin ? (
+                      <>
+                        <li>
+                          <Link href="/admin">Trang quản trị</Link>
+                        </li>
+                        <li>
+                          <Link href="/admin/database">Cơ sở dữ liệu</Link>
+                        </li>
+                      </>
+                    ) : null}
                     <li>
-                      <Link href="/logout">Đăng xuất</Link>
+                      <SignOutButton redirectUrl="/">
+                        <button type="button">Đăng xuất</button>
+                      </SignOutButton>
                     </li>
                   </ul>
                 </div>
               </SignedIn>
               <div className="site-copyright color-gray-400 mt-30">
-                Bản quyền 2026 © Genz - Mẫu blog cá nhân.
+                Bản quyền 2026 © Vitamind.
                 <br />
-                Thiết kế bởi
-                <Link href="http://alithemes.com" target="_blank">
-                  &nbsp; AliThemes
-                </Link>
+                Nền tảng nội dung và sản phẩm công nghệ thực tế.
               </div>
             </div>
           </div>

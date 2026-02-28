@@ -25,7 +25,7 @@ const PopularCategories = () => {
                       width={32}
                       height={32}
                       src={`/assets/imgs/page/homepage1/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                   </Link>
                 </div>

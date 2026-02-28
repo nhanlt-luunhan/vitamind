@@ -26,7 +26,7 @@ const Sidebar = ({ openClass }) => {
                         width={64}
                         height={64}
                         src={`/assets/imgs/page/healthy/${item.img}`}
-                        alt="Genz"
+                        alt="Vitamind"
                       />
                     </Link>
                   </div>
@@ -62,7 +62,7 @@ const Sidebar = ({ openClass }) => {
                       width={32}
                       height={32}
                       src={`/assets/imgs/page/homepage1/${item.authorAvata}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                     <div className="author-info">
                       <span className="d-block color-gray-700 text-sm">{item.authorName}</span>
@@ -77,7 +77,12 @@ const Sidebar = ({ openClass }) => {
         <div className="box-sidebar bg-gray-850 border-gray-800">
           <div className="head-sidebar">
             <Link href="/">
-              <Image width={116} height={36} src="/assets/imgs/template/logo.svg" alt="Genz" />
+              <Image
+                width={194}
+                height={36}
+                src="/assets/imgs/template/LOGO-H-VITAMIND.png"
+                alt="Vitamind"
+              />
             </Link>
             <h6 className="color-gray-700">Theo dõi chúng tôi trên Instagram</h6>
           </div>
@@ -95,7 +100,7 @@ const Sidebar = ({ openClass }) => {
                       height={80}
                       className="bdrd-8"
                       src={`/assets/imgs/page/homepage1/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                   </Link>
                 </div>

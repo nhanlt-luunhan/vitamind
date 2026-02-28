@@ -19,7 +19,7 @@ export default function NotFound() {
                           width={384}
                           height={360}
                           src="/assets/imgs/page/404/404.svg"
-                          alt="Genz"
+                          alt="Vitamind"
                         />
                       </div>
                     </div>

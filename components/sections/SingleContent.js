@@ -38,7 +38,7 @@ const SingleContent = () => {
           </h3>
           <div className="d-inline-block mt-40">
             <div className="box-author">
-              <Image width={48} height={48} src="/assets/imgs/page/about/author2.png" alt="Genz" />
+              <Image width={48} height={48} src="/assets/imgs/page/about/author2.png" alt="Vitamind" />
               <div className="author-info">
                 <h6 className="color-gray-700">Lưu Nhân</h6>
               </div>
@@ -153,7 +153,7 @@ const SingleContent = () => {
                   width={48}
                   height={48}
                   src="/assets/imgs/page/single/author.png"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
                 <div className="author-info">
                   <h6 className="color-gray-700">Tuấn Kiệt</h6>
@@ -174,7 +174,7 @@ const SingleContent = () => {
                   width={48}
                   height={48}
                   src="/assets/imgs/page/single/author2.png"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
                 <div className="author-info">
                   <h6 className="color-gray-700">Ngọc Lan</h6>
@@ -195,7 +195,7 @@ const SingleContent = () => {
                   width={48}
                   height={48}
                   src="/assets/imgs/page/single/author3.png"
-                  alt="Genz"
+                  alt="Vitamind"
                 />
                 <div className="author-info">
                   <h6 className="color-gray-700">Hải Nam</h6>

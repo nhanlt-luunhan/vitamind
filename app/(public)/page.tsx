@@ -11,14 +11,12 @@ export default function Home() {
     <Layout>
       <div className="cover-home1">
         <div className="container">
-          <div className="row">
-            <div className="col-xl-1" />
-            <div className="col-xl-10 col-lg-12">
+          <div className="home-stage">
               <Hero1 />
               <HotTopic />
               <EditorPicked />
               <PopularCategories />
-              <div className="row mt-70">
+              <div className="row home-stage__content">
                 <div className="col-lg-8">
                   <RecentPosts />
                 </div>
@@ -26,7 +24,6 @@ export default function Home() {
                   <Sidebar openClass="" />
                 </div>
               </div>
-            </div>
           </div>
         </div>
       </div>

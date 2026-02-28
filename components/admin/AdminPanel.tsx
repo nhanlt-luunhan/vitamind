@@ -16,6 +16,7 @@ type UserRow = {
   email: string;
   name: string | null;
   display_name: string | null;
+  gid: string | null;
   role: string | null;
   status: string | null;
   avatar_url: string | null;
@@ -97,6 +98,26 @@ const normalizeRole = (role?: string | null): Role => {
   return "viewer";
 };
 
+const formatRoleLabel = (role?: string | null) => {
+  if (role === "admin") return "Admin";
+  if (role === "editor") return "Biên tập";
+  return "Xem";
+};
+
+const formatStatusLabel = (status?: string | null) => {
+  if (status === "disabled" || status === "blocked") return "Bị khóa";
+  if (status === "active" || !status) return "Hoạt động";
+  if (status === "published") return "Đã xuất bản";
+  if (status === "archived") return "Lưu trữ";
+  if (status === "draft") return "Bản nháp";
+  if (status === "paid") return "Đã thanh toán";
+  if (status === "shipping") return "Đang giao";
+  if (status === "done") return "Hoàn tất";
+  if (status === "cancelled") return "Đã hủy";
+  if (status === "new") return "Mới";
+  return status;
+};
+
 const formatDate = (value?: string | null) => {
   if (!value) return "-";
   const date = new Date(value);
@@ -143,24 +164,107 @@ const exportCsv = (name: string, rows: Array<Record<string, unknown>>) => {
   URL.revokeObjectURL(url);
 };
 
-export function AdminPanel({ user }: { user: SessionUser }) {
+type AdminWorkspaceMetric = {
+  label: string;
+  value: string;
+  note: string;
+};
+
+function AdminWorkspaceBanner({
+  eyebrow,
+  title,
+  description,
+  metrics,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  metrics: AdminWorkspaceMetric[];
+}) {
+  return (
+    <div className="admin-workspace-banner">
+      <div className="admin-workspace-banner__copy">
+        <span className="admin-workspace-banner__eyebrow">{eyebrow}</span>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+      <div className="admin-workspace-banner__metrics">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="admin-workspace-metric">
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+            <small>{metric.note}</small>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export type AdminTabKey = "users" | "products" | "orders" | "blog" | "media" | "audit";
+
+export function AdminPanel({
+  user,
+  initialTab,
+  showSidebar = true,
+}: {
+  user: SessionUser;
+  initialTab?: AdminTabKey;
+  showSidebar?: boolean;
+}) {
   const role = normalizeRole(user.role);
   const canAdmin = roleRank[role] >= roleRank.admin;
   const canEdit = roleRank[role] >= roleRank.editor;
   const canView = roleRank[role] >= roleRank.viewer;
 
-  const [activeTab, setActiveTab] = useState<
-    "users" | "products" | "orders" | "blog" | "media" | "audit"
-  >("users");
+  const [activeTab, setActiveTab] = useState<AdminTabKey>(initialTab ?? "users");
 
   const tabs = [
-    { key: "users", label: "Người dùng", visible: canAdmin },
-    { key: "products", label: "Sản phẩm", visible: canView },
-    { key: "orders", label: "Đơn hàng", visible: canView },
-    { key: "blog", label: "Blog", visible: canView },
-    { key: "media", label: "Media", visible: canView },
-    { key: "audit", label: "Audit", visible: canAdmin },
+    {
+      key: "users",
+      label: "Người dùng",
+      visible: canAdmin,
+      description: "Phân quyền, trạng thái và vai trò truy cập.",
+    },
+    {
+      key: "products",
+      label: "Sản phẩm",
+      visible: canView,
+      description: "Danh mục thương mại, giá và khả năng xuất nhập dữ liệu.",
+    },
+    {
+      key: "orders",
+      label: "Đơn hàng",
+      visible: canView,
+      description: "Vận hành và cập nhật trạng thái cho giao dịch.",
+    },
+    {
+      key: "blog",
+      label: "Blog",
+      visible: canView,
+      description: "Nội dung, metadata và trạng thái phát hành bài viết.",
+    },
+    {
+      key: "media",
+      label: "Thư viện",
+      visible: canView,
+      description: "Tài nguyên hình ảnh và tệp tải lên.",
+    },
+    {
+      key: "audit",
+      label: "Nhật ký",
+      visible: canAdmin,
+      description: "Lịch sử thao tác và truy vết thay đổi quan trọng.",
+    },
   ].filter((tab) => tab.visible);
+
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [activeTab, initialTab]);
+
+  const activeWorkspace = tabs.find((tab) => tab.key === activeTab) ?? tabs[0];
 
   useEffect(() => {
     if (tabs.length && !tabs.find((tab) => tab.key === activeTab)) {
@@ -170,25 +274,59 @@ export function AdminPanel({ user }: { user: SessionUser }) {
 
   return (
     <div className="admin-shell mt-40">
-      <div className="admin-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={`admin-tab ${activeTab === tab.key ? "active" : ""}`}
-            type="button"
-            onClick={() => setActiveTab(tab.key as typeof activeTab)}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="admin-workspace-overview">
+        <div className="admin-workspace-overview__copy">
+          <span className="admin-workspace-overview__eyebrow">Phân khu đang hoạt động</span>
+          <h3>{activeWorkspace?.label ?? "Không khả dụng"}</h3>
+          <p>
+            {activeWorkspace?.description ??
+              "Không tìm thấy phân khu phù hợp với quyền truy cập hiện tại."}
+          </p>
+        </div>
+        <div className="admin-workspace-overview__meta">
+          <div className="admin-workspace-overview__chip">
+            <span>Vai trò</span>
+            <strong>{formatRoleLabel(role)}</strong>
+          </div>
+          <div className="admin-workspace-overview__chip">
+            <span>Tab đang mở</span>
+            <strong>{tabs.length}</strong>
+          </div>
+          <div className="admin-workspace-overview__chip">
+            <span>Chế độ</span>
+            <strong>{canAdmin ? "Quản trị" : canEdit ? "Biên tập" : "Quan sát"}</strong>
+          </div>
+        </div>
       </div>
 
-      {activeTab === "users" && canAdmin ? <UsersTab canManage={canAdmin} /> : null}
-      {activeTab === "products" ? <ProductsTab canEdit={canEdit} /> : null}
-      {activeTab === "orders" ? <OrdersTab canEdit={canAdmin} /> : null}
-      {activeTab === "blog" ? <BlogTab canEdit={canEdit} /> : null}
-      {activeTab === "media" ? <MediaTab canEdit={canEdit} /> : null}
-      {activeTab === "audit" && canAdmin ? <AuditTab /> : null}
+      <div className={`admin-stage ${showSidebar ? "" : "admin-stage--single"}`}>
+        {showSidebar ? (
+          <aside className="admin-stage__sidebar">
+            <div className="admin-tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  className={`admin-tab ${activeTab === tab.key ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                >
+                  <strong>{tab.label}</strong>
+                  <span>{tab.description}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        ) : null}
+
+        <div className="admin-stage__content">
+          {activeTab === "users" && canAdmin ? <UsersTab canManage={canAdmin} /> : null}
+          {activeTab === "products" ? <ProductsTab canEdit={canEdit} /> : null}
+          {activeTab === "orders" ? <OrdersTab canEdit={canAdmin} /> : null}
+          {activeTab === "blog" ? <BlogTab canEdit={canEdit} /> : null}
+          {activeTab === "media" ? <MediaTab canEdit={canEdit} /> : null}
+          {activeTab === "audit" && canAdmin ? <AuditTab /> : null}
+        </div>
+      </div>
 
       {!canView ? (
         <div className="admin-panel mt-30">
@@ -227,13 +365,36 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     if (!search.trim()) return users;
     const term = search.toLowerCase();
     return users.filter((user) =>
-      [user.email, user.name, user.display_name, user.role, user.status].some((value) =>
+      [user.email, user.name, user.display_name, user.gid, user.role, user.status].some((value) =>
         String(value ?? "")
           .toLowerCase()
           .includes(term),
       ),
     );
   }, [users, search]);
+
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng người dùng",
+        value: String(users.length),
+        note: "Tất cả tài khoản trong hệ thống.",
+      },
+      {
+        label: "Đang hiển thị",
+        value: String(filtered.length),
+        note: search.trim() ? "Đã lọc theo tìm kiếm hiện tại." : "Danh sách hiện tại.",
+      },
+      {
+        label: "Bị khóa",
+        value: String(
+          users.filter((user) => ["blocked", "disabled"].includes(user.status ?? "")).length,
+        ),
+        note: "Tài khoản cần xem lại quyền truy cập.",
+      },
+    ],
+    [filtered.length, search, users],
+  );
 
   const handleSave = async () => {
     if (!editing) return;
@@ -278,6 +439,13 @@ function UsersTab({ canManage }: { canManage: boolean }) {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Điều phối người dùng"
+        title="Phân quyền là lớp nền tảng của khu quản trị."
+        description="Quản lý người dùng theo vai trò, trạng thái và khả năng truy cập. Mục này ưu tiên kiểm soát quyền hạn trước khi chỉnh dữ liệu."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
           <h4 className="color-white mb-5">Người dùng</h4>
@@ -286,7 +454,7 @@ function UsersTab({ canManage }: { canManage: boolean }) {
         <div className="admin-toolbar__actions">
           <input
             className="admin-input"
-            placeholder="Tìm theo email, tên, role"
+            placeholder="Tìm theo email, tên, GID, role"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -305,7 +473,8 @@ function UsersTab({ canManage }: { canManage: boolean }) {
               <th>Avatar</th>
               <th>Email</th>
               <th>Tên</th>
-              <th>Role</th>
+              <th>GID</th>
+              <th>Vai trò</th>
               <th>Trạng thái</th>
               <th>Tạo</th>
               <th></th>
@@ -314,29 +483,30 @@ function UsersTab({ canManage }: { canManage: boolean }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7}>Đang tải...</td>
+                <td colSpan={8}>Đang tải...</td>
               </tr>
             ) : null}
             {!loading && !filtered.length ? (
               <tr>
-                <td colSpan={7}>Chưa có dữ liệu.</td>
+                <td colSpan={8}>Chưa có dữ liệu.</td>
               </tr>
             ) : null}
             {filtered.map((row) => {
               const isEditing = editing?.id === row.id;
-                  const displayName = row.display_name ?? row.name ?? "-";
-                  const statusLabel = row.status === "disabled" ? "blocked" : row.status ?? "active";
+              const displayName = row.display_name ?? row.name ?? "-";
+              const statusLabel = formatStatusLabel(row.status);
               return (
                 <tr key={row.id}>
                   <td>
                     {row.avatar_url ? (
                       <img className="admin-media-thumb" src={row.avatar_url} alt="avatar" />
                     ) : (
-                      <span className="admin-badge">User</span>
+                      <span className="admin-badge">Người dùng</span>
                     )}
                   </td>
                   <td>{row.email}</td>
                   <td>{displayName}</td>
+                  <td>{row.gid ?? "-"}</td>
                   <td>
                     {isEditing ? (
                       <select
@@ -349,11 +519,13 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                         }
                       >
                         <option value="admin">Admin</option>
-                        <option value="editor">Editor</option>
-                        <option value="viewer">Viewer</option>
+                        <option value="editor">Biên tập</option>
+                        <option value="viewer">Xem</option>
                       </select>
                     ) : (
-                      <span className="admin-badge">{row.role ?? "viewer"}</span>
+                      <span className="admin-badge">
+                        {formatRoleLabel(row.role)}
+                      </span>
                     )}
                   </td>
                   <td>
@@ -371,8 +543,8 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                           )
                         }
                       >
-                        <option value="active">Active</option>
-                        <option value="blocked">Blocked</option>
+                        <option value="active">Hoạt động</option>
+                        <option value="blocked">Bị khóa</option>
                       </select>
                     ) : (
                       statusLabel
@@ -455,6 +627,27 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         .some((value) => value.includes(term)),
     );
   }, [products, search]);
+
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng sản phẩm",
+        value: String(products.length),
+        note: "Toàn bộ SKU hiện có trong kho dữ liệu.",
+      },
+      {
+        label: "Đang hiển thị",
+        value: String(filtered.length),
+        note: search.trim() ? "Kết quả sau khi lọc." : "Toàn bộ danh sách.",
+      },
+      {
+        label: "Đã xuất bản",
+        value: String(products.filter((row) => row.status === "published").length),
+        note: "Sản phẩm đang sẵn sàng hiển thị.",
+      },
+    ],
+    [filtered.length, products, search],
+  );
 
   const handleCreate = async () => {
     if (!canEdit) return;
@@ -552,6 +745,13 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Trung tâm danh mục"
+        title="Sản phẩm cần được điều phối như một kho hiển thị trực tiếp."
+        description="Khu này gom tạo mới, nhập CSV và cập nhật giá trị trình bày. Bố cục ưu tiên thao tác nhanh và khả năng rà soát."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
           <h4 className="color-white mb-5">Sản phẩm</h4>
@@ -562,7 +762,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         <div className="admin-toolbar__actions">
           <input
             className="admin-input"
-            placeholder="Tìm theo tên, SKU, category"
+            placeholder="Tìm theo tên, SKU, danh mục"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -615,9 +815,9 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
             value={form.status}
             onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
           >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
+            <option value="draft">Bản nháp</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="archived">Lưu trữ</option>
           </select>
           <Button unstyled className="btn btn-linear" type="button" onClick={handleCreate}>
             Thêm sản phẩm
@@ -724,12 +924,12 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
                           )
                         }
                       >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
+                        <option value="draft">Bản nháp</option>
+                        <option value="published">Đã xuất bản</option>
+                        <option value="archived">Lưu trữ</option>
                       </select>
                     ) : (
-                      (row.status ?? "draft")
+                      formatStatusLabel(row.status)
                     )}
                   </td>
                   <td>{formatDate(row.updated_at ?? row.created_at)}</td>
@@ -767,7 +967,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
                         </>
                       )
                     ) : (
-                      <span className="text-sm color-gray-500">Read-only</span>
+                      <span className="text-sm color-gray-500">Chỉ xem</span>
                     )}
                   </td>
                 </tr>
@@ -821,6 +1021,27 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
     );
   }, [orders, search]);
 
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng đơn",
+        value: String(orders.length),
+        note: "Toàn bộ giao dịch trong bộ vận hành.",
+      },
+      {
+        label: "Đang hiển thị",
+        value: String(filtered.length),
+        note: search.trim() ? "Đã rút gọn theo bộ lọc." : "Danh sách giao dịch hiện tại.",
+      },
+      {
+        label: "Cần xử lý",
+        value: String(orders.filter((row) => ["new", "paid", "shipping"].includes(row.status ?? "")).length),
+        note: "Đơn hàng còn trong luồng vận hành.",
+      },
+    ],
+    [filtered.length, orders, search],
+  );
+
   const handleCreate = async () => {
     if (!canEdit) return;
     setError(null);
@@ -868,6 +1089,13 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Điều hành giao dịch"
+        title="Đơn hàng là phân khu vận hành, không chỉ là một bảng dữ liệu."
+        description="Theo dõi dòng giao dịch, cập nhật trạng thái và giữ góc nhìn tổng quan về những đơn chưa hoàn thành."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
           <h4 className="color-white mb-5">Đơn hàng</h4>
@@ -890,25 +1118,25 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
         <div className="admin-form-grid mt-20">
           <input
             className="admin-input"
-            placeholder="User ID (optional)"
+            placeholder="ID người dùng (không bắt buộc)"
             value={form.user_id}
             onChange={(event) => setForm((prev) => ({ ...prev, user_id: event.target.value }))}
           />
           <input
             className="admin-input"
-            placeholder="Items JSON"
+            placeholder="JSON sản phẩm"
             value={form.items}
             onChange={(event) => setForm((prev) => ({ ...prev, items: event.target.value }))}
           />
           <input
             className="admin-input"
-            placeholder="Subtotal"
+            placeholder="Tạm tính"
             value={form.subtotal}
             onChange={(event) => setForm((prev) => ({ ...prev, subtotal: event.target.value }))}
           />
           <input
             className="admin-input"
-            placeholder="Shipping"
+            placeholder="Phí vận chuyển"
             value={form.shipping}
             onChange={(event) => setForm((prev) => ({ ...prev, shipping: event.target.value }))}
           />
@@ -917,11 +1145,11 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
             value={form.status}
             onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}
           >
-            <option value="new">New</option>
-            <option value="paid">Paid</option>
-            <option value="shipping">Shipping</option>
-            <option value="done">Done</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="new">Mới</option>
+            <option value="paid">Đã thanh toán</option>
+            <option value="shipping">Đang giao</option>
+            <option value="done">Hoàn tất</option>
+            <option value="cancelled">Đã hủy</option>
           </select>
           <Button unstyled className="btn btn-linear" type="button" onClick={handleCreate}>
             Tạo đơn
@@ -936,9 +1164,9 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
           <thead>
             <tr>
               <th>Mã</th>
-              <th>User</th>
+              <th>Người dùng</th>
               <th>Tạm tính</th>
-              <th>Shipping</th>
+              <th>Vận chuyển</th>
               <th>Trạng thái</th>
               <th>Ngày</th>
               <th></th>
@@ -974,14 +1202,14 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
                           )
                         }
                       >
-                        <option value="new">New</option>
-                        <option value="paid">Paid</option>
-                        <option value="shipping">Shipping</option>
-                        <option value="done">Done</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="new">Mới</option>
+                        <option value="paid">Đã thanh toán</option>
+                        <option value="shipping">Đang giao</option>
+                        <option value="done">Hoàn tất</option>
+                        <option value="cancelled">Đã hủy</option>
                       </select>
                     ) : (
-                      (row.status ?? "new")
+                      formatStatusLabel(row.status)
                     )}
                   </td>
                   <td>{formatDate(row.created_at)}</td>
@@ -1010,7 +1238,7 @@ function OrdersTab({ canEdit }: { canEdit: boolean }) {
                         </button>
                       )
                     ) : (
-                      <span className="text-sm color-gray-500">Read-only</span>
+                      <span className="text-sm color-gray-500">Chỉ xem</span>
                     )}
                   </td>
                 </tr>
@@ -1056,6 +1284,27 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
         .some((value) => value.includes(term)),
     );
   }, [posts, search]);
+
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng bài viết",
+        value: String(posts.length),
+        note: "Số bài đang quản lý trong CMS dạng tệp.",
+      },
+      {
+        label: "Đang hiển thị",
+        value: String(filtered.length),
+        note: search.trim() ? "Kết quả theo bộ lọc hiện tại." : "Tất cả bài đăng tải.",
+      },
+      {
+        label: "Đã xuất bản",
+        value: String(posts.filter((post) => post.published).length),
+        note: "Bài đăng đã mở cho người dùng.",
+      },
+    ],
+    [filtered.length, posts, search],
+  );
 
   const handleCreate = async () => {
     if (!canEdit) return;
@@ -1117,6 +1366,13 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Bàn biên tập"
+        title="Blog trong admin được xem như một bàn xuất bản."
+        description="Tập trung vào metadata và trạng thái xuất bản. Không đẩy người vận hành vào một biểu mẫu quá tải."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
           <h4 className="color-white mb-5">Blog</h4>
@@ -1234,13 +1490,13 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
                           )
                         }
                       >
-                        <option value="published">Published</option>
-                        <option value="draft">Draft</option>
+                        <option value="published">Đã xuất bản</option>
+                        <option value="draft">Bản nháp</option>
                       </select>
                     ) : row.published ? (
-                      "Published"
+                      "Đã xuất bản"
                     ) : (
-                      "Draft"
+                      "Bản nháp"
                     )}
                   </td>
                   <td>{formatDate(row.updated_at ?? row.created_at)}</td>
@@ -1278,7 +1534,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
                         </>
                       )
                     ) : (
-                      <span className="text-sm color-gray-500">Read-only</span>
+                      <span className="text-sm color-gray-500">Chỉ xem</span>
                     )}
                   </td>
                 </tr>
@@ -1313,6 +1569,27 @@ function MediaTab({ canEdit }: { canEdit: boolean }) {
     loadMedia();
   }, []);
 
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng tệp",
+        value: String(media.length),
+        note: "Toàn bộ tài nguyên đã được đưa vào thư viện.",
+      },
+      {
+        label: "Hình ảnh",
+        value: String(media.filter((item) => item.type?.startsWith("image/")).length),
+        note: "Tài nguyên hình ảnh sẵn sàng sử dụng.",
+      },
+      {
+        label: "Tệp khác",
+        value: String(media.filter((item) => !item.type?.startsWith("image/")).length),
+        note: "PDF, video và các định dạng khác.",
+      },
+    ],
+    [media],
+  );
+
   const handleUpload = async (file?: File | null) => {
     if (!file || !canEdit) return;
     setError(null);
@@ -1343,15 +1620,22 @@ function MediaTab({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Thư viện tài nguyên"
+        title="Thư viện media là kho kỹ thuật cần được theo dõi theo từng loại tài nguyên."
+        description="Bố cục ưu tiên preview, tải lên nhanh và khả năng dọn dẹp những tài nguyên không còn cần thiết."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
-          <h4 className="color-white mb-5">Media</h4>
+          <h4 className="color-white mb-5">Thư viện</h4>
           <p className="text-sm color-gray-500">Upload và quản lý tài nguyên hình ảnh / file.</p>
         </div>
         <div className="admin-toolbar__actions">
           {canEdit ? (
             <label className="btn btn-admin-outline">
-              Upload
+              Tải lên
               <input
                 className="admin-file"
                 type="file"
@@ -1413,7 +1697,7 @@ function MediaTab({ canEdit }: { canEdit: boolean }) {
                         Xoá
                       </button>
                     ) : (
-                      <span className="text-sm color-gray-500">Read-only</span>
+                      <span className="text-sm color-gray-500">Chỉ xem</span>
                     )}
                   </td>
                 </tr>
@@ -1503,6 +1787,27 @@ function AuditTab() {
     return list;
   }, [rows, filters]);
 
+  const metrics = useMemo(
+    () => [
+      {
+        label: "Tổng nhật ký",
+        value: String(rows.length),
+        note: "Toàn bộ bản ghi truy vết trong phiên hiện tại.",
+      },
+      {
+        label: "Đang lọc",
+        value: String(filtered.length),
+        note: "Số dòng còn lại sau bộ điều kiện.",
+      },
+      {
+        label: "Nhóm bảng",
+        value: String(tables.length),
+        note: "Số vùng dữ liệu đang được theo dõi.",
+      },
+    ],
+    [filtered.length, rows.length, tables.length],
+  );
+
   const formatDateTime = (value: string) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
@@ -1514,9 +1819,16 @@ function AuditTab() {
 
   return (
     <div className="admin-panel mt-30">
+      <AdminWorkspaceBanner
+        eyebrow="Dòng truy vết"
+        title="Nhật ký kiểm soát được tách thành một vùng truy vết riêng."
+        description="Giữ cho thao tác kiểm soát có bộ lọc rõ ràng, để tìm thấy biến động thay vì đọc một bảng dài."
+        metrics={metrics}
+      />
+
       <div className="admin-toolbar">
         <div>
-          <h4 className="color-white mb-5">Audit log</h4>
+          <h4 className="color-white mb-5">Nhật ký hệ thống</h4>
           <p className="text-sm color-gray-500">Theo dõi các thay đổi quan trọng trong admin.</p>
         </div>
         <div className="admin-toolbar__actions">
@@ -1578,7 +1890,7 @@ function AuditTab() {
           <option value="asc">Cũ nhất</option>
         </select>
         <button className="btn btn-admin-outline" onClick={resetFilters} type="button">
-          Reset
+          Đặt lại
         </button>
       </div>
 

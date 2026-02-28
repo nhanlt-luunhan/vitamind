@@ -137,7 +137,7 @@ const PortfolioFilter = ({ col, show }) => {
                             width={525}
                             height={510}
                             src={`/assets/imgs/page/about/${item.img}`}
-                            alt="Genz"
+                            alt="Vitamind"
                           />
                           <div className="card-info card-bg-2">
                             <div className="info-bottom mb-15">

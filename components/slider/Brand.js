@@ -99,7 +99,7 @@ const Brand = () => {
                 width={205}
                 height={48}
                 src={`/assets/imgs/page/homepage3/${item.img}`}
-                alt="Genz"
+                alt="Vitamind"
               />
             </Link>
           </SwiperSlide>

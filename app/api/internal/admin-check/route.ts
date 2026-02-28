@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db/admin-db";
+import { syncClerkUserById } from "@/lib/auth/clerk-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,12 @@ export async function POST(request: Request) {
   const clerkUserId = request.headers.get("x-clerk-user-id");
   if (!clerkUserId) {
     return NextResponse.json({ error: "Missing user" }, { status: 400 });
+  }
+
+  try {
+    await syncClerkUserById(clerkUserId);
+  } catch {
+    // Continue with the latest internal snapshot if Clerk is unreachable.
   }
 
   const { rows } = await query<UserRow>(

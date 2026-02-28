@@ -91,7 +91,7 @@ const TrendingTopic = () => {
                       width={190}
                       height={235}
                       src={`/assets/imgs/page/homepage1/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
 
                     <div className="card-info">

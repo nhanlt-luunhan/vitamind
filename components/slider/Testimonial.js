@@ -101,7 +101,7 @@ const Testimonial = () => {
                       width={48}
                       height={48}
                       src={`/assets/imgs/page/about/${item.img}`}
-                      alt="Genz"
+                      alt="Vitamind"
                     />
                     <div className="author-info">
                       <h6 className="color-gray-700">{item.name}</h6>

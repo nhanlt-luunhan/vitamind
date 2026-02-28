@@ -5,9 +5,11 @@ import "swiper/css/pagination";
 import "@/public/assets/css/style.trim.css";
 import "./globals.css";
 
+import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { getSiteUrl } from "@/lib/utils/site-url";
 
 const beVietnam = localFont({
   variable: "--font-sans",
@@ -36,9 +38,47 @@ const beVietnam = localFont({
   display: "swap",
 });
 
-export const metadata = {
-  title: "Vitamind - Blog cá nhân",
-  description: "Mẫu blog cá nhân sáng tạo",
+const siteUrl = getSiteUrl();
+const siteName = "Vitamind";
+const siteTitle = "Vitamind - Blog cá nhân";
+const siteDescription =
+  "Chia sẻ bài viết, dự án Raspberry Pi, tự động hóa và các sản phẩm công nghệ thực tế.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteTitle,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "vi_VN",
+    siteName,
+    title: siteTitle,
+    description: siteDescription,
+    url: siteUrl,
+    images: [
+      {
+        url: "/assets/imgs/template/LOGO-H-VITAMIND.png",
+        alt: siteName,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+    images: ["/assets/imgs/template/LOGO-H-VITAMIND.png"],
+  },
+  icons: {
+    icon: "/assets/imgs/template/favicon.svg",
+    shortcut: "/assets/imgs/template/favicon.svg",
+    apple: "/assets/imgs/template/FAVICON_LARGE.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

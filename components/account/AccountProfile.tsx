@@ -8,7 +8,9 @@ import { Button } from "@/components/ui";
 export type AccountUser = {
   id: string;
   email: string;
+  contact_email: string | null;
   name: string | null;
+  gid: string | null;
   phone: string | null;
   bio: string | null;
   location: string | null;
@@ -34,6 +36,8 @@ export function AccountProfile({ user }: Props) {
   const { user: clerkUser, isLoaded } = useUser();
   const [profile, setProfile] = useState({
     name: user.name ?? "",
+    contactEmail: user.contact_email ?? user.email ?? "",
+    gid: user.gid ?? "",
     phone: user.phone ?? "",
     location: user.location ?? "",
     company: user.company ?? "",
@@ -82,6 +86,8 @@ export function AccountProfile({ user }: Props) {
     if (updated) {
       setProfile({
         name: updated.name ?? "",
+        contactEmail: updated.contact_email ?? updated.email ?? "",
+        gid: updated.gid ?? "",
         phone: updated.phone ?? "",
         location: updated.location ?? "",
         company: updated.company ?? "",
@@ -136,8 +142,8 @@ export function AccountProfile({ user }: Props) {
   };
 
   return (
-    <div className="row mt-40">
-      <div className="col-lg-4">
+    <div className="account-profile">
+      <aside className="account-profile__summary">
         <div className="account-card">
           <div className="account-avatar">
             {avatarUrl ? (
@@ -146,8 +152,15 @@ export function AccountProfile({ user }: Props) {
               <div className="account-avatar__fallback">{getInitial(user)}</div>
             )}
           </div>
-          <h4 className="color-white mb-5">{profile.name || "Chưa đặt tên"}</h4>
-          <p className="color-gray-500 mb-0">{user.email}</p>
+          <div className="account-summary-text">
+            <h4 className="color-white mb-5">{profile.name || "Chưa đặt tên"}</h4>
+            <p className="color-gray-500 mb-0">{profile.contactEmail || user.email}</p>
+            {profile.gid ? (
+              <p className="color-gray-500 mb-0">
+                <span className="color-white">{profile.gid}</span>
+              </p>
+            ) : null}
+          </div>
           <div className="account-upload mt-20">
             <label className="btn btn-linear w-100">
               <input
@@ -158,94 +171,97 @@ export function AccountProfile({ user }: Props) {
               />
               {uploading ? "Đang tải ảnh..." : "Tải ảnh đại diện"}
             </label>
-            <p className="text-sm color-gray-500 mt-10">JPG/PNG/WebP/GIF, tối đa 2MB.</p>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <div className="col-lg-8">
+      <section className="account-profile__main">
         <div className="account-card">
           <h4 className="color-white mb-10">Thông tin cá nhân</h4>
-          <p className="text-sm color-gray-500 mb-20">
-            Cập nhật thông tin để hồ sơ luôn mới và dễ liên hệ.
-          </p>
 
           <form onSubmit={handleSubmit}>
-            <div className="row">
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Họ và tên</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={profile.name}
-                    onChange={handleChange("name")}
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
+            <div className="account-form-grid">
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Họ và tên</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.name}
+                  onChange={handleChange("name")}
+                  placeholder="Nguyễn Văn A"
+                />
               </div>
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Email</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={user.email}
-                    disabled
-                  />
-                </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Email đăng nhập</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={user.email}
+                  disabled
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Gmail liên hệ</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.contactEmail}
+                  onChange={handleChange("contactEmail")}
+                  placeholder="ban@gmail.com"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">GID</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.gid}
+                  onChange={handleChange("gid")}
+                  placeholder="5015114132"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Số điện thoại</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.phone}
+                  onChange={handleChange("phone")}
+                  placeholder="0901 234 567"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Khu vực</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.location}
+                  onChange={handleChange("location")}
+                  placeholder="TP. Hồ Chí Minh"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Công ty</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.company}
+                  onChange={handleChange("company")}
+                  placeholder="Tên công ty"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="color-gray-700 text-sm mb-10 d-block">Website</label>
+                <input
+                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
+                  value={profile.website}
+                  onChange={handleChange("website")}
+                  placeholder="https://domain.com"
+                />
               </div>
             </div>
 
-            <div className="row">
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Số điện thoại</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={profile.phone}
-                    onChange={handleChange("phone")}
-                    placeholder="0901 234 567"
-                  />
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Khu vực</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={profile.location}
-                    onChange={handleChange("location")}
-                    placeholder="TP. Hồ Chí Minh"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="row">
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Công ty</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={profile.company}
-                    onChange={handleChange("company")}
-                    placeholder="Tên công ty"
-                  />
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="form-group">
-                  <label className="color-gray-700 text-sm mb-10 d-block">Website</label>
-                  <input
-                    className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                    value={profile.website}
-                    onChange={handleChange("website")}
-                    placeholder="https://domain.com"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
+            <div className="form-group account-form-grid__full">
               <label className="color-gray-700 text-sm mb-10 d-block">Giới thiệu ngắn</label>
               <textarea
                 className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
@@ -266,7 +282,7 @@ export function AccountProfile({ user }: Props) {
             </div>
           </form>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

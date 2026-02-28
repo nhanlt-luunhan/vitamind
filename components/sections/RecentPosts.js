@@ -21,7 +21,7 @@ const RecentPosts = () => {
                   width={270}
                   height={257}
                   src={`/assets/imgs/page/healthy/${item.img}`}
-                  alt="Genz"
+                  alt="Vitamind"
                 />
               </Link>
             </div>
