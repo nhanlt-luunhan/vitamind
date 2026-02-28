@@ -3,6 +3,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
 const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
+const internalApiBaseUrl =
+  process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
@@ -34,7 +36,7 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
 
-    const checkUrl = new URL("/api/internal/admin-check", req.url);
+    const checkUrl = new URL("/api/internal/admin-check", internalApiBaseUrl);
     const res = await fetch(checkUrl, {
       method: "POST",
       headers: {

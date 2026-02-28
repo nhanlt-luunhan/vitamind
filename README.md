@@ -24,13 +24,14 @@ npm install
 docker compose up -d db
 ```
 
-3. Create `.env.local` from `.env.example` and set:
+3. Create `.env.local` from `.env.example` and set local development values:
 
 - `DATABASE_URL`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-- `CLERK_SECRET_KEY`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_test_...`)
+- `CLERK_SECRET_KEY` (`sk_test_...`)
 - `CLERK_WEBHOOK_SIGNING_SECRET`
 - `INTERNAL_API_SECRET`
+- `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
 
 4. Run dev server:
 
@@ -40,9 +41,17 @@ npm run dev
 
 App will be available at `http://localhost:3333`.
 
+Clerk local development should use a separate development/test instance from production.
+Do not reuse `pk_live` / `sk_live` in `.env.local`.
+
 ## Production (Synology Docker)
 
-1. Update `.env.docker` with production values.
+1. Update `.env.docker` with production values:
+
+- `SITE_URL=https://app.vitamind.com.vn`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (`pk_live_...`)
+- `CLERK_SECRET_KEY` (`sk_live_...`)
+- `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
 2. Build and run:
 
 ```bash
