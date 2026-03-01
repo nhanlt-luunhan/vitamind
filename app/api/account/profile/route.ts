@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
+import { GID_RULE_MESSAGE, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +26,6 @@ type ProfileRow = {
 
 const normalizeText = (value: unknown) => {
   const text = String(value ?? "").trim();
-  return text.length ? text : null;
-};
-
-const normalizeGid = (value: unknown) => {
-  const text = String(value ?? "")
-    .trim()
-    .toUpperCase();
   return text.length ? text : null;
 };
 
@@ -70,9 +64,6 @@ export async function PUT(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!user.clerk_user_id) {
-    return NextResponse.json({ error: "Missing Clerk user" }, { status: 400 });
-  }
 
   const body = await request.json().catch(() => null);
   if (!body) {
@@ -82,13 +73,17 @@ export async function PUT(request: Request) {
   const name = normalizeText(body.name);
   const contactEmail = normalizeText(body.contactEmail);
   const phone = normalizeText(body.phone);
+  const rawGid = sanitizeGid(body.gid);
   const gid = normalizeGid(body.gid);
   const bio = normalizeText(body.bio);
   const location = normalizeText(body.location);
   const company = normalizeText(body.company);
   const website = normalizeText(body.website);
-
   const { firstName, lastName } = splitName(name);
+
+  if (rawGid && !gid) {
+    return NextResponse.json({ error: GID_RULE_MESSAGE }, { status: 400 });
+  }
 
   const { rows, error } = await query<ProfileRow>(
     `update users
@@ -116,6 +111,10 @@ export async function PUT(request: Request) {
 
   if (!rows[0]) {
     return NextResponse.json({ error: "Không cập nhật được tài khoản." }, { status: 500 });
+  }
+
+  if (!user.clerk_user_id) {
+    return NextResponse.json({ user: rows[0] });
   }
 
   const client = await clerkClient();

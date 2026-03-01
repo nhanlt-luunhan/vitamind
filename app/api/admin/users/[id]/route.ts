@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
 import { logAudit } from "@/lib/audit";
 import { normalizeRole, canManageUsers } from "@/lib/auth/rbac";
+import { processQueuedClerkDeletion, queueClerkUserDeletion } from "@/lib/auth/clerk-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -32,14 +33,14 @@ const normalizeStatus = (value: unknown) => {
 const syncClerkMetadata = async (clerkUserId: string | null, role: string, status: string) => {
   if (!clerkUserId) return;
   try {
-  const client = await clerkClient();
-  const current = await client.users.getUser(clerkUserId);
+    const client = await clerkClient();
+    const current = await client.users.getUser(clerkUserId);
     const publicMetadata = {
       ...(current.publicMetadata ?? {}),
       role,
       status,
     };
-  await client.users.updateUser(clerkUserId, { publicMetadata });
+    await client.users.updateUser(clerkUserId, { publicMetadata });
   } catch (error) {
     console.error("Failed to sync Clerk metadata", error);
   }
@@ -119,7 +120,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   if (id === currentUser?.id) {
     return NextResponse.json(
-      { error: "Không thể khóa tài khoản đang đăng nhập." },
+      { error: "Không thể xóa tài khoản đang đăng nhập." },
       { status: 400 },
     );
   }
@@ -136,23 +137,24 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Không tìm thấy user." }, { status: 404 });
   }
 
-  await query(
-    `update users
-     set status = 'blocked', updated_at = now()
-     where id = $1`,
-    [id],
-  );
+  if (existing.clerk_user_id) {
+    await queueClerkUserDeletion(existing.clerk_user_id, existing.email);
+  }
+
+  await query(`delete from users where id = $1`, [id]);
 
   await logAudit({
     actorUserId: currentUser?.id ?? null,
-    action: "block",
+    action: "delete",
     tableName: "users",
     recordId: id,
     before: existing,
-    after: { ...existing, status: "blocked" },
+    after: null,
   });
 
-  await syncClerkMetadata(existing.clerk_user_id, existing.role ?? "viewer", "blocked");
+  if (existing.clerk_user_id) {
+    await processQueuedClerkDeletion(existing.clerk_user_id).catch(() => null);
+  }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, deletedId: id });
 }

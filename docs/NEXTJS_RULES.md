@@ -36,7 +36,7 @@ Trang thai hien tai cua repo:
 
 - repo da dung App Router
 - co route group `(blog)`, `(public)`, `(shop)`
-- co route handlers cho `api`, `adminer`, `sitemap.xml`
+- co route handlers cho `api`, `sitemap.xml`
 
 ### 2. Server Components va Client Components
 
@@ -65,7 +65,7 @@ Next.js cho phep:
 Trang thai hien tai cua repo:
 
 - blog slug page dang dung `generateStaticParams` + `revalidate = 60`
-- search API va adminer proxy da danh dau `dynamic = "force-dynamic"`
+- search API da danh dau `dynamic = "force-dynamic"`
 - auth/admin flow phu thuoc user session nen thuoc nhom dynamic
 
 ### 4. Metadata, Image, Font
@@ -94,7 +94,7 @@ Docs hien tai da dung ten `proxy.ts` thay cho `middleware.ts`. Proxy dung de:
 Trang thai hien tai cua repo:
 
 - repo da dung `proxy.ts`
-- `proxy.ts` dang gate `/admin`, `/account`, `/adminer`
+- `proxy.ts` dang gate `/admin`, `/account`
 - Clerk auth va RBAC dang dat tai day va tai `lib/auth`
 
 ### 6. Self-hosting va standalone output
@@ -136,7 +136,7 @@ Trang thai hien tai cua repo:
 3. Khi route hoac handler phu thuoc session, cookie, header, query real-time hoac DB admin, phai chi ro y do:
    - `dynamic = "force-dynamic"` o segment/handler, hoac
    - `fetch(..., { cache: "no-store" })` cho request nhay cam
-4. Khong them cache ngam cho admin, Clerk, RBAC, Adminer proxy, profile, search.
+4. Khong them cache ngam cho admin, Clerk, RBAC, profile, search.
 5. Chi dung `revalidatePath` hoac `revalidateTag` khi co mutation va co du lieu dang duoc cache that su.
 6. Neu sau nay them `unstable_cache`, phai tach ro:
    - key cache
@@ -157,17 +157,12 @@ Trang thai hien tai cua repo:
 1. API moi dat trong `app/api/**/route.ts`.
 2. Chi dung `NextRequest`/`NextResponse` khi can API mo rong cua Next; neu khong can, uu tien Web API chuan.
 3. Route handler co auth/quyen noi bo phai xac thuc server-side, khong tin gia tri tu client.
-4. Proxy noi bo nhu `app/adminer/[[...adminerPath]]/route.ts` phai:
-   - preserve method
-   - preserve body khi can
-   - loc/ghi de header can thiet
-   - tu rewrite `location` neu backend redirect ve origin noi bo
 5. API tim kiem va API theo query user phai tranh cache sai. Duy tri dynamic/no-store.
 
 ### F. Proxy, auth, va RBAC
 
 1. Duy tri file `proxy.ts` theo convention moi cua Next.js. Khong tao lai `middleware.ts` moi.
-2. Gate `/admin`, `/account`, `/adminer`, va API nhay cam ngay tai proxy hoac helper server.
+2. Gate `/admin`, `/account`, va API nhay cam ngay tai proxy hoac helper server.
 3. Khi auth state phu thuoc Clerk session claims, phai co fallback server check nhu repo dang lam voi `/api/internal/admin-check`.
 4. Neu deployment di qua reverse proxy/container, khong hard-code loopback cho request auth noi bo neu origin public moi la duong dung.
 
@@ -210,12 +205,6 @@ Trang thai hien tai cua repo:
 - Duy tri `dynamic = "force-dynamic"`.
 - Khong dua ket qua search va admin/product query vao cache mac dinh.
 
-### Adminer proxy
-
-- Giữ route handler proxy rieng trong App Router.
-- Khong expose origin noi bo ra ngoai.
-- Luon rewrite redirect header neu backend tra ve host noi bo.
-
 ### Auth UI
 
 - Shell `sign-in/sign-up` co the la client component, nhung auth completion va redirect can giu theo flow server-safe cua Clerk.
@@ -234,5 +223,5 @@ Trang thai hien tai cua repo:
 ## 5. Ghi chu quan trong cho repo nay
 
 - Next.js docs hien tai da nhan manh `proxy.ts` thay cho `middleware.ts`.
-- Trong App Router hien tai, `params` va mot so dynamic APIs duoc xu ly theo async model. Code moi nen follow kieu dang repo dang dung o blog page va adminer route.
+- Trong App Router hien tai, `params` va mot so dynamic APIs duoc xu ly theo async model. Code moi nen follow kieu dang repo dang dung o blog page.
 - Khong dua quy tac cache chung chung vao admin/auth. O repo nay, do chinh xac cua session va RBAC quan trong hon toi uu cache.

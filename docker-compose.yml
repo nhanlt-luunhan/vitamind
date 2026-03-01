@@ -73,15 +73,24 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  adminer:
-    image: adminer
+  pgadmin:
+    image: dpage/pgadmin4:9
     profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@vitamind.com.vn}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change-me-pgadmin}
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
     ports:
-      - "127.0.0.1:33808:8080"
+      - "${PGADMIN_BIND_IP:-127.0.0.1}:${PGADMIN_PORT:-35050}:80"
     depends_on:
       - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
     restart: unless-stopped
-    mem_limit: 128m
+    mem_limit: 256m
 
 volumes:
   db_data:
+  pgadmin_data:

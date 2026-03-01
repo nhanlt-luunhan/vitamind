@@ -43,5 +43,22 @@ services:
       retries: 5
     restart: unless-stopped
 
+  pgadmin:
+    image: dpage/pgadmin4:9
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@vitamind.com.vn"
+      PGADMIN_DEFAULT_PASSWORD: "change-me-pgadmin"
+      PGADMIN_SERVER_JSON_FILE: "/pgadmin4/servers.json"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+    ports:
+      - "${PGADMIN_BIND_IP:-127.0.0.1}:${PGADMIN_PORT:-35050}:80"
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    restart: unless-stopped
+
 volumes:
   db_data:
+  pgadmin_data:

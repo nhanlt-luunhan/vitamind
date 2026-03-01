@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useSessionUser } from "@/components/auth/useSessionUser";
 import { createBodyScrollLock, lockBodyScroll, unlockBodyScroll } from "@/lib/dom/bodyScrollLock";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
@@ -177,7 +177,8 @@ const createEmptySearchResults = () => ({
 
 const Header = ({ handleOpen, handleRemove, openClass }) => {
   const router = useRouter();
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
+  const { isLoaded: isAuthLoaded, isSignedIn } = useSessionUser();
+  const [hasMounted, setHasMounted] = useState(false);
   const [scroll, setScroll] = useState(0);
   const [overlayTop, setOverlayTop] = useState(78);
   const [isSearchMounted, setSearchMounted] = useState(false);
@@ -265,6 +266,10 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
     }
     openNavPanel(key);
   };
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -727,7 +732,7 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                 ) : null}
                 </div>
                 <div className={`${styles.authSlot} d-none d-sm-flex`}>
-                  {!isAuthLoaded ? (
+                  {!hasMounted || !isAuthLoaded ? (
                     <span className={styles.authPlaceholder} aria-hidden="true" />
                   ) : isSignedIn ? (
                     <HeaderUserMenu />
@@ -743,13 +748,13 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
+                        strokeWidth="1.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden="true"
                       >
-                        <path d="M20 21a8 8 0 0 0-16 0" />
-                        <circle cx="12" cy="8" r="4" />
+                        <circle cx="12" cy="8.5" r="3.25" />
+                        <path d="M6.75 18.5c1.57-2.06 3.35-3.09 5.25-3.09s3.68 1.03 5.25 3.09" />
                       </svg>
                     </Link>
                   )}

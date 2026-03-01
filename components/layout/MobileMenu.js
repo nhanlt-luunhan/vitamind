@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { SignedIn, SignedOut, SignOutButton, useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { useSessionUser } from "@/components/auth/useSessionUser";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const MobileMenu = ({ openClass }) => {
@@ -9,6 +9,8 @@ const MobileMenu = ({ openClass }) => {
     status: false,
     key: "",
   });
+  const [hasMounted, setHasMounted] = useState(false);
+  const { isLoaded, isSignedIn, user } = useSessionUser();
 
   const handleToggle = (key) => {
     if (isActive.key === key) {
@@ -23,11 +25,12 @@ const MobileMenu = ({ openClass }) => {
     }
   };
 
-  const { user } = useUser();
-  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
-  const role =
-    typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : null;
-  const isAdmin = role === "admin" || primaryEmail === "nhanlt.luunhan@gmail.com";
+  const avatarUrl = user?.avatar_url ?? null;
+  const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   return (
     <>
@@ -55,21 +58,11 @@ const MobileMenu = ({ openClass }) => {
                       </span>
                       <Link href="/blog">Chuyên mục</Link>
                       <ul className={isActive.key == 2 ? "sub-menu d-block" : "sub-menu d-none"}>
-                        <li>
-                          <Link href="/blog">Chuyên mục 1</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Chuyên mục 2</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Chuyên mục 3</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Chuyên mục 4</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Chuyên mục 5</Link>
-                        </li>
+                        <li><Link href="/blog">Chuyên mục 1</Link></li>
+                        <li><Link href="/blog">Chuyên mục 2</Link></li>
+                        <li><Link href="/blog">Chuyên mục 3</Link></li>
+                        <li><Link href="/blog">Chuyên mục 4</Link></li>
+                        <li><Link href="/blog">Chuyên mục 5</Link></li>
                       </ul>
                     </li>
                     <li
@@ -81,15 +74,9 @@ const MobileMenu = ({ openClass }) => {
                       </span>
                       <Link href="/blog">Bài viết</Link>
                       <ul className={isActive.key == 3 ? "sub-menu d-block" : "sub-menu d-none"}>
-                        <li>
-                          <Link href="/category/raspberry-pi">Raspberry Pi</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog/2">Bài viết 2</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog/3">Bài viết 3</Link>
-                        </li>
+                        <li><Link href="/category/raspberry-pi">Raspberry Pi</Link></li>
+                        <li><Link href="/blog/2">Bài viết 2</Link></li>
+                        <li><Link href="/blog/3">Bài viết 3</Link></li>
                       </ul>
                     </li>
                     <li
@@ -103,21 +90,9 @@ const MobileMenu = ({ openClass }) => {
                         Dự án
                       </Link>
                       <ul className={isActive.key == 5 ? "sub-menu d-block" : "sub-menu d-none"}>
-                        <li>
-                          <Link className="color-gray-500" href="/shop">
-                            Dự án của tôi
-                          </Link>
-                        </li>
-                        <li>
-                          <Link className="color-gray-500" href="/shop">
-                            Dự án của tôi 2
-                          </Link>
-                        </li>
-                        <li>
-                          <Link className="color-gray-500" href="/shop">
-                            Chi tiết dự án
-                          </Link>
-                        </li>
+                        <li><Link className="color-gray-500" href="/shop">Dự án của tôi</Link></li>
+                        <li><Link className="color-gray-500" href="/shop">Dự án của tôi 2</Link></li>
+                        <li><Link className="color-gray-500" href="/shop">Chi tiết dự án</Link></li>
                       </ul>
                     </li>
                     <li
@@ -129,46 +104,30 @@ const MobileMenu = ({ openClass }) => {
                       </span>
                       <Link href="/blog">Trang</Link>
                       <ul className={isActive.key == 4 ? "sub-menu d-block" : "sub-menu d-none"}>
-                        <li>
-                          <Link href="/blog">Giới thiệu</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Bài viết tác giả</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Liên hệ</Link>
-                        </li>
-                        <li>
-                          <Link href="/blog">Kết quả tìm kiếm</Link>
-                        </li>
-                        <SignedOut>
-                          <li>
-                            <Link href="/sign-in">Đăng nhập</Link>
-                          </li>
-                          <li>
-                            <Link href="/sign-up">Đăng ký</Link>
-                          </li>
-                        </SignedOut>
-                        <SignedIn>
-                          <li>
-                            <SignOutButton redirectUrl="/">
-                              <button type="button">Đăng xuất</button>
-                            </SignOutButton>
-                          </li>
-                        </SignedIn>
-                        {isAdmin ? (
+                        <li><Link href="/blog">Giới thiệu</Link></li>
+                        <li><Link href="/blog">Bài viết tác giả</Link></li>
+                        <li><Link href="/blog">Liên hệ</Link></li>
+                        <li><Link href="/blog">Kết quả tìm kiếm</Link></li>
+                        {hasMounted && isLoaded && !isSignedIn ? (
                           <>
-                            <li>
-                              <Link href="/admin">Quản trị</Link>
-                            </li>
-                            <li>
-                              <Link href="/admin/database">Cơ sở dữ liệu</Link>
-                            </li>
+                            <li><Link href="/sign-in">Đăng nhập</Link></li>
+                            <li><Link href="/sign-up">Đăng ký</Link></li>
                           </>
                         ) : null}
-                        <li>
-                          <Link href="/page-404">Trang 404</Link>
-                        </li>
+                        {hasMounted && isLoaded && isSignedIn ? (
+                          <li>
+                            <button type="button" onClick={() => window.location.assign("/logout")}>
+                              Đăng xuất
+                            </button>
+                          </li>
+                        ) : null}
+                        {hasMounted && isAdmin ? (
+                          <>
+                            <li><Link href="/admin">Quản trị</Link></li>
+                            <li><Link href="/admin/database">Cơ sở dữ liệu</Link></li>
+                          </>
+                        ) : null}
+                        <li><Link href="/page-404">Trang 404</Link></li>
                       </ul>
                     </li>
                     <li>
@@ -177,20 +136,15 @@ const MobileMenu = ({ openClass }) => {
                   </ul>
                 </nav>
               </div>
-              <SignedIn>
+              {hasMounted && isLoaded && isSignedIn ? (
                 <div className="mobile-account border-gray-800">
                   <div className="mobile-header-top bg-gray-900">
                     <div className="user-account">
                       <Link href="/account">
-                        {user?.imageUrl ? (
-                          <img width={48} height={48} src={user.imageUrl} alt="Vitamind" />
+                        {avatarUrl ? (
+                          <img width={48} height={48} src={avatarUrl} alt="Vitamind" />
                         ) : (
-                          <Image
-                            width={48}
-                            height={48}
-                            src="/assets/imgs/template/favicon.png"
-                            alt="Vitamind"
-                          />
+                          <Image width={48} height={48} src="/assets/imgs/template/favicon.png" alt="Vitamind" />
                         )}
                       </Link>
                       <div className="content">
@@ -202,39 +156,25 @@ const MobileMenu = ({ openClass }) => {
                     </div>
                   </div>
                   <ul className="mobile-menu">
-                    <li>
-                      <Link href="/account">Hồ sơ</Link>
-                    </li>
-                    <li>
-                      <Link href="/account">Bài đã lưu</Link>
-                    </li>
-                    <li>
-                      <Link href="/account">Thêm bài viết</Link>
-                    </li>
-                    <li>
-                      <Link href="/account">Mục yêu thích</Link>
-                    </li>
-                    <li>
-                      <Link href="/account">Cài đặt tài khoản</Link>
-                    </li>
+                    <li><Link href="/account">Hồ sơ</Link></li>
+                    <li><Link href="/account">Bài đã lưu</Link></li>
+                    <li><Link href="/account">Thêm bài viết</Link></li>
+                    <li><Link href="/account">Mục yêu thích</Link></li>
+                    <li><Link href="/account">Cài đặt tài khoản</Link></li>
                     {isAdmin ? (
                       <>
-                        <li>
-                          <Link href="/admin">Trang quản trị</Link>
-                        </li>
-                        <li>
-                          <Link href="/admin/database">Cơ sở dữ liệu</Link>
-                        </li>
+                        <li><Link href="/admin">Trang quản trị</Link></li>
+                        <li><Link href="/admin/database">Cơ sở dữ liệu</Link></li>
                       </>
                     ) : null}
                     <li>
-                      <SignOutButton redirectUrl="/">
-                        <button type="button">Đăng xuất</button>
-                      </SignOutButton>
+                      <button type="button" onClick={() => window.location.assign("/logout")}>
+                        Đăng xuất
+                      </button>
                     </li>
                   </ul>
                 </div>
-              </SignedIn>
+              ) : null}
               <div className="site-copyright color-gray-400 mt-30">
                 Bản quyền 2026 © Vitamind.
                 <br />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui";
+import { GID_RULE_MESSAGE, hasGidValue, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 
 export type AccountUser = {
   id: string;
@@ -49,6 +50,7 @@ export function AccountProfile({ user }: Props) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const gidError = profile.gid.length > 0 && !normalizeGid(profile.gid) ? GID_RULE_MESSAGE : null;
 
   useEffect(() => {
     if (clerkUser?.imageUrl) {
@@ -59,7 +61,9 @@ export function AccountProfile({ user }: Props) {
   const handleChange =
     (field: keyof typeof profile) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setProfile((prev) => ({ ...prev, [field]: event.target.value }));
+      const nextValue =
+        field === "gid" ? sanitizeGid(event.target.value).slice(0, 10) : event.target.value;
+      setProfile((prev) => ({ ...prev, [field]: nextValue }));
     };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -67,6 +71,11 @@ export function AccountProfile({ user }: Props) {
     setSaving(true);
     setMessage(null);
     setError(null);
+
+    if (gidError) {
+      setSaving(false);
+      return;
+    }
 
     const response = await fetch("/api/account/profile", {
       method: "PUT",
@@ -94,6 +103,7 @@ export function AccountProfile({ user }: Props) {
         website: updated.website ?? "",
         bio: updated.bio ?? "",
       });
+      window.dispatchEvent(new CustomEvent("account-profile-updated"));
     }
 
     setMessage("Đã lưu thông tin tài khoản.");
@@ -134,7 +144,7 @@ export function AccountProfile({ user }: Props) {
       }
       setMessage("Ảnh đại diện đã được cập nhật.");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("Không thể tải ảnh đại diện.");
     } finally {
       setUploading(false);
@@ -155,7 +165,7 @@ export function AccountProfile({ user }: Props) {
           <div className="account-summary-text">
             <h4 className="color-white mb-5">{profile.name || "Chưa đặt tên"}</h4>
             <p className="color-gray-500 mb-0">{profile.contactEmail || user.email}</p>
-            {profile.gid ? (
+            {hasGidValue(profile.gid) ? (
               <p className="color-gray-500 mb-0">
                 <span className="color-white">{profile.gid}</span>
               </p>
@@ -217,7 +227,12 @@ export function AccountProfile({ user }: Props) {
                   value={profile.gid}
                   onChange={handleChange("gid")}
                   placeholder="5015114132"
+                  inputMode="numeric"
+                  maxLength={10}
                 />
+                <small className={`account-field-hint${gidError ? " error" : ""}`}>
+                  {gidError ?? "GID gồm đúng 10 chữ số."}
+                </small>
               </div>
 
               <div className="form-group">
@@ -276,7 +291,12 @@ export function AccountProfile({ user }: Props) {
             {error ? <p className="account-status error">{error}</p> : null}
 
             <div className="account-actions">
-              <Button unstyled className="btn btn-linear" type="submit" disabled={saving}>
+              <Button
+                unstyled
+                className="btn btn-linear"
+                type="submit"
+                disabled={saving || Boolean(gidError)}
+              >
                 {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>
             </div>

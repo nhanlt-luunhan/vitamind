@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
 import { canManageUsers } from "@/lib/auth/rbac";
-import { syncAllClerkUsers } from "@/lib/auth/clerk-sync";
+import { drainClerkDeletionQueue, syncAllClerkUsers } from "@/lib/auth/clerk-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -20,24 +20,41 @@ type UserRow = {
   updated_at: string | null;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const user = await getSessionUser();
   if (!canManageUsers(user)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    await syncAllClerkUsers();
-  } catch {
-    // Keep serving the latest internal snapshot if Clerk is unavailable.
+  const searchParams = request.nextUrl.searchParams;
+  const shouldSync = searchParams.get("sync") !== "0";
+  const rawLimit = Number(searchParams.get("limit") ?? "");
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.trunc(rawLimit), 200) : null;
+
+  if (shouldSync) {
+    try {
+      await drainClerkDeletionQueue();
+      await syncAllClerkUsers();
+    } catch {
+      // Keep serving the latest internal snapshot if Clerk is unavailable.
+    }
   }
 
   const { rows } = await query<UserRow>(
     `select id, clerk_user_id, email, name, display_name, gid, role, status, avatar_url, created_at, updated_at
      from users
-     order by created_at desc`,
+     order by coalesce(updated_at, created_at) desc, created_at desc
+     ${limit ? "limit $1" : ""}`,
+    limit ? [limit] : undefined,
   );
-  return NextResponse.json({ users: rows });
+  return NextResponse.json({
+    users: rows,
+    meta: {
+      synced: shouldSync,
+      limit,
+      polled_at: new Date().toISOString(),
+    },
+  });
 }
 
 export async function POST() {

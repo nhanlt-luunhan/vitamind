@@ -76,6 +76,8 @@ type MediaRow = {
   updated_at: string | null;
 };
 
+type UploadScope = "posts" | "products";
+
 type AuditRow = {
   id: string;
   actor_email: string | null;
@@ -139,6 +141,20 @@ const fetchJson = async (url: string, options?: RequestInit) => {
     throw new Error(message);
   }
   return data;
+};
+
+const uploadAdminAsset = async (scope: UploadScope, file?: File | null) => {
+  if (!file) {
+    throw new Error("Chưa chọn tệp.");
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  const data = await fetchJson(`/api/admin/uploads/${scope}`, {
+    method: "POST",
+    body: formData,
+  });
+  return String((data as { url?: string }).url ?? "").trim();
 };
 
 const exportCsv = (name: string, rows: Array<Record<string, unknown>>) => {
@@ -416,14 +432,14 @@ function UsersTab({ canManage }: { canManage: boolean }) {
     }
   };
 
-  const handleBlock = async (id: string) => {
-    if (!confirm("Khoá user này?")) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm("Xóa user này? Nếu có tài khoản Clerk liên kết, hệ thống cũng sẽ xóa bên Clerk.")) {
+      return;
+    }
     setError(null);
     try {
       await fetchJson(`/api/admin/users/${id}`, { method: "DELETE" });
-      setUsers((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, status: "blocked" } : item)),
-      );
+      setUsers((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       setError((err as Error).message);
     }
@@ -576,10 +592,10 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                         </button>
                         <button
                           className="btn btn-admin-outline"
-                          onClick={() => handleBlock(row.id)}
+                          onClick={() => handleDelete(row.id)}
                           type="button"
                         >
-                          Khoá
+                          Xóa
                         </button>
                       </>
                     )}
@@ -599,7 +615,14 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ProductRow | null>(null);
-  const [form, setForm] = useState({ name: "", price: "", sku: "", category: "", status: "draft" });
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    sku: "",
+    category: "",
+    images: "",
+    status: "draft",
+  });
 
   const loadProducts = async () => {
     setLoading(true);
@@ -658,6 +681,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         price: form.price,
         sku: form.sku,
         category: form.category,
+        images: form.images,
         status: form.status,
       };
       const data = await fetchJson("/api/admin/products", {
@@ -666,7 +690,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         body: JSON.stringify(payload),
       });
       setProducts((prev) => [data.product, ...prev]);
-      setForm({ name: "", price: "", sku: "", category: "", status: "draft" });
+      setForm({ name: "", price: "", sku: "", category: "", images: "", status: "draft" });
     } catch (err) {
       setError((err as Error).message);
     }
@@ -681,6 +705,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         price: editing.price,
         sku: editing.sku,
         category: editing.category,
+        images: editing.images,
         status: editing.status,
       };
       const data = await fetchJson(`/api/admin/products/${editing.id}`, {
@@ -726,6 +751,38 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         }
       },
     });
+  };
+
+  const handleCreateImageUpload = async (file?: File | null) => {
+    if (!file || !canEdit) return;
+    setError(null);
+    try {
+      const url = await uploadAdminAsset("products", file);
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images ? `${prev.images}, ${url}` : url,
+      }));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleEditImageUpload = async (file?: File | null) => {
+    if (!file || !editing) return;
+    setError(null);
+    try {
+      const url = await uploadAdminAsset("products", file);
+      setEditing((prev) =>
+        prev
+          ? {
+              ...prev,
+              images: [...(prev.images ?? []), url],
+            }
+          : prev,
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    }
   };
 
   const handleExport = () => {
@@ -810,6 +867,12 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
             value={form.category}
             onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
           />
+          <input
+            className="admin-input"
+            placeholder="URL ảnh sản phẩm, ngăn cách bằng dấu phẩy"
+            value={form.images}
+            onChange={(event) => setForm((prev) => ({ ...prev, images: event.target.value }))}
+          />
           <select
             className="admin-select"
             value={form.status}
@@ -819,6 +882,15 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
             <option value="published">Đã xuất bản</option>
             <option value="archived">Lưu trữ</option>
           </select>
+          <label className="btn btn-admin-outline">
+            Upload ảnh SP
+            <input
+              className="admin-file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(event) => handleCreateImageUpload(event.target.files?.[0])}
+            />
+          </label>
           <Button unstyled className="btn btn-linear" type="button" onClick={handleCreate}>
             Thêm sản phẩm
           </Button>
@@ -831,6 +903,7 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
         <table className="table admin-table">
           <thead>
             <tr>
+              <th>Ảnh</th>
               <th>Tên</th>
               <th>Giá</th>
               <th>SKU</th>
@@ -843,18 +916,60 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7}>Đang tải...</td>
+                <td colSpan={8}>Đang tải...</td>
               </tr>
             ) : null}
             {!loading && !filtered.length ? (
               <tr>
-                <td colSpan={7}>Chưa có dữ liệu.</td>
+                <td colSpan={8}>Chưa có dữ liệu.</td>
               </tr>
             ) : null}
             {filtered.map((row) => {
               const isEditing = editing?.id === row.id;
+              const primaryImage = (isEditing ? editing?.images : row.images)?.[0] ?? null;
               return (
                 <tr key={row.id}>
+                  <td>
+                    {isEditing ? (
+                      <div className="admin-cell-stack">
+                        {primaryImage ? (
+                          <img className="admin-media-thumb" src={primaryImage} alt={row.name} />
+                        ) : (
+                          <span className="admin-badge">NO IMG</span>
+                        )}
+                        <input
+                          className="admin-input"
+                          value={(editing?.images ?? []).join(", ")}
+                          onChange={(event) =>
+                            setEditing((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    images: event.target.value
+                                      .split(",")
+                                      .map((item) => item.trim())
+                                      .filter(Boolean),
+                                  }
+                                : prev,
+                            )
+                          }
+                        />
+                        <label className="btn btn-admin-outline">
+                          Upload
+                          <input
+                            className="admin-file"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            onChange={(event) => handleEditImageUpload(event.target.files?.[0])}
+                          />
+                        </label>
+                      </div>
+                    ) : primaryImage ? (
+                      <img className="admin-media-thumb" src={primaryImage} alt={row.name} />
+                    ) : (
+                      <span className="admin-badge">NO IMG</span>
+                    )}
+                  </td>
                   <td>
                     {isEditing ? (
                       <input
@@ -1256,7 +1371,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<BlogRow | null>(null);
-  const [form, setForm] = useState({ title: "", category: "", description: "" });
+  const [form, setForm] = useState({ title: "", category: "", description: "", cover_image: "" });
 
   const loadPosts = async () => {
     setLoading(true);
@@ -1314,6 +1429,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
         title: form.title,
         description: form.description,
         category: form.category,
+        cover_image: form.cover_image,
       };
       const data = await fetchJson("/api/admin/blog", {
         method: "POST",
@@ -1321,7 +1437,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
         body: JSON.stringify(payload),
       });
       setPosts((prev) => [data.post, ...prev]);
-      setForm({ title: "", category: "", description: "" });
+      setForm({ title: "", category: "", description: "", cover_image: "" });
     } catch (err) {
       setError((err as Error).message);
     }
@@ -1336,6 +1452,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
         description: editing.description,
         category: editing.category,
         tags: editing.tags,
+        cover_image: editing.cover_image,
         published: editing.published,
       };
       const data = await fetchJson(`/api/admin/blog/${editing.slug}`, {
@@ -1359,6 +1476,28 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
       setPosts((prev) =>
         prev.map((item) => (item.slug === slug ? { ...item, published: false } : item)),
       );
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleCreateCoverUpload = async (file?: File | null) => {
+    if (!file || !canEdit) return;
+    setError(null);
+    try {
+      const url = await uploadAdminAsset("posts", file);
+      setForm((prev) => ({ ...prev, cover_image: url }));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleEditCoverUpload = async (file?: File | null) => {
+    if (!file || !editing) return;
+    setError(null);
+    try {
+      const url = await uploadAdminAsset("posts", file);
+      setEditing((prev) => (prev ? { ...prev, cover_image: url } : prev));
     } catch (err) {
       setError((err as Error).message);
     }
@@ -1411,6 +1550,21 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
             value={form.description}
             onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
           />
+          <input
+            className="admin-input"
+            placeholder="URL ảnh cover"
+            value={form.cover_image}
+            onChange={(event) => setForm((prev) => ({ ...prev, cover_image: event.target.value }))}
+          />
+          <label className="btn btn-admin-outline">
+            Upload cover
+            <input
+              className="admin-file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={(event) => handleCreateCoverUpload(event.target.files?.[0])}
+            />
+          </label>
           <Button unstyled className="btn btn-linear" type="button" onClick={handleCreate}>
             Tạo bài viết
           </Button>
@@ -1423,6 +1577,7 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
         <table className="table admin-table">
           <thead>
             <tr>
+              <th>Cover</th>
               <th>Tiêu đề</th>
               <th>Slug</th>
               <th>Danh mục</th>
@@ -1434,18 +1589,55 @@ function BlogTab({ canEdit }: { canEdit: boolean }) {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>Đang tải...</td>
+                <td colSpan={7}>Đang tải...</td>
               </tr>
             ) : null}
             {!loading && !filtered.length ? (
               <tr>
-                <td colSpan={6}>Chưa có dữ liệu.</td>
+                <td colSpan={7}>Chưa có dữ liệu.</td>
               </tr>
             ) : null}
             {filtered.map((row) => {
               const isEditing = editing?.slug === row.slug;
               return (
                 <tr key={row.slug}>
+                  <td>
+                    {isEditing ? (
+                      <div className="admin-cell-stack">
+                        {editing?.cover_image ? (
+                          <img
+                            className="admin-media-thumb"
+                            src={editing.cover_image}
+                            alt={editing.title}
+                          />
+                        ) : (
+                          <span className="admin-badge">NO IMG</span>
+                        )}
+                        <input
+                          className="admin-input"
+                          value={editing?.cover_image ?? ""}
+                          onChange={(event) =>
+                            setEditing((prev) =>
+                              prev ? { ...prev, cover_image: event.target.value } : prev,
+                            )
+                          }
+                        />
+                        <label className="btn btn-admin-outline">
+                          Upload
+                          <input
+                            className="admin-file"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            onChange={(event) => handleEditCoverUpload(event.target.files?.[0])}
+                          />
+                        </label>
+                      </div>
+                    ) : row.cover_image ? (
+                      <img className="admin-media-thumb" src={row.cover_image} alt={row.title} />
+                    ) : (
+                      <span className="admin-badge">NO IMG</span>
+                    )}
+                  </td>
                   <td>
                     {isEditing ? (
                       <input

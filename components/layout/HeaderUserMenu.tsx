@@ -2,51 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useClerk, useUser } from "@clerk/nextjs";
 import { ThemeSwitch } from "@/components/elements/SwitchButton";
+import { useSessionUser } from "@/components/auth/useSessionUser";
+import { hasGidValue } from "@/lib/utils/gid";
 import styles from "./HeaderUserMenu.module.css";
 
-type AccountSession = {
-  id: string;
-  email: string;
-  name: string | null;
-  display_name: string | null;
-  gid: string | null;
-  role: string | null;
-  status: string | null;
-  avatar_url: string | null;
-};
-
-const fallbackAdminEmail = "nhanlt.luunhan@gmail.com";
-
 export function HeaderUserMenu() {
-  const { signOut } = useClerk();
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useSessionUser();
   const [open, setOpen] = useState(false);
-  const [sessionUser, setSessionUser] = useState<AccountSession | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-
-    let ignore = false;
-    fetch("/api/account/profile", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        const data = await response.json();
-        return (data?.user as AccountSession | null) ?? null;
-      })
-      .then((data) => {
-        if (!ignore && data) {
-          setSessionUser(data);
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      ignore = true;
-    };
-  }, [isLoaded, user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,21 +25,13 @@ export function HeaderUserMenu() {
     };
   }, []);
 
-  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
   const displayName =
-    sessionUser?.display_name ??
-    sessionUser?.name ??
-    user?.fullName ??
-    primaryEmail?.split("@")[0] ??
+    user?.display_name ??
+    user?.name ??
+    user?.email?.split("@")[0] ??
     "Tài khoản";
-  const avatarUrl = user?.imageUrl ?? sessionUser?.avatar_url ?? null;
-  const role =
-    sessionUser?.role ??
-    (typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : null);
-  const gid =
-    sessionUser?.gid ??
-    (typeof user?.publicMetadata?.gid === "string" ? user.publicMetadata.gid : null);
-  const isAdmin = role === "admin" || primaryEmail === fallbackAdminEmail;
+  const avatarUrl = user?.avatar_url ?? null;
+  const isAdmin = user?.role === "admin";
 
   const menuItems = useMemo(
     () => [
@@ -108,13 +64,7 @@ export function HeaderUserMenu() {
         aria-label="Mở menu tài khoản"
       >
         {avatarUrl ? (
-          <img
-            className={styles.avatar}
-            src={avatarUrl}
-            alt={displayName}
-            width="40"
-            height="40"
-          />
+          <img className={styles.avatar} src={avatarUrl} alt={displayName} width="34" height="34" />
         ) : (
           <span className={`${styles.avatar} ${styles.avatarFallback}`}>
             {displayName.charAt(0).toUpperCase()}
@@ -127,11 +77,11 @@ export function HeaderUserMenu() {
           <div className={styles.profile}>
             <div className={styles.profileMeta}>
               <strong>{displayName}</strong>
-              <p>{sessionUser?.email ?? primaryEmail}</p>
+              <p>{user.email}</p>
               <span className={styles.roleBadge}>
                 {isAdmin ? "Quản trị viên" : "Người dùng"}
               </span>
-              {gid ? <small className={styles.gid}>{gid}</small> : null}
+              {hasGidValue(user.gid) ? <small className={styles.gid}>{user.gid}</small> : null}
             </div>
           </div>
 
@@ -155,7 +105,7 @@ export function HeaderUserMenu() {
           <button
             type="button"
             className={styles.signout}
-            onClick={() => signOut({ redirectUrl: "/" })}
+            onClick={() => window.location.assign("/logout")}
           >
             Đăng xuất
           </button>

@@ -13,7 +13,8 @@ type Props = {
   initialMode: Mode;
 };
 
-const postAuthPath = "/auth/continue";
+const signInRedirectPath = "/auth/continue";
+const signUpRedirectPath = "/auth/continue";
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (
@@ -44,28 +45,66 @@ async function resolveSignInIdentifier(identifier: string) {
     throw new Error("Không thể kiểm tra email lúc này.");
   }
 
-  const data = (await response.json()) as { identifier?: string };
-  return (data.identifier ?? identifier).trim();
+  const data = (await response.json()) as {
+    mode?: "clerk" | "db" | "unknown";
+    identifier?: string;
+  };
+  return {
+    mode: data.mode ?? "unknown",
+    identifier: (data.identifier ?? identifier).trim(),
+  };
 }
 
-function GoogleMark() {
+function EyeOpenMark() {
   return (
     <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
       <path
-        fill="#EA4335"
-        d="M12 10.2v3.9h5.4c-.2 1.3-1.5 3.9-5.4 3.9-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3 .8 3.7 1.4l2.5-2.4C16.6 3.5 14.5 2.6 12 2.6 6.9 2.6 2.8 6.7 2.8 11.8S6.9 21 12 21c6.9 0 9.1-4.8 9.1-7.3 0-.5 0-.9-.1-1.3H12Z"
+        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function EyeClosedMark() {
+  return (
+    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+      <path
+        d="M3 3l18 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
-        fill="#34A853"
-        d="M2.8 7.3l3.2 2.4c.9-2.7 3.3-4.6 6-4.6 1.8 0 3 .8 3.7 1.4l2.5-2.4C16.6 3.5 14.5 2.6 12 2.6 8.1 2.6 4.7 4.8 2.8 7.3Z"
+        d="M10.6 6.3A10.9 10.9 0 0 1 12 6c6.4 0 10 6 10 6a19 19 0 0 1-4 4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
-        fill="#FBBC05"
-        d="M12 21c2.4 0 4.5-.8 6-2.3l-2.8-2.2c-.8.5-1.8.9-3.2.9-3.8 0-5.2-2.5-5.4-3.8l-3.3 2.5C5.1 18.7 8.3 21 12 21Z"
+        d="M6.7 6.8C4 8.4 2 12 2 12a19 19 0 0 0 10 6c1.5 0 2.8-.3 4-.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
-        fill="#4285F4"
-        d="M21.1 13.7c0-.5 0-.9-.1-1.3H12v3.9h5.4c-.3 1.3-1.2 2.4-2.5 3.1l2.8 2.2c1.7-1.6 3.4-4.5 3.4-7.9Z"
+        d="M9.9 9.9A3 3 0 0 0 14.1 14.1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -82,6 +121,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [signInSubmitting, setSignInSubmitting] = useState(false);
   const [signInOauthLoading, setSignInOauthLoading] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
@@ -89,6 +129,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const [fullName, setFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [signUpSubmitting, setSignUpSubmitting] = useState(false);
@@ -128,15 +169,45 @@ export function AuthSplitDeck({ initialMode }: Props) {
     setSignInError(null);
 
     try {
-      const resolvedIdentifier = await resolveSignInIdentifier(signInEmail);
+      const resolved = await resolveSignInIdentifier(signInEmail);
+
+      if (resolved.mode === "db") {
+        const response = await fetch("/api/auth/db-sign-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identifier: resolved.identifier,
+            password: signInPassword,
+            remember: rememberPassword,
+          }),
+        });
+
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string; destination?: string }
+          | null;
+
+        if (!response.ok) {
+          setSignInError(data?.error ?? "Không thể đăng nhập lúc này.");
+          return;
+        }
+
+        window.location.assign(data?.destination ?? "/");
+        return;
+      }
+
+      if (resolved.mode === "unknown") {
+        setSignInError("Không tìm thấy tài khoản tương ứng với email hoặc GID này.");
+        return;
+      }
+
       const result = await signIn.create({
-        identifier: resolvedIdentifier,
+        identifier: resolved.identifier,
         password: signInPassword,
       });
 
       if (result.status === "complete") {
         await setActiveSignIn({ session: result.createdSessionId });
-        window.location.assign(postAuthPath);
+        window.location.assign(signInRedirectPath);
         return;
       }
 
@@ -158,7 +229,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sign-in/sso-callback",
-        redirectUrlComplete: postAuthPath,
+        redirectUrlComplete: signInRedirectPath,
       });
     } catch (error) {
       setSignInOauthLoading(false);
@@ -184,7 +255,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
       if (result.status === "complete") {
         await setActiveSignUp({ session: result.createdSessionId });
-        window.location.assign(postAuthPath);
+        window.location.assign(signUpRedirectPath);
         return;
       }
 
@@ -210,7 +281,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
       if (result.status === "complete") {
         await setActiveSignUp({ session: result.createdSessionId });
-        window.location.assign(postAuthPath);
+        window.location.assign(signUpRedirectPath);
         return;
       }
 
@@ -232,7 +303,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
       await signUp.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sign-up/sso-callback",
-        redirectUrlComplete: postAuthPath,
+        redirectUrlComplete: signUpRedirectPath,
       });
     } catch (error) {
       setSignUpOauthLoading(false);
@@ -243,10 +314,10 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const isSignIn = mode === "sign-in";
   const title = isSignIn ? "Đăng nhập" : verifying ? "Xác minh email" : "Tạo tài khoản";
   const subtitle = isSignIn
-    ? "Nhập email và mật khẩu để truy cập vào hệ thống."
+    ? ""
     : verifying
       ? "Nhập mã xác minh đã được gửi về email của bạn."
-      : "Tạo tài khoản mới. Chỉ mất chưa đến một phút.";
+      : "";
 
   return (
     <div className={styles.page}>
@@ -259,7 +330,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
           </div>
 
           <h2 className={styles.title}>{title}</h2>
-          <p className={styles.subtitle}>{subtitle}</p>
+          {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
 
           <div className={styles.formWrap}>
             {isSignIn ? (
@@ -267,11 +338,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
                 <label className={styles.field}>
                   <span>Email</span>
                   <input
-                    type="email"
+                    type="text"
                     autoComplete="username"
                     value={signInEmail}
                     onChange={(event) => setSignInEmail(event.target.value)}
-                    placeholder="Nhập email"
+                    placeholder="Nhập email hoặc GID"
                     required
                   />
                 </label>
@@ -281,20 +352,31 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   <button
                     type="button"
                     className={styles.textLink}
-                    onClick={() => setSignInError("Tính năng quên mật khẩu sẽ được bật ở bước tiếp theo.")}
+                    onClick={() => router.push("/forgot-password")}
                   >
                     Quên mật khẩu?
                   </button>
                 </div>
 
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={signInPassword}
-                  onChange={(event) => setSignInPassword(event.target.value)}
-                  placeholder="Nhập mật khẩu"
-                  required
-                />
+                <div className={styles.passwordField}>
+                  <input
+                    type={showSignInPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={signInPassword}
+                    onChange={(event) => setSignInPassword(event.target.value)}
+                    placeholder="Nhập mật khẩu"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    onClick={() => setShowSignInPassword((value) => !value)}
+                    aria-label={showSignInPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-pressed={showSignInPassword}
+                  >
+                    {showSignInPassword ? <EyeClosedMark /> : <EyeOpenMark />}
+                  </button>
+                </div>
 
                 <label className={styles.checkRow}>
                   <input
@@ -325,7 +407,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
                     disabled={!signInLoaded || signInOauthLoading}
                     aria-label="Đăng nhập với Google"
                   >
-                    <GoogleMark />
+                    <Image
+                      src="/assets/imgs/template/icons/google-icon.png"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className={styles.socialButtonIcon}
+                    />
+                    <span className={styles.socialButtonText}>
+                      {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
+                    </span>
                   </button>
                 </div>
               </form>
@@ -357,17 +448,38 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       />
                     </label>
 
-                    <label className={styles.field}>
+                    <div className={styles.field}>
                       <span>Mật khẩu</span>
-                      <input
-                        type="password"
-                        autoComplete="new-password"
-                        value={signUpPassword}
-                        onChange={(event) => setSignUpPassword(event.target.value)}
-                        placeholder="Tạo mật khẩu"
-                        required
+                      <div className={styles.passwordField}>
+                        <input
+                          type={showSignUpPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={signUpPassword}
+                          onChange={(event) => setSignUpPassword(event.target.value)}
+                          placeholder="Tạo mật khẩu"
+                          required
+                        />
+                        <button
+                          type="button"
+                          className={styles.passwordToggle}
+                          onClick={() => setShowSignUpPassword((value) => !value)}
+                          aria-label={showSignUpPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                          aria-pressed={showSignUpPassword}
+                        >
+                          {showSignUpPassword ? <EyeClosedMark /> : <EyeOpenMark />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.captchaBlock}>
+                      <div
+                        id="clerk-captcha"
+                        className={styles.captchaSlot}
+                        data-cl-theme="light"
+                        data-cl-size="flexible"
+                        data-cl-language="auto"
                       />
-                    </label>
+                    </div>
 
                     {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
                     {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
@@ -390,7 +502,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         disabled={!signUpLoaded || signUpOauthLoading}
                         aria-label="Đăng ký với Google"
                       >
-                        <GoogleMark />
+                        <Image
+                          src="/assets/imgs/template/icons/google-icon.png"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={styles.socialButtonIcon}
+                        />
+                        <span className={styles.socialButtonText}>
+                          {signUpOauthLoading ? "Đang chuyển sang Google..." : "Đăng ký với Google"}
+                        </span>
                       </button>
                     </div>
                   </form>

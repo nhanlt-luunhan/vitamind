@@ -1,7 +1,40 @@
 @import "../styles/tokens.css";
 
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Be Vietnam Pro";
+  src: url("/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
+  --font-sans: "Be Vietnam Pro";
   --site-shell-max: 1400px;
   --site-shell-gutter: clamp(16px, 3vw, 40px);
   --page-bg: var(--c-9);
@@ -174,6 +207,13 @@ body {
   line-height: 1.6;
 }
 
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 .container {
   width: min(var(--site-shell-max), calc(100vw - (var(--site-shell-gutter) * 2)));
   max-width: none;
@@ -191,7 +231,13 @@ h5,
 h6 {
   margin: 0 0 var(--space-3) 0;
   color: var(--page-heading);
-  font-family: var(--font-display), "Noto Serif", "Times New Roman", serif;
+  font-family:
+    var(--font-display),
+    "Be Vietnam Pro",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   font-weight: 600;
   line-height: 1.15;
 }
@@ -1096,6 +1142,12 @@ p {
   flex-wrap: wrap;
 }
 
+.admin-cell-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+}
+
 .admin-media-thumb {
   width: 48px;
   height: 48px;
@@ -1266,6 +1318,18 @@ p {
 
 .account-profile__main .color-gray-700 {
   color: var(--surface-text-soft) !important;
+}
+
+.account-field-hint {
+  display: block;
+  margin-top: 10px;
+  color: var(--surface-text-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.account-field-hint.error {
+  color: #ef4444;
 }
 
 .account-profile__main .form-control {

@@ -2,16 +2,28 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { Layout } from "@/components/layout/Layout";
 
 export default function Page() {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const { signOut } = useClerk();
 
   useEffect(() => {
-    signOut(() => router.replace("/"));
-  }, [signOut, router]);
+    const run = async () => {
+      await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => undefined);
+
+      if (!isLoaded) return;
+      if (isSignedIn) {
+        signOut(() => router.replace("/"));
+        return;
+      }
+      router.replace("/");
+    };
+
+    run();
+  }, [isLoaded, isSignedIn, signOut, router]);
 
   return (
     <Layout>

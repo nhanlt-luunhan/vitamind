@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)", "/adminer(.*)"]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
 const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
 
 function isLoopbackOrigin(value: string) {
@@ -18,7 +19,6 @@ function getInternalApiBaseUrl(requestUrl: string) {
   const configuredBaseUrl =
     process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;
 
-  // In container/proxy deployments, loopback can fail from middleware even when the public origin works.
   if (isLoopbackOrigin(configuredBaseUrl) && !isLoopbackOrigin(requestOrigin)) {
     return requestOrigin;
   }
@@ -28,8 +28,10 @@ function getInternalApiBaseUrl(requestUrl: string) {
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
+  const dbSession = await verifySessionToken(req.cookies.get(SESSION_COOKIE_NAME)?.value ?? null);
+  const hasDbSession = Boolean(dbSession?.sub);
 
-  if ((isAdminRoute(req) || isAccountRoute(req)) && !userId) {
+  if ((isAdminRoute(req) || isAccountRoute(req)) && !userId && !hasDbSession) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
@@ -79,6 +81,17 @@ export default clerkMiddleware(async (auth, req) => {
       }
       return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
+  }
+
+  if (isAdminRoute(req) && !userId && hasDbSession) {
+    const blocked = dbSession?.status === "blocked" || dbSession?.status === "disabled";
+    if (dbSession?.role === "admin" && !blocked) {
+      return NextResponse.next();
+    }
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/not-authorized", req.url));
   }
 
   return NextResponse.next();

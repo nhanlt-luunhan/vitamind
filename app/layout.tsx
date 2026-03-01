@@ -8,43 +8,26 @@ import "@/public/assets/css/style.trim.css";
 import "./globals.css";
 
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, RedirectToTasks } from "@clerk/nextjs";
 import { getSiteUrl } from "@/lib/utils/site-url";
-
-const beVietnam = localFont({
-  variable: "--font-sans",
-  src: [
-    {
-      path: "../public/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Medium.ttf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../public/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-SemiBold.ttf",
-      weight: "600",
-      style: "normal",
-    },
-    {
-      path: "../public/assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Bold.ttf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  display: "swap",
-});
 
 const siteUrl = getSiteUrl();
 const siteName = "VITAMIND";
 const siteTitle = "VITAMIND";
 const siteDescription =
   "Chia sẻ bài viết, dự án Raspberry Pi, tự động hóa và các sản phẩm công nghệ thực tế.";
+const themeInitScript = `
+  try {
+    var storageKey = "theme";
+    var stored = localStorage.getItem(storageKey);
+    var mode = stored === "day" || stored === "night" || stored === "system" ? stored : "system";
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var isDark = mode === "night" || (mode === "system" && prefersDark);
+    document.documentElement.classList.toggle("theme-night", isDark);
+    document.documentElement.classList.toggle("theme-day", !isDark);
+  } catch (error) {}
+`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -82,9 +65,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi">
-      <body className={beVietnam.variable}>
-        <ClerkProvider>
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body>
+        <ClerkProvider
+          taskUrls={{
+            "reset-password": "/tasks/reset-password",
+            "setup-mfa": "/tasks/setup-mfa",
+          }}
+        >
+          <RedirectToTasks />
           <ThemeProvider>{children}</ThemeProvider>
         </ClerkProvider>
       </body>

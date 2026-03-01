@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyWebhook } from "@clerk/backend/webhooks";
-import { disableClerkUser, upsertClerkUser } from "@/lib/auth/clerk-sync";
+import {
+  drainClerkDeletionQueue,
+  markClerkDeletionProcessed,
+  upsertClerkUser,
+} from "@/lib/auth/clerk-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +20,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
+  await drainClerkDeletionQueue().catch(() => null);
+
   if (event.type === "user.created" || event.type === "user.updated") {
     await upsertClerkUser(event.data);
   }
 
   if (event.type === "user.deleted") {
-    await disableClerkUser(event.data?.id);
+    await markClerkDeletionProcessed(event.data?.id);
   }
 
   return NextResponse.json({ ok: true });

@@ -2,52 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useSessionUser } from "@/components/auth/useSessionUser";
+import { hasGidValue } from "@/lib/utils/gid";
 import styles from "./AdminUserMenu.module.css";
-
-type AccountSession = {
-  email: string;
-  name: string | null;
-  display_name: string | null;
-  gid: string | null;
-  role: string | null;
-  avatar_url: string | null;
-};
 
 type AdminUserMenuProps = {
   onLock: () => void;
 };
 
-const fallbackAdminEmail = "nhanlt.luunhan@gmail.com";
-
 export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
-  const { signOut } = useClerk();
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useSessionUser();
   const [open, setOpen] = useState(false);
-  const [sessionUser, setSessionUser] = useState<AccountSession | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-
-    let ignore = false;
-    fetch("/api/account/profile", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        const data = await response.json();
-        return (data?.user as AccountSession | null) ?? null;
-      })
-      .then((data) => {
-        if (!ignore && data) {
-          setSessionUser(data);
-        }
-      })
-      .catch(() => undefined);
-
-    return () => {
-      ignore = true;
-    };
-  }, [isLoaded, user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -62,21 +28,13 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
     };
   }, []);
 
-  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
   const displayName =
-    sessionUser?.display_name ??
-    sessionUser?.name ??
-    user?.fullName ??
-    primaryEmail?.split("@")[0] ??
+    user?.display_name ??
+    user?.name ??
+    user?.email?.split("@")[0] ??
     "Tài khoản";
-  const avatarUrl = user?.imageUrl ?? sessionUser?.avatar_url ?? null;
-  const role =
-    sessionUser?.role ??
-    (typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : null);
-  const gid =
-    sessionUser?.gid ??
-    (typeof user?.publicMetadata?.gid === "string" ? user.publicMetadata.gid : null);
-  const isAdmin = role === "admin" || primaryEmail === fallbackAdminEmail;
+  const avatarUrl = user?.avatar_url ?? null;
+  const isAdmin = user?.role === "admin";
 
   const menuItems = useMemo(
     () => [
@@ -129,11 +87,11 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
               Welcome {displayName}!
             </strong>
             <div className={styles.headerMeta}>
-              <span className={styles.metaItem} title={sessionUser?.email ?? primaryEmail ?? ""}>
-                <span className={styles.metaValue}>{sessionUser?.email ?? primaryEmail}</span>
+              <span className={styles.metaItem} title={user.email}>
+                <span className={styles.metaValue}>{user.email}</span>
               </span>
               <span className={styles.metaItem}>
-                {gid ? `GID ${gid}` : isAdmin ? "Admin access" : "User access"}
+                {hasGidValue(user.gid) ? user.gid : isAdmin ? "Admin access" : "User access"}
               </span>
             </div>
           </div>
@@ -167,7 +125,7 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
           <button
             type="button"
             className={styles.signout}
-            onClick={() => signOut({ redirectUrl: "/" })}
+            onClick={() => window.location.assign("/logout")}
           >
             <i className="ri-logout-box-r-line" aria-hidden="true" />
             <span>Logout</span>

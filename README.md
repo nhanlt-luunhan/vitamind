@@ -24,6 +24,26 @@ npm install
 docker compose up -d db
 ```
 
+Nếu muốn giao diện quản trị PostgreSQL bằng `pgAdmin 4`:
+
+```bash
+docker compose --profile tools up -d pgadmin
+```
+
+`pgAdmin` sẽ chạy tại `http://127.0.0.1:35050`.
+Thông tin đăng nhập mặc định:
+
+- Email: `admin@vitamind.com.vn`
+- Password: `change-me-pgadmin`
+
+Server `vitamind` sẽ được nạp sẵn khi container khởi động. Nếu cần tự kiểm tra thủ công, dùng:
+
+- Host: `db` nếu app chạy trong Docker, hoặc `127.0.0.1` nếu bạn dùng Postgres local map port ra máy
+- Port: `5432` trong mạng Docker, hoặc `33542` trên máy host
+- Username: `vitamind`
+- Password: `vitamind`
+- Database: `vitamind`
+
 3. Nếu chạy app bằng `npm run dev`, tạo `.env.local` từ `.env.example` rồi điền các giá trị local:
 
 - `DATABASE_URL`
@@ -32,6 +52,8 @@ docker compose up -d db
 - `CLERK_WEBHOOK_SIGNING_SECRET`
 - `INTERNAL_API_SECRET`
 - `INTERNAL_API_BASE_URL=http://127.0.0.1:3333`
+- nếu muốn mở giao diện DB từ máy khác qua IP, đặt:
+  - `PGADMIN_BIND_IP=0.0.0.0`
 
 4. Chạy server local:
 
@@ -46,7 +68,7 @@ Không dùng lại `pk_live` / `sk_live` trong `.env.local`.
 
 Nếu chạy app bằng Docker ở môi trường development, tạo `.env.dev.docker` từ `.env.dev.docker.example`.
 Không cho `docker-compose.dev.yml` dùng `.env.docker`, vì file đó dành cho production.
-Nếu muốn dùng màn hình Adminer chỉ dành cho admin bên trong app, hãy cấu hình `ADMINER_INTERNAL_URL` đúng với môi trường đang chạy.
+Nếu muốn đổi tài khoản `pgAdmin`, sửa `PGADMIN_DEFAULT_EMAIL` và `PGADMIN_DEFAULT_PASSWORD`.
 Nếu chạy sau reverse proxy hoặc trong Portainer/Synology, không dùng `INTERNAL_API_BASE_URL=http://127.0.0.1:3333` cho middleware admin.
 Hãy để app tự dùng origin của request, hoặc đặt `INTERNAL_API_BASE_URL` thành domain/public origin thực tế của app.
 
@@ -62,6 +84,17 @@ docker compose up -d --build
 ```
 
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
+`pgAdmin` được map ra `127.0.0.1:35050`, nên nếu cần truy cập từ máy khác phải tự cấu hình reverse proxy hoặc đổi publish rule.
+Repo hiện hỗ trợ đổi trực tiếp bind IP qua env:
+
+- `PGADMIN_BIND_IP=0.0.0.0` để truy cập `http://<server-ip>:35050`
+- nếu muốn đổi cổng, dùng thêm `PGADMIN_PORT`
+
+Với Docker Compose production, chạy:
+
+```bash
+docker compose --profile tools up -d pgadmin
+```
 
 ### Quy tắc xử lý lỗi build trên Synology
 

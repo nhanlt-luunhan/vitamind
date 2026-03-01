@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useSessionUser } from "@/components/auth/useSessionUser";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { AdminUserMenu } from "@/components/admin/AdminUserMenu";
 import styles from "./AdminShell.module.css";
@@ -61,7 +61,7 @@ const adminMenu: AdminMenuSection[] = [
         label: "Cơ sở dữ liệu",
         icon: "ri-database-2-line",
         key: "database",
-        keywords: ["database", "db", "du lieu", "co so du lieu", "adminer"],
+        keywords: ["database", "db", "du lieu", "co so du lieu", "pgadmin", "postgres"],
       },
     ],
   },
@@ -146,8 +146,7 @@ const notificationLinks = [
 
 export function AdminShell({ activeItem, children }: AdminShellProps) {
   const router = useRouter();
-  const { signOut } = useClerk();
-  const { user } = useUser();
+  const { user } = useSessionUser();
   const { resolvedTheme, setThemeMode } = useTheme();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -159,8 +158,8 @@ export function AdminShell({ activeItem, children }: AdminShellProps) {
   const lockInputRef = useRef<HTMLInputElement | null>(null);
 
   const flattenedMenu = useMemo(() => adminMenu.flatMap((section) => section.items), []);
-  const lockName = user?.fullName ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "Admin";
-  const lockAvatar = user?.imageUrl ?? null;
+  const lockName = user?.display_name ?? user?.name ?? user?.email?.split("@")[0] ?? "Admin";
+  const lockAvatar = user?.avatar_url ?? null;
   const adminLogo =
     resolvedTheme === "night"
       ? "/assets/imgs/template/vitamind-night.svg"
@@ -412,7 +411,7 @@ export function AdminShell({ activeItem, children }: AdminShellProps) {
               <span>Không phải bạn? Quay lại</span>
               <button
                 type="button"
-                onClick={() => signOut({ redirectUrl: "/sign-in" })}
+                onClick={() => window.location.assign("/logout")}
               >
                 đăng nhập
               </button>

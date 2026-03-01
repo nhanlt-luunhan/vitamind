@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { query } from "@/lib/db/admin-db";
 import { syncClerkUserById } from "@/lib/auth/clerk-sync";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 
 export type SessionUser = {
   id: string;
@@ -33,19 +35,46 @@ async function fetchUserByClerkId(clerkUserId: string): Promise<SessionUser | nu
   return rows[0] ?? null;
 }
 
+async function fetchUserById(userId: string): Promise<SessionUser | null> {
+  const { rows } = await query<SessionUser>(
+    `select id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
+     from users
+     where id = $1
+     limit 1`,
+    [userId],
+  );
+  return rows[0] ?? null;
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
   const { userId } = await auth();
-  if (!userId) return null;
-  try {
-    await syncClerkUserById(userId);
-  } catch {
-    // Fall back to the last synced internal profile if Clerk is temporarily unreachable.
+
+  if (userId) {
+    let syncedUser: SessionUser | null = null;
+    try {
+      syncedUser = await syncClerkUserById(userId);
+    } catch {
+      // Fall back to the last synced internal profile if Clerk is temporarily unreachable.
+    }
+    const user = syncedUser ?? (await fetchUserByClerkId(userId));
+    if (user?.status && user.status !== "active") {
+      return null;
+    }
+    if (user) {
+      return user;
+    }
   }
-  const user = await fetchUserByClerkId(userId);
-  if (user?.status && user.status !== "active") {
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null;
+  const claims = await verifySessionToken(token);
+  if (!claims?.sub) return null;
+
+  const dbUser = await fetchUserById(claims.sub);
+  if (dbUser?.status && dbUser.status !== "active") {
     return null;
   }
-  return user;
+  return dbUser;
 }
 
 export async function requireAdmin() {
