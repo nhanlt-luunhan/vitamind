@@ -4,8 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
-import { ButtonClient } from "@/components/ui";
+import { useAuth } from "@clerk/nextjs";
 import { createBodyScrollLock, lockBodyScroll, unlockBodyScroll } from "@/lib/dom/bodyScrollLock";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
@@ -178,6 +177,7 @@ const createEmptySearchResults = () => ({
 
 const Header = ({ handleOpen, handleRemove, openClass }) => {
   const router = useRouter();
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const [scroll, setScroll] = useState(0);
   const [overlayTop, setOverlayTop] = useState(78);
   const [isSearchMounted, setSearchMounted] = useState(false);
@@ -706,10 +706,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                               </section>
                               <section className={styles.searchSection}>
                                 <p className={styles.searchLabel}>Gợi ý khám phá</p>
-                                <p className={styles.searchHint}>
-                                  Tìm trên toàn bộ nội dung public của website, không bao gồm khu
-                                  admin và dashboard quản trị.
-                                </p>
                                 <div className={styles.searchTags}>
                                   {suggestedTopics.map((item) => (
                                     <Link
@@ -728,22 +724,36 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                         </div>
                       </div>
                     </>
-                  ) : null}
+                ) : null}
                 </div>
-                <SignedOut>
-                  <div className={`${styles.authSlot} d-none d-sm-flex`}>
-                    <ButtonClient asChild unstyled className={styles.authButton}>
-                      <Link href="/sign-in" prefetch={false}>
-                        Đăng nhập
-                      </Link>
-                    </ButtonClient>
-                  </div>
-                </SignedOut>
-                <SignedIn>
-                  <div className={`${styles.authSlot} d-none d-sm-flex`}>
+                <div className={`${styles.authSlot} d-none d-sm-flex`}>
+                  {!isAuthLoaded ? (
+                    <span className={styles.authPlaceholder} aria-hidden="true" />
+                  ) : isSignedIn ? (
                     <HeaderUserMenu />
-                  </div>
-                </SignedIn>
+                  ) : (
+                    <Link
+                      href="/sign-in"
+                      prefetch={false}
+                      className={styles.authFrameLink}
+                      aria-label="Đăng nhập"
+                    >
+                      <svg
+                        className={styles.icon}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M20 21a8 8 0 0 0-16 0" />
+                        <circle cx="12" cy="8" r="4" />
+                      </svg>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -90,7 +90,13 @@ export function HeaderUserMenu() {
     [isAdmin],
   );
 
-  if (!isLoaded || !user) return null;
+  if (!isLoaded || !user) {
+    return (
+      <div className={styles.root} aria-hidden="true">
+        <span className={`${styles.trigger} ${styles.triggerPlaceholder}`} />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.root} ref={menuRef}>
@@ -102,7 +108,13 @@ export function HeaderUserMenu() {
         aria-label="Mở menu tài khoản"
       >
         {avatarUrl ? (
-          <img className={styles.avatar} src={avatarUrl} alt={displayName} />
+          <img
+            className={styles.avatar}
+            src={avatarUrl}
+            alt={displayName}
+            width="40"
+            height="40"
+          />
         ) : (
           <span className={`${styles.avatar} ${styles.avatarFallback}`}>
             {displayName.charAt(0).toUpperCase()}
