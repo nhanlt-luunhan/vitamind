@@ -1,42 +1,23 @@
 "use client";
 
-import Image from "next/image";
-
-const ZALO_OA_ID = "161296678959895198";
+import Script from "next/script";
 
 const ZaloChatWidget = () => {
-  const handleClick = (e) => {
-    e.preventDefault();
-    const isMobile = navigator.maxTouchPoints > 0 || /Mobi|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      // Mobile: open Zalo app
-      window.location.href = `https://zalo.me/${ZALO_OA_ID}`;
-    } else {
-      // Desktop: open Zalo web chat in new window
-      window.open(
-        `https://chat.zalo.me/?phone=${ZALO_OA_ID}`,
-        "zalo-chat",
-        "width=400,height=600,left=100,top=100,resizable=yes,scrollbars=yes"
-      );
-    }
-  };
-
   return (
-    <a
-      className="floating-actions__item floating-actions__item--zalo"
-      href={`https://zalo.me/${ZALO_OA_ID}`}
-      onClick={handleClick}
-      aria-label="Chat qua Zalo"
-      title="Chat qua Zalo"
-    >
-      <Image
-        src="/assets/imgs/template/zalo-logo.png"
-        alt="Zalo"
-        width={54}
-        height={54}
-        priority={false}
+    <>
+      <div
+        className="zalo-chat-widget floating-actions__item floating-actions__item--zalo"
+        data-oaid="161296678959895198"
+        data-welcome-message="Rất vui khi được hỗ trợ bạn!"
+        data-autopopup="0"
+        data-width=""
+        data-height=""
       />
-    </a>
+      <Script
+        src="https://sp.zalo.me/plugins/sdk.js"
+        strategy="afterInteractive"
+      />
+    </>
   );
 };
 

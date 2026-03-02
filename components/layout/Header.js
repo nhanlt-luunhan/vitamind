@@ -352,15 +352,23 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
   useEffect(() => {
     if (!isNavMounted) return undefined;
 
+    const handleClickOutside = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        closeNavPanel();
+      }
+    };
+
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         closeNavPanel();
       }
     };
 
+    document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isNavMounted]);
@@ -729,7 +737,7 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                         </div>
                       </div>
                     </>
-                ) : null}
+                  ) : null}
                 </div>
                 <div className={`${styles.authSlot} d-none d-sm-flex`}>
                   {!hasMounted || !isAuthLoaded ? (

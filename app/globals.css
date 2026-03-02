@@ -335,10 +335,12 @@ p {
   transform: translateY(-3px);
 }
 
-.floating-actions__item--zalo {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+.floating-actions__item--zalo,
+.zalo-chat-widget,
+.zalo-chat-widget iframe {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 .floating-actions__item--zalo img {

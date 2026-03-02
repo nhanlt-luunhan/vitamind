@@ -58,7 +58,7 @@
   padding: 0;
   border: 0;
   z-index: 78;
-  background: var(--surface-overlay);
+  background: transparent;
   backdrop-filter: blur(16px);
   opacity: 0;
   transition: opacity 0.28s ease;
@@ -310,7 +310,7 @@
   padding: 0;
   border: 0;
   z-index: 82;
-  background: var(--surface-overlay-strong);
+  background: transparent;
   backdrop-filter: blur(18px);
   opacity: 0;
   transition: opacity 0.3s ease;
