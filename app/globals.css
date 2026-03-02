@@ -190,6 +190,8 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Giữ chỗ scrollbar để tránh layout shift khi overlay mở */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -221,6 +223,19 @@ textarea {
   padding-right: 0;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Fix layout shift khi scroll lock: dùng right:0 thay vì width:100%
+   để header không bị ảnh hưởng khi padding-right được thêm vào */
+.sticky-bar.stick {
+  left: 0;
+  right: 0;
+  width: auto !important;
+  transition: padding-right 0s !important;
+}
+
+header {
+  transition: padding-right 0s;
 }
 
 h1,
@@ -525,11 +540,13 @@ p {
   box-shadow: 0 0 6px rgb(from var(--c-3) r g b / 0.45);
 }
 
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
   .cursor-ring {
     display: none;
   }
 }
+
 .box-content-single img,
 .content-detail img,
 .card-image img {
@@ -2621,6 +2638,7 @@ small {
 }
 
 @media (max-width: 991px) {
+
   .account-profile,
   .auth-shell__grid,
   .studio-layout,
