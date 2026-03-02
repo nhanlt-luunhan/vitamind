@@ -47,22 +47,27 @@ async function fetchUserById(userId: string): Promise<SessionUser | null> {
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const { userId } = await auth();
+  // Try Clerk auth first — if no Clerk session or Clerk is not configured, fall through to cookie
+  try {
+    const { userId } = await auth();
 
-  if (userId) {
-    let syncedUser: SessionUser | null = null;
-    try {
-      syncedUser = await syncClerkUserById(userId);
-    } catch {
-      // Fall back to the last synced internal profile if Clerk is temporarily unreachable.
+    if (userId) {
+      let syncedUser: SessionUser | null = null;
+      try {
+        syncedUser = await syncClerkUserById(userId);
+      } catch {
+        // Fall back to the last synced internal profile if Clerk is temporarily unreachable.
+      }
+      const user = syncedUser ?? (await fetchUserByClerkId(userId));
+      if (user?.status && user.status !== "active") {
+        return null;
+      }
+      if (user) {
+        return user;
+      }
     }
-    const user = syncedUser ?? (await fetchUserByClerkId(userId));
-    if (user?.status && user.status !== "active") {
-      return null;
-    }
-    if (user) {
-      return user;
-    }
+  } catch {
+    // Clerk not configured or threw — fall through to cookie-based session
   }
 
   const cookieStore = await cookies();

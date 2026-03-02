@@ -161,7 +161,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
     fullName.trim().split(/\s+/).slice(0, -1).join(" ") || fullName.trim() || undefined;
   const lastName = fullName.trim().split(/\s+/).slice(-1)[0] || undefined;
 
-  const handlePasswordSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+  // Step 1: resolve identifier
+  const [signInStep, setSignInStep] = useState<"identifier" | "db-password" | "clerk-oauth">("identifier");
+  const [resolvedIdentifier, setResolvedIdentifier] = useState("");
+
+  const handleResolveIdentifier = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!signInLoaded) return;
 
@@ -172,46 +176,53 @@ export function AuthSplitDeck({ initialMode }: Props) {
       const resolved = await resolveSignInIdentifier(signInEmail);
 
       if (resolved.mode === "db") {
-        const response = await fetch("/api/auth/db-sign-in", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            identifier: resolved.identifier,
-            password: signInPassword,
-            remember: rememberPassword,
-          }),
-        });
-
-        const data = (await response.json().catch(() => null)) as
-          | { error?: string; destination?: string }
-          | null;
-
-        if (!response.ok) {
-          setSignInError(data?.error ?? "Không thể đăng nhập lúc này.");
-          return;
-        }
-
-        window.location.assign(data?.destination ?? "/");
+        setResolvedIdentifier(resolved.identifier);
+        setSignInStep("db-password");
         return;
       }
 
-      if (resolved.mode === "unknown") {
-        setSignInError("Không tìm thấy tài khoản tương ứng với email hoặc GID này.");
+      if (resolved.mode === "clerk") {
+        setResolvedIdentifier(resolved.identifier);
+        setSignInStep("clerk-oauth");
         return;
       }
 
-      const result = await signIn.create({
-        identifier: resolved.identifier,
-        password: signInPassword,
+      // unknown
+      setSignInError("Không tìm thấy tài khoản tương ứng với email hoặc GID này.");
+    } catch (error) {
+      setSignInError(getErrorMessage(error, "Không thể kiểm tra email lúc này."));
+    } finally {
+      setSignInSubmitting(false);
+    }
+  };
+
+  const handleDbPasswordSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setSignInSubmitting(true);
+    setSignInError(null);
+
+    try {
+      const response = await fetch("/api/auth/db-sign-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: resolvedIdentifier,
+          password: signInPassword,
+          remember: rememberPassword,
+        }),
       });
 
-      if (result.status === "complete") {
-        await setActiveSignIn({ session: result.createdSessionId });
-        window.location.assign(signInRedirectPath);
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; destination?: string }
+        | null;
+
+      if (!response.ok) {
+        setSignInError(data?.error ?? "Không thể đăng nhập lúc này.");
         return;
       }
 
-      setSignInError("Đăng nhập chưa hoàn tất. Vui lòng thử lại.");
+      window.location.assign(data?.destination ?? "/");
     } catch (error) {
       setSignInError(getErrorMessage(error, "Không thể đăng nhập lúc này."));
     } finally {
@@ -334,92 +345,174 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
           <div className={styles.formWrap}>
             {isSignIn ? (
-              <form className={styles.form} onSubmit={handlePasswordSignIn}>
-                <label className={styles.field}>
-                  <span>Email</span>
-                  <input
-                    type="text"
-                    autoComplete="username"
-                    value={signInEmail}
-                    onChange={(event) => setSignInEmail(event.target.value)}
-                    placeholder="Nhập email hoặc GID"
-                    required
-                  />
-                </label>
+              <>
+                {/* Step 1: enter email / GID */}
+                {signInStep === "identifier" && (
+                  <form className={styles.form} onSubmit={handleResolveIdentifier}>
+                    <label className={styles.field}>
+                      <span>Email hoặc GID</span>
+                      <input
+                        type="text"
+                        autoComplete="username"
+                        value={signInEmail}
+                        onChange={(event) => setSignInEmail(event.target.value)}
+                        placeholder="Nhập email hoặc GID"
+                        required
+                      />
+                    </label>
 
-                <div className={styles.passwordHead}>
-                  <span>Mật khẩu</span>
-                  <button
-                    type="button"
-                    className={styles.textLink}
-                    onClick={() => router.push("/forgot-password")}
-                  >
-                    Quên mật khẩu?
-                  </button>
-                </div>
+                    {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
-                <div className={styles.passwordField}>
-                  <input
-                    type={showSignInPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    value={signInPassword}
-                    onChange={(event) => setSignInPassword(event.target.value)}
-                    placeholder="Nhập mật khẩu"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className={styles.passwordToggle}
-                    onClick={() => setShowSignInPassword((value) => !value)}
-                    aria-label={showSignInPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                    aria-pressed={showSignInPassword}
-                  >
-                    {showSignInPassword ? <EyeClosedMark /> : <EyeOpenMark />}
-                  </button>
-                </div>
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={!signInLoaded || signInSubmitting}
+                    >
+                      {signInSubmitting ? "Đang kiểm tra..." : "Tiếp tục"}
+                    </button>
 
-                <label className={styles.checkRow}>
-                  <input
-                    type="checkbox"
-                    checked={rememberPassword}
-                    onChange={(event) => setRememberPassword(event.target.checked)}
-                  />
-                  <span>Lưu mật khẩu</span>
-                </label>
+                    <p className={styles.divider}>Hoặc đăng nhập với</p>
 
-                {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
+                    <div className={styles.socialRow}>
+                      <button
+                        type="button"
+                        className={styles.socialButton}
+                        onClick={handleGoogleSignIn}
+                        disabled={!signInLoaded || signInOauthLoading}
+                        aria-label="Đăng nhập với Google"
+                      >
+                        <Image
+                          src="/assets/imgs/template/icons/google-icon.png"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={styles.socialButtonIcon}
+                        />
+                        <span className={styles.socialButtonText}>
+                          {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                )}
 
-                <button
-                  type="submit"
-                  className={styles.primaryButton}
-                  disabled={!signInLoaded || signInSubmitting}
-                >
-                  {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-                </button>
+                {/* Step 2a: DB password login */}
+                {signInStep === "db-password" && (
+                  <form className={styles.form} onSubmit={handleDbPasswordSignIn}>
+                    <p className={styles.subtitle} style={{ marginBottom: 0 }}>
+                      Đăng nhập cho: <strong>{resolvedIdentifier}</strong>
+                    </p>
 
-                <p className={styles.divider}>Hoặc đăng nhập với</p>
+                    <div className={styles.passwordHead}>
+                      <span>Mật khẩu</span>
+                      <button
+                        type="button"
+                        className={styles.textLink}
+                        onClick={() => router.push("/forgot-password")}
+                      >
+                        Quên mật khẩu?
+                      </button>
+                    </div>
 
-                <div className={styles.socialRow}>
-                  <button
-                    type="button"
-                    className={styles.socialButton}
-                    onClick={handleGoogleSignIn}
-                    disabled={!signInLoaded || signInOauthLoading}
-                    aria-label="Đăng nhập với Google"
-                  >
-                    <Image
-                      src="/assets/imgs/template/icons/google-icon.png"
-                      alt=""
-                      width={18}
-                      height={18}
-                      className={styles.socialButtonIcon}
-                    />
-                    <span className={styles.socialButtonText}>
-                      {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
-                    </span>
-                  </button>
-                </div>
-              </form>
+                    <div className={styles.passwordField}>
+                      <input
+                        type={showSignInPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        value={signInPassword}
+                        onChange={(event) => setSignInPassword(event.target.value)}
+                        placeholder="Nhập mật khẩu"
+                        required
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className={styles.passwordToggle}
+                        onClick={() => setShowSignInPassword((v) => !v)}
+                        aria-label={showSignInPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        aria-pressed={showSignInPassword}
+                      >
+                        {showSignInPassword ? <EyeClosedMark /> : <EyeOpenMark />}
+                      </button>
+                    </div>
+
+                    <label className={styles.checkRow}>
+                      <input
+                        type="checkbox"
+                        checked={rememberPassword}
+                        onChange={(event) => setRememberPassword(event.target.checked)}
+                      />
+                      <span>Lưu đăng nhập</span>
+                    </label>
+
+                    {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
+
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={signInSubmitting}
+                    >
+                      {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setSignInStep("identifier");
+                        setSignInPassword("");
+                        setSignInError(null);
+                      }}
+                    >
+                      ← Dùng email khác
+                    </button>
+                  </form>
+                )}
+
+                {/* Step 2b: Clerk / Google OAuth */}
+                {signInStep === "clerk-oauth" && (
+                  <div className={styles.form}>
+                    <p className={styles.subtitle} style={{ marginBottom: 0 }}>
+                      Tiếp tục đăng nhập với tài khoản Google cho: <strong>{resolvedIdentifier}</strong>
+                    </p>
+
+                    {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
+
+                    <div className={styles.socialRow}>
+                      <button
+                        type="button"
+                        className={styles.socialButton}
+                        onClick={handleGoogleSignIn}
+                        disabled={!signInLoaded || signInOauthLoading}
+                        aria-label="Đăng nhập với Google"
+                      >
+                        <Image
+                          src="/assets/imgs/template/icons/google-icon.png"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={styles.socialButtonIcon}
+                        />
+                        <span className={styles.socialButtonText}>
+                          {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
+                        </span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setSignInStep("identifier");
+                        setSignInError(null);
+                      }}
+                    >
+                      ← Dùng email khác
+                    </button>
+                  </div>
+                )}
+              </>
+
             ) : (
               <>
                 {!verifying ? (

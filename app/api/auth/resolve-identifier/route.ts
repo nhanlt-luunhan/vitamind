@@ -58,7 +58,8 @@ export async function POST(request: Request) {
       // Fall back to local DB lookup if Clerk is temporarily unavailable.
     }
 
-    return NextResponse.json({ mode: "clerk", identifier: email });
+    // Email not found in DB or Clerk — do not assume clerk mode
+    return NextResponse.json({ mode: "unknown", identifier: email });
   }
 
   const gid = normalizeGid(identifier);
