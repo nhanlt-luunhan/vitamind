@@ -186,12 +186,13 @@ html {
     "Segoe UI",
     sans-serif;
   font-size: 16px;
+  /* Luôn hiện scrollbar → không bao giờ shift khi panel mở/đóng */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Giữ chỗ scrollbar để tránh layout shift khi overlay mở */
-  scrollbar-gutter: stable;
 }
 
 body {
@@ -223,19 +224,6 @@ textarea {
   padding-right: 0;
   margin-left: auto;
   margin-right: auto;
-}
-
-/* Fix layout shift khi scroll lock: dùng right:0 thay vì width:100%
-   để header không bị ảnh hưởng khi padding-right được thêm vào */
-.sticky-bar.stick {
-  left: 0;
-  right: 0;
-  width: auto !important;
-  transition: padding-right 0s !important;
-}
-
-header {
-  transition: padding-right 0s;
 }
 
 h1,
