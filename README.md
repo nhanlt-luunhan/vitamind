@@ -146,6 +146,24 @@ Các event cần bật:
 - `user.updated`
 - `user.deleted`
 
+Nếu cần đồng bộ toàn bộ user Clerk về Postgres sau khi deploy hoặc sau khi thiếu webhook cũ, gọi endpoint nội bộ:
+
+```bash
+curl -X POST https://vitamind.com.vn/api/internal/clerk-sync \
+  -H "x-internal-secret: YOUR_INTERNAL_API_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Nếu chỉ muốn sync một user Clerk cụ thể:
+
+```bash
+curl -X POST https://vitamind.com.vn/api/internal/clerk-sync \
+  -H "x-internal-secret: YOUR_INTERNAL_API_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"clerkUserId":"user_xxx"}'
+```
+
 ## Ghi chú
 
 - `.env.local` và `.env` được bỏ khỏi git.
