@@ -83,11 +83,25 @@ git pull origin main
 sh ./scripts/deploy-synology-safe.sh
 ```
 
+Nếu muốn đồng bộ trạng thái Synology sát với local nhất có thể sau khi pull code, dùng:
+
+```bash
+git pull origin main
+sh ./scripts/synology-full-sync.sh
+```
+
 Script trên sẽ:
 
 - backup PostgreSQL hiện tại vào thư mục `backups/` nếu container DB đang chạy
 - build lại stack bằng `docker-compose.synology.yml`
 - không tự chạy DB sync trừ khi bạn chủ động bật `RUN_DB_SYNC=true`
+
+Script `synology-full-sync.sh` sẽ:
+
+- deploy lại stack
+- chạy DB sync có chủ đích
+- ép sync toàn bộ user từ Clerk về Postgres
+- in ra danh sách user hiện có trong DB để đối chiếu với local
 
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
 `pgAdmin` được map ra `127.0.0.1:35050`, nên nếu cần truy cập từ máy khác phải tự cấu hình reverse proxy hoặc đổi publish rule.
