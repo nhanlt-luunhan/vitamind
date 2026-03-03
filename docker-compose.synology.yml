@@ -76,8 +76,6 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:9
-    profiles:
-      - tools
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@vitamind.com.vn}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change-me-pgadmin}

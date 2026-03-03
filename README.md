@@ -96,10 +96,10 @@ Repo hiện hỗ trợ đổi trực tiếp bind IP qua env:
 - `PGADMIN_BIND_IP=0.0.0.0` để truy cập `http://<server-ip>:35050`
 - nếu muốn đổi cổng, dùng thêm `PGADMIN_PORT`
 
-Với Docker Compose production, chạy:
+Trên Synology, `pgAdmin` giờ chạy mặc định cùng stack `app + db`, nên chỉ cần:
 
 ```bash
-docker compose -f docker-compose.synology.yml --profile tools up -d pgadmin
+sh ./scripts/deploy-synology-safe.sh
 ```
 
 Nếu vừa thêm file SQL mới trong `docker/db-init`, chạy sync có chủ đích:
