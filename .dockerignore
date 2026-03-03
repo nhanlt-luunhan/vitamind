@@ -6,8 +6,14 @@ node_modules
 README.md
 docs
 docker
+!docker/
+!docker/db-init/
+!docker/db-init/*.sql
 .vscode
 scripts
+!scripts/
+!scripts/sync-db.mjs
+!scripts/docker-entrypoint.sh
 server
 tools
 prisma

@@ -10,21 +10,18 @@ services:
     environment:
       NODE_ENV: "production"
       PORT: "3333"
+      HOSTNAME: "0.0.0.0"
       NODE_OPTIONS: "--max-old-space-size=512"
       NEXT_TELEMETRY_DISABLED: "1"
+      AUTO_DB_SYNC: "true"
     volumes:
       - ./public/uploads:/app/public/uploads
       - ./content:/app/content
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:3333/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:3333/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -40,6 +37,8 @@ services:
 
   db:
     image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_BIND_IP:-127.0.0.1}:${POSTGRES_PORT:-33542}:5432"
     environment:
       POSTGRES_USER: "vitamind"
       POSTGRES_PASSWORD: "vitamind"
@@ -48,7 +47,7 @@ services:
       - db_data:/var/lib/postgresql/data
       - ./docker/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vitamind"]
+      test: [ "CMD-SHELL", "pg_isready -U vitamind" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,7 +74,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:9
-    profiles: ["tools"]
+    profiles: [ "tools" ]
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@vitamind.com.vn}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change-me-pgadmin}

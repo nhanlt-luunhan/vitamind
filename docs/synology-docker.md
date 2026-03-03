@@ -16,6 +16,8 @@ Repo nay co the chay on tren Docker Synology, nhung khong nen goi la "100% tu do
 3. Khong xoa volume Postgres khi deploy lai.
 4. Chay `npm run db:sync` moi khi them file SQL moi trong `docker/db-init`.
 
+App container production hien se tu chay DB sync khi khoi dong neu `AUTO_DB_SYNC=true`.
+
 ## Bao toan du lieu DB
 
 DB duoc giu lai neu:
@@ -44,7 +46,7 @@ DB se mat neu:
 2. Backup DB.
 3. Kiem tra `.env.docker` tren NAS.
 4. `docker compose up -d --build`
-5. `npm run db:sync` neu co migration SQL moi.
+5. Theo doi log app de chac chan buoc auto sync thanh cong.
 6. Kiem tra `GET /api/health`.
 
 ## Cac gioi han con lai
