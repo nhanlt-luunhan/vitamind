@@ -419,6 +419,9 @@ function UsersTab({ canManage }: { canManage: boolean }) {
       const payload = {
         role: editing.role,
         status: editing.status,
+        name: editing.name,
+        display_name: editing.display_name,
+        gid: editing.gid,
       };
       const data = await fetchJson(`/api/admin/users/${editing.id}`, {
         method: "PATCH",
@@ -521,8 +524,51 @@ function UsersTab({ canManage }: { canManage: boolean }) {
                     )}
                   </td>
                   <td>{row.email}</td>
-                  <td>{displayName}</td>
-                  <td>{row.gid ?? "-"}</td>
+                  <td>
+                    {isEditing ? (
+                      <div className="admin-inline">
+                        <label className="admin-inline__label">Hiển thị</label>
+                        <input
+                          className="admin-input"
+                          value={editing?.display_name ?? ""}
+                          onChange={(event) =>
+                            setEditing((prev) =>
+                              prev ? { ...prev, display_name: event.target.value } : prev,
+                            )
+                          }
+                          placeholder="Tên hiển thị"
+                        />
+                        <label className="admin-inline__label">Tên thật</label>
+                        <input
+                          className="admin-input"
+                          value={editing?.name ?? ""}
+                          onChange={(event) =>
+                            setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
+                          }
+                          placeholder="Tên thật"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="fw-600">{displayName}</div>
+                        <div className="color-gray-500 text-sm">{row.name ?? "-"}</div>
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input
+                        className="admin-input"
+                        value={editing?.gid ?? ""}
+                        onChange={(event) =>
+                          setEditing((prev) => (prev ? { ...prev, gid: event.target.value } : prev))
+                        }
+                        placeholder="GID"
+                      />
+                    ) : (
+                      row.gid ?? "-"
+                    )}
+                  </td>
                   <td>
                     {isEditing ? (
                       <select

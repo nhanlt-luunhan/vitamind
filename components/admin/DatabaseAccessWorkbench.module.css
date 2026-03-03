@@ -1,0 +1,244 @@
+.root {
+  display: grid;
+  gap: 18px;
+}
+
+.intro {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  border: 1px solid var(--admin-border);
+  background:
+    radial-gradient(circle at top right, rgb(from var(--surface-highlight-strong) r g b / 0.16), transparent 34%),
+    linear-gradient(180deg, rgb(from var(--admin-panel-alt-bg) r g b / 0.94), rgb(from var(--admin-panel-bg) r g b / 0.98));
+}
+
+.intro strong {
+  color: var(--admin-text);
+  font-size: 1.12rem;
+}
+
+.intro p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  line-height: 1.65;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel-bg);
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelHead div {
+  display: grid;
+  gap: 4px;
+}
+
+.panelHead h3 {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 1.05rem;
+}
+
+.panelHead p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  line-height: 1.6;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgb(from var(--surface-highlight-strong) r g b / 0.14);
+  color: #0284c7;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.itemButton {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel-alt-bg);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.itemButton:hover,
+.itemActive {
+  transform: translateY(-1px);
+  border-color: var(--surface-highlight-strong);
+  background: rgb(from var(--surface-highlight-strong) r g b / 0.08);
+}
+
+.itemButton strong {
+  color: var(--admin-text);
+}
+
+.itemButton span,
+.itemButton small {
+  color: var(--admin-text-muted);
+  line-height: 1.5;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  color: var(--admin-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel-bg);
+  color: var(--admin-text);
+  font: inherit;
+}
+
+.field textarea {
+  min-height: 100px;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--surface-highlight-strong);
+  box-shadow: 0 0 0 3px rgb(from var(--surface-highlight-strong) r g b / 0.12);
+}
+
+.selectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.permissionCard {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel-alt-bg);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.permissionCard:hover,
+.permissionCardActive {
+  transform: translateY(-1px);
+  border-color: var(--surface-highlight-strong);
+  background: rgb(from var(--surface-highlight-strong) r g b / 0.08);
+}
+
+.permissionCard strong {
+  color: var(--admin-text);
+}
+
+.permissionCard span,
+.permissionCard small {
+  color: var(--admin-text-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.secondaryButton,
+.primaryButton {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  background: var(--admin-panel-bg);
+  color: var(--admin-text);
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #0f766e, #0ea5e9);
+  color: #eff6ff;
+}
+
+.feedbackError,
+.feedbackSuccess {
+  padding: 12px 14px;
+  border-radius: 14px;
+  line-height: 1.6;
+}
+
+.feedbackError {
+  border: 1px solid var(--surface-danger-border);
+  background: var(--surface-danger);
+  color: var(--surface-danger-text);
+}
+
+.feedbackSuccess {
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+@media (max-width: 991px) {
+  .grid,
+  .selectionGrid {
+    grid-template-columns: 1fr;
+  }
+}

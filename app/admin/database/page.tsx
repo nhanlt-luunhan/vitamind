@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { DatabaseAccessWorkbench } from "@/components/admin/DatabaseAccessWorkbench";
 import { AdminShell } from "@/components/admin/AdminShell";
 import shellStyles from "@/components/admin/AdminShell.module.css";
+import { fetchAccessGroups, fetchAccessPermissions } from "@/lib/access-control/admin";
 import { requireAdmin } from "@/lib/auth/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   await requireAdmin();
   const pgAdminPort = process.env.PGADMIN_PORT ?? "35050";
+  const [permissionsResult, groupsResult] = await Promise.all([
+    fetchAccessPermissions(),
+    fetchAccessGroups(),
+  ]);
+  const initialPermissions = permissionsResult.error ? [] : permissionsResult.rows;
+  const initialGroups = groupsResult.error ? [] : groupsResult.rows;
 
   return (
     <AdminShell activeItem="database">
@@ -21,6 +29,12 @@ export default async function Page() {
           </p>
         </div>
         <div className={shellStyles.topActions}>
+          <Link className="studio-action studio-action--secondary" href="/admin/users/list-view">
+            Người dùng
+          </Link>
+          <Link className="studio-action studio-action--secondary" href="/admin/database#permissions">
+            Quyền
+          </Link>
           <Link className="studio-action studio-action--secondary" href="/admin">
             Về bảng điều khiển
           </Link>
@@ -42,6 +56,63 @@ export default async function Page() {
           <span className={shellStyles.metricLabel}>Mục tiêu</span>
           <strong className={shellStyles.metricValue}>Postgres</strong>
           <p className={shellStyles.metricText}>Điểm vào duy nhất để xem bảng, chỉ mục và dữ liệu migration hiện hành.</p>
+        </article>
+      </section>
+
+      <section id="users" className={`${shellStyles.panel} ${shellStyles.anchorTarget}`}>
+        <div className={shellStyles.panelHead}>
+          <div>
+            <span className={shellStyles.panelEyebrow}>Người dùng</span>
+            <h2>Danh sách người dùng đã tách thành list view theo tham chiếu Lahomes</h2>
+          </div>
+          <Link className="studio-action studio-action--secondary" href="/admin/users/list-view">
+            Mở danh sách người dùng
+          </Link>
+        </div>
+        <p className={shellStyles.panelCopy}>
+          Khu vực chỉnh sửa user giờ đi theo cây thư mục kiểu Lahomes tại
+          {" "}
+          <code>app/admin/users/list-view</code>
+          {" "}
+          để tách riêng list view, form chỉnh sửa và lịch sử thao tác khỏi trang điều phối database.
+        </p>
+        <div className={`${shellStyles.metrics} ${shellStyles.metricsTriple}`}>
+          <article className={shellStyles.metricCard}>
+            <span className={shellStyles.metricLabel}>Route</span>
+            <strong className={shellStyles.metricValue}>/admin/users/list-view</strong>
+            <p className={shellStyles.metricText}>
+              Danh sách user dùng bố cục card và table theo customer list view của Lahomes.
+            </p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <span className={shellStyles.metricLabel}>Nhóm</span>
+            <strong className={shellStyles.metricValue}>{initialGroups.length}</strong>
+            <p className={shellStyles.metricText}>
+              Group được tạo trước, sau đó mới gán lại cho user trong màn hình chi tiết.
+            </p>
+          </article>
+          <article className={shellStyles.metricCard}>
+            <span className={shellStyles.metricLabel}>Quyền</span>
+            <strong className={shellStyles.metricValue}>{initialPermissions.length}</strong>
+            <p className={shellStyles.metricText}>
+              Permission riêng và permission kế thừa theo group đều hiển thị ngay trong list view mới.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className={`${shellStyles.grid} ${shellStyles.gridBalanced}`}>
+        <article id="permissions" className={`${shellStyles.panel} ${shellStyles.anchorTarget}`}>
+          <div className={shellStyles.panelHead}>
+            <div>
+              <span className={shellStyles.panelEyebrow}>Quyền</span>
+              <h2>Tạo quyền, gom quyền vào nhóm rồi áp dụng lại cho user</h2>
+            </div>
+          </div>
+          <DatabaseAccessWorkbench
+            initialPermissions={initialPermissions}
+            initialGroups={initialGroups}
+          />
         </article>
       </section>
 

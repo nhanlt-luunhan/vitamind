@@ -74,14 +74,20 @@ Hãy để app tự dùng origin của request, hoặc đặt `INTERNAL_API_BASE
 
 ## Triển khai trên Synology Docker
 
-1. Giữ toàn bộ cấu hình production, bao gồm cả secret nếu bạn chấp nhận đồng bộ từ Mac sang Synology, trong `.env.docker`.
+1. Giữ toàn bộ cấu hình production trong `.env.docker` và dùng file stack riêng cho Synology là `docker-compose.synology.yml`.
 
-2. Trên Synology, chỉ cần `git pull` để nhận `.env.docker` mới rồi build và chạy:
+2. Trên Synology, cập nhật code rồi chạy deploy an toàn:
 
 ```bash
 git pull origin main
-docker compose up -d --build
+sh ./scripts/deploy-synology-safe.sh
 ```
+
+Script trên sẽ:
+
+- backup PostgreSQL hiện tại vào thư mục `backups/` nếu container DB đang chạy
+- build lại stack bằng `docker-compose.synology.yml`
+- không tự chạy DB sync trừ khi bạn chủ động bật `RUN_DB_SYNC=true`
 
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
 `pgAdmin` được map ra `127.0.0.1:35050`, nên nếu cần truy cập từ máy khác phải tự cấu hình reverse proxy hoặc đổi publish rule.
@@ -93,7 +99,19 @@ Repo hiện hỗ trợ đổi trực tiếp bind IP qua env:
 Với Docker Compose production, chạy:
 
 ```bash
-docker compose --profile tools up -d pgadmin
+docker compose -f docker-compose.synology.yml --profile tools up -d pgadmin
+```
+
+Nếu vừa thêm file SQL mới trong `docker/db-init`, chạy sync có chủ đích:
+
+```bash
+RUN_DB_SYNC=true sh ./scripts/deploy-synology-safe.sh
+```
+
+Hoặc:
+
+```bash
+docker compose -f docker-compose.synology.yml exec -T app sh -lc 'node /app/scripts/sync-db.mjs --mode url'
 ```
 
 ### Quy tắc xử lý lỗi build trên Synology
@@ -113,6 +131,7 @@ docker compose --profile tools up -d pgadmin
 - Dockerfile của dự án đã chuẩn hóa theo quy tắc:
   - copy `.env.docker` sang `.env.production`
   - rồi mới chạy `next build`
+- Production hiện không auto sync DB khi container khởi động. Đây là chủ đích để giảm rủi ro trên Synology.
 - Không đổi tên `docker-compose.yml`, vì Synology đang đọc đúng file này.
 
 ## Webhook Clerk

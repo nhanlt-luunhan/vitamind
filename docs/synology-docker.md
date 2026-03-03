@@ -14,15 +14,16 @@ Repo nay co the chay on tren Docker Synology, nhung khong nen goi la "100% tu do
 1. Dien dung Clerk keys va `INTERNAL_API_SECRET`.
 2. Khong tro `DATABASE_URL` local/dev vao DB production.
 3. Khong xoa volume Postgres khi deploy lai.
-4. Chay `npm run db:sync` moi khi them file SQL moi trong `docker/db-init`.
+4. Chay DB sync co chu dich moi khi them file SQL moi trong `docker/db-init`.
 
-App container production hien se tu chay DB sync khi khoi dong neu `AUTO_DB_SYNC=true`.
+Production tren Synology nen de `AUTO_DB_SYNC=false` theo mac dinh. Khong nen de app tu sync schema moi lan khoi dong.
 
 ## Bao toan du lieu DB
 
 DB duoc giu lai neu:
 
 - van dung cung volume `db_data`
+- volume duoc gan ten co dinh `vitamind_db_data` tren file `docker-compose.synology.yml`
 - chi `docker compose up -d --build` hoac recreate container
 - khong chay `docker compose down -v`
 - khong xoa volume trong Portainer / Synology Container Manager
@@ -43,11 +44,10 @@ DB se mat neu:
 ## Quy trinh update an toan
 
 1. Pull code moi.
-2. Backup DB.
-3. Kiem tra `.env.docker` tren NAS.
-4. `docker compose up -d --build`
-5. Theo doi log app de chac chan buoc auto sync thanh cong.
-6. Kiem tra `GET /api/health`.
+2. Kiem tra `.env.docker` tren NAS.
+3. Chay `sh ./scripts/deploy-synology-safe.sh`
+4. Neu co file SQL moi, chay `RUN_DB_SYNC=true sh ./scripts/deploy-synology-safe.sh`
+5. Kiem tra `GET /api/health`.
 
 ## Cac gioi han con lai
 

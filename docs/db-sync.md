@@ -34,6 +34,7 @@ Script se:
 - Tu dong chon mode `url` neu co `DATABASE_URL`, neu khong thi dung `docker compose exec -T db`
 - Dung ngay khi gap loi (`ON_ERROR_STOP=1`)
 - Chay duoc qua `npm run ...` tren Windows/macOS vi script sync dung Node
+- Khong tu dong chay trong production/Synology neu ban khong chu dong bat `AUTO_DB_SYNC=true`
 
 ## Cac mode ho tro
 

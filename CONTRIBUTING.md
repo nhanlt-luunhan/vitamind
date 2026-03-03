@@ -29,6 +29,10 @@
 - Use async/await.
 - Before changing App Router/auth/cache behavior, read `docs/NEXTJS_RULES.md`.
 
+## Data Language Rule
+- New seeded data, demo data, sample content, admin-created defaults, and newly authored user-facing records must be written in Vietnamese by default.
+- Only use non-Vietnamese content when the feature explicitly requires another language, and document that reason in the related PR or implementation note.
+
 ## Workflow
 - Write a UI spec before implementation.
 - Commit a snapshot before major changes.

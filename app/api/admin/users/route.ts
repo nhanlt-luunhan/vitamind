@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
-import { query } from "@/lib/db/admin-db";
 import { canManageUsers } from "@/lib/auth/rbac";
 import { drainClerkDeletionQueue, syncAllClerkUsers } from "@/lib/auth/clerk-sync";
+import { fetchDecoratedUsers } from "@/lib/access-control/admin";
 
 export const dynamic = "force-dynamic";
-
-type UserRow = {
-  id: string;
-  clerk_user_id: string | null;
-  email: string;
-  name: string | null;
-  display_name: string | null;
-  gid: string | null;
-  role: string | null;
-  status: string | null;
-  avatar_url: string | null;
-  created_at: string;
-  updated_at: string | null;
-};
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
@@ -40,13 +26,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const { rows } = await query<UserRow>(
-    `select id, clerk_user_id, email, name, display_name, gid, role, status, avatar_url, created_at, updated_at
-     from users
-     order by coalesce(updated_at, created_at) desc, created_at desc
-     ${limit ? "limit $1" : ""}`,
-    limit ? [limit] : undefined,
-  );
+  const { rows, error } = await fetchDecoratedUsers(limit);
+  if (error) {
+    return NextResponse.json({ error }, { status: 400 });
+  }
+
   return NextResponse.json({
     users: rows,
     meta: {

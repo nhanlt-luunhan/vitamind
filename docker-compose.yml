@@ -13,7 +13,7 @@ services:
       HOSTNAME: "0.0.0.0"
       NODE_OPTIONS: "--max-old-space-size=512"
       NEXT_TELEMETRY_DISABLED: "1"
-      AUTO_DB_SYNC: "true"
+      AUTO_DB_SYNC: "${AUTO_DB_SYNC:-false}"
     volumes:
       - ./public/uploads:/app/public/uploads
       - ./content:/app/content
@@ -27,6 +27,7 @@ services:
       retries: 3
       start_period: 20s
     restart: unless-stopped
+    stop_grace_period: 30s
     init: true
     mem_limit: 768m
     logging:
@@ -40,18 +41,19 @@ services:
     ports:
       - "${POSTGRES_BIND_IP:-127.0.0.1}:${POSTGRES_PORT:-33542}:5432"
     environment:
-      POSTGRES_USER: "vitamind"
-      POSTGRES_PASSWORD: "vitamind"
-      POSTGRES_DB: "vitamind"
+      POSTGRES_USER: "${POSTGRES_USER:-vitamind}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-vitamind}"
+      POSTGRES_DB: "${POSTGRES_DB:-vitamind}"
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./docker/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U vitamind" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vitamind} -d ${POSTGRES_DB:-vitamind}" ]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    stop_grace_period: 1m
     mem_limit: 512m
     shm_size: "256mb"
     command:

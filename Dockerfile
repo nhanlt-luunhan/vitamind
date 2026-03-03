@@ -35,6 +35,6 @@ USER nextjs
 EXPOSE 3333
 ENV PORT=3333
 ENV HOSTNAME=0.0.0.0
-ENV AUTO_DB_SYNC=true
+ENV AUTO_DB_SYNC=false
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["node","-e","fetch('http://127.0.0.1:3333/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["/app/scripts/docker-entrypoint.sh"]

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSessionUser } from "@/components/auth/useSessionUser";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { AdminUserMenu } from "@/components/admin/AdminUserMenu";
@@ -31,6 +31,13 @@ type AdminMenuItem = {
   icon: string;
   key: AdminNavKey | null;
   keywords: string[];
+  children?: {
+    href: string;
+    label: string;
+    hash?: string;
+    matchPath?: string;
+    keywords: string[];
+  }[];
 };
 
 type AdminMenuSection = {
@@ -62,6 +69,20 @@ const adminMenu: AdminMenuSection[] = [
         icon: "ri-database-2-line",
         key: "database",
         keywords: ["database", "db", "du lieu", "co so du lieu", "pgadmin", "postgres"],
+        children: [
+          {
+            href: "/admin/users/list-view",
+            label: "Người dùng",
+            matchPath: "/admin/users/list-view",
+            keywords: ["user", "users", "db user", "tai khoan db", "nguoi dung db"],
+          },
+          {
+            href: "/admin/database#permissions",
+            label: "Quyền",
+            hash: "#permissions",
+            keywords: ["quyen", "quyền", "permission", "permissions", "grant", "role"],
+          },
+        ],
       },
     ],
   },
@@ -140,24 +161,46 @@ const notificationLinks = [
   {
     href: "/admin/database",
     label: "Console dữ liệu",
-    note: "Đi vào Adminer qua proxy nội bộ.",
+    note: "Mở khu điều phối Postgres và pgAdmin.",
   },
 ];
 
 export function AdminShell({ activeItem, children }: AdminShellProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useSessionUser();
   const { resolvedTheme, setThemeMode } = useTheme();
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [isLocked, setLocked] = useState(false);
+  const [activeHash, setActiveHash] = useState("");
+  const [isDatabaseMenuOpen, setDatabaseMenuOpen] = useState(activeItem === "database");
   const [lockPassword, setLockPassword] = useState("");
   const [lockError, setLockError] = useState("");
   const controlsRef = useRef<HTMLDivElement | null>(null);
   const lockInputRef = useRef<HTMLInputElement | null>(null);
 
-  const flattenedMenu = useMemo(() => adminMenu.flatMap((section) => section.items), []);
+  const flattenedMenu = useMemo(
+    () =>
+      adminMenu.flatMap((section) =>
+        section.items.flatMap((item) => [
+          {
+            href: item.href,
+            label: item.label,
+            keywords: item.keywords,
+            key: item.key,
+          },
+          ...((item.children ?? []).map((child) => ({
+            href: child.href,
+            label: `${item.label} ${child.label}`,
+            keywords: child.keywords,
+            key: item.key,
+          })) ?? []),
+        ])
+      ),
+    []
+  );
   const lockName = user?.display_name ?? user?.name ?? user?.email?.split("@")[0] ?? "Admin";
   const lockAvatar = user?.avatar_url ?? null;
   const adminLogo =
@@ -180,6 +223,24 @@ export function AdminShell({ activeItem, children }: AdminShellProps) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const syncHash = () => {
+      setActiveHash(window.location.hash);
+    };
+
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => {
+      window.removeEventListener("hashchange", syncHash);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeItem === "database") {
+      setDatabaseMenuOpen(true);
+    }
+  }, [activeItem]);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("admin-shell-locked");
@@ -258,17 +319,66 @@ export function AdminShell({ activeItem, children }: AdminShellProps) {
               <span className={styles.navGroupTitle}>{section.title}</span>
               <div className={styles.nav}>
                 {section.items.map((item) => (
-                  <Link
-                    key={`${section.title}-${item.label}`}
-                    href={item.href}
-                    className={`${styles.navItem} ${item.key === activeItem ? styles.navItemActive : ""}`}
-                    title={item.label}
-                  >
-                    <span className={styles.navIcon}>
-                      <i className={item.icon} aria-hidden="true" />
-                    </span>
-                    <span className={styles.navText}>{item.label}</span>
-                  </Link>
+                  <div key={`${section.title}-${item.label}`} className={styles.navBranch}>
+                    {item.children?.length ? (
+                      <div className={styles.navBranchRow}>
+                        <Link
+                          href={item.href}
+                          className={`${styles.navItem} ${styles.navItemLink} ${
+                            item.key === activeItem ? styles.navItemActive : ""
+                          }`}
+                          title={item.label}
+                        >
+                          <span className={styles.navIcon}>
+                            <i className={item.icon} aria-hidden="true" />
+                          </span>
+                          <span className={styles.navText}>{item.label}</span>
+                        </Link>
+                        <button
+                          type="button"
+                          className={`${styles.navToggle} ${isDatabaseMenuOpen ? styles.navToggleOpen : ""}`}
+                          onClick={() => setDatabaseMenuOpen((value) => !value)}
+                          aria-label={`${isDatabaseMenuOpen ? "Thu gọn" : "Mở rộng"} mục ${item.label}`}
+                          aria-expanded={isDatabaseMenuOpen}
+                        >
+                          <i className="ri-arrow-down-s-line" aria-hidden="true" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={`${styles.navItem} ${item.key === activeItem ? styles.navItemActive : ""}`}
+                        title={item.label}
+                      >
+                        <span className={styles.navIcon}>
+                          <i className={item.icon} aria-hidden="true" />
+                        </span>
+                        <span className={styles.navText}>{item.label}</span>
+                      </Link>
+                    )}
+
+                    {item.children?.length && isDatabaseMenuOpen && !isSidebarCollapsed ? (
+                      <div className={styles.navChildren}>
+                        {item.children.map((child) => {
+                          const isChildActive =
+                            item.key === activeItem &&
+                            ((child.hash && activeHash === child.hash) ||
+                              (child.matchPath && pathname === child.matchPath));
+
+                          return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`${styles.navChild} ${isChildActive ? styles.navChildActive : ""}`}
+                          >
+                            <span>{child.label}</span>
+                            <i className="ri-arrow-right-s-line" aria-hidden="true" />
+                          </Link>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 ))}
               </div>
             </div>

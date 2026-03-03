@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 const connectionString = process.env.DATABASE_URL;
@@ -32,5 +32,27 @@ export async function query<T extends Record<string, unknown>>(
     return { rows: result.rows };
   } catch (error) {
     return { rows: [], error: (error as Error).message };
+  }
+}
+
+export async function withTransaction<T>(
+  callback: (client: PoolClient) => Promise<T>,
+): Promise<{ result?: T; error?: string }> {
+  if (!pool) {
+    if (isBuildPhase) return {};
+    return { error: "DATABASE_URL is not set." };
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const result = await callback(client);
+    await client.query("commit");
+    return { result };
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    return { error: (error as Error).message };
+  } finally {
+    client.release();
   }
 }
