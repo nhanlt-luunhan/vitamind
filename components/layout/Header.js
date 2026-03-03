@@ -177,7 +177,7 @@ const createEmptySearchResults = () => ({
 
 const Header = ({ handleOpen, handleRemove, openClass }) => {
   const router = useRouter();
-  const { isLoaded: isAuthLoaded, isSignedIn } = useSessionUser();
+  const { isLoaded: isAuthLoaded, isSignedIn, user } = useSessionUser();
   const [hasMounted, setHasMounted] = useState(false);
   const [scroll, setScroll] = useState(0);
   const [overlayTop, setOverlayTop] = useState(78);
@@ -197,6 +197,10 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
   const closeTimerRef = useRef(null);
   const navCloseTimerRef = useRef(null);
   const bodyScrollLockRef = useRef(createBodyScrollLock());
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const openSearch = () => {
     if (isNavMounted) {
@@ -266,10 +270,6 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
     }
     openNavPanel(key);
   };
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -743,7 +743,7 @@ const Header = ({ handleOpen, handleRemove, openClass }) => {
                   {!hasMounted || !isAuthLoaded ? (
                     <span className={styles.authPlaceholder} aria-hidden="true" />
                   ) : isSignedIn ? (
-                    <HeaderUserMenu />
+                    <HeaderUserMenu user={user} isLoaded={isAuthLoaded} />
                   ) : (
                     <Link
                       href="/sign-in"

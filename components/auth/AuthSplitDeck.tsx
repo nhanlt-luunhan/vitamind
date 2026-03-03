@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useOptionalSignIn, useOptionalSignUp } from "@/components/auth/useOptionalClerk";
+import { hasClerkPublishableKeyValue } from "@/lib/auth/clerk-config";
 import { useSessionUser } from "./useSessionUser";
 import styles from "./AuthSplitDeck.module.css";
 
@@ -50,6 +51,7 @@ async function resolveSignInIdentifier(identifier: string) {
     mode?: "clerk" | "db" | "unknown";
     identifier?: string;
   };
+
   return {
     mode: data.mode ?? "unknown",
     identifier: (data.identifier ?? identifier).trim(),
@@ -116,23 +118,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const pathname = usePathname();
   const { isLoaded: signInLoaded, signIn, setActive: setActiveSignIn } = useOptionalSignIn();
   const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useOptionalSignUp();
-  const { isSignedIn, isLoaded: sessionLoaded } = useSessionUser();
+  const { isSignedIn, user } = useSessionUser();
+  const isClerkConfigured = hasClerkPublishableKeyValue(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [rememberPassword, setRememberPassword] = useState(false);
-  const [isDay, setIsDay] = useState(false);
-
-  // Sync with html class set by the blocking theme init script
-  useEffect(() => {
-    const update = () => {
-      setIsDay(document.documentElement.classList.contains("theme-day"));
-    };
-    update();
-    // Re-check when system preference changes
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -151,6 +141,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const [signUpOauthLoading, setSignUpOauthLoading] = useState(false);
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
+
+  const [signInStep, setSignInStep] = useState<"identifier" | "db-password" | "clerk-oauth">(
+    "identifier",
+  );
+  const [resolvedIdentifier, setResolvedIdentifier] = useState("");
 
   useEffect(() => {
     setMode(initialMode);
@@ -176,10 +171,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
     fullName.trim().split(/\s+/).slice(0, -1).join(" ") || fullName.trim() || undefined;
   const lastName = fullName.trim().split(/\s+/).slice(-1)[0] || undefined;
 
-  // Step 1: resolve identifier
-  const [signInStep, setSignInStep] = useState<"identifier" | "db-password" | "clerk-oauth">("identifier");
-  const [resolvedIdentifier, setResolvedIdentifier] = useState("");
-
   const handleResolveIdentifier = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -190,28 +181,22 @@ export function AuthSplitDeck({ initialMode }: Props) {
       const resolved = await resolveSignInIdentifier(signInEmail);
 
       if (resolved.mode === "db") {
-        setSignInSubmitting(false);
         setResolvedIdentifier(resolved.identifier);
         setSignInStep("db-password");
         return;
       }
 
       if (resolved.mode === "clerk") {
-        setSignInSubmitting(false);
         setResolvedIdentifier(resolved.identifier);
         setSignInStep("clerk-oauth");
         return;
       }
 
-      // unknown: allow DB password flow as a fallback
-      setSignInSubmitting(false);
       setResolvedIdentifier(resolved.identifier);
       setSignInStep("db-password");
-      return;
     } catch (error) {
       const fallbackIdentifier = signInEmail.trim();
       if (fallbackIdentifier) {
-        setSignInSubmitting(false);
         setResolvedIdentifier(fallbackIdentifier);
         setSignInStep("db-password");
         return;
@@ -257,8 +242,13 @@ export function AuthSplitDeck({ initialMode }: Props) {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!signInLoaded) {
+    if (!isClerkConfigured) {
       setSignInError("Clerk chưa được cấu hình. Không thể đăng nhập bằng Google.");
+      return;
+    }
+
+    if (!signInLoaded || !signIn) {
+      setSignInError("Google Sign-In đang khởi tạo. Vui lòng thử lại sau ít giây.");
       return;
     }
 
@@ -279,7 +269,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!signUpLoaded) return;
+    if (!signUpLoaded || !signUp) return;
 
     setSignUpSubmitting(true);
     setSignUpError(null);
@@ -311,7 +301,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const handleVerifyEmail = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!signUpLoaded) return;
+    if (!signUpLoaded || !signUp) return;
 
     setSignUpSubmitting(true);
     setSignUpError(null);
@@ -334,7 +324,15 @@ export function AuthSplitDeck({ initialMode }: Props) {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!signUpLoaded) return;
+    if (!isClerkConfigured) {
+      setSignUpError("Clerk chưa được cấu hình. Không thể đăng ký bằng Google.");
+      return;
+    }
+
+    if (!signUpLoaded || !signUp) {
+      setSignUpError("Google Sign-Up đang khởi tạo. Vui lòng thử lại sau ít giây.");
+      return;
+    }
 
     setSignUpOauthLoading(true);
     setSignUpError(null);
@@ -353,11 +351,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const isSignIn = mode === "sign-in";
   const title = isSignIn ? "Đăng nhập" : verifying ? "Xác minh email" : "Tạo tài khoản";
-  const subtitle = isSignIn
-    ? ""
-    : verifying
-      ? "Nhập mã xác minh đã được gửi về email của bạn."
-      : "";
+  const subtitle = isSignIn ? "" : verifying ? "Nhập mã xác minh đã được gửi về email của bạn." : "";
 
   return (
     <div className={styles.page}>
@@ -366,14 +360,21 @@ export function AuthSplitDeck({ initialMode }: Props) {
           <div className={styles.logoWrap}>
             <Link href="/" className={styles.logoLink}>
               <Image
-                src={isDay
-                  ? "/assets/imgs/template/vitamind-day.svg"
-                  : "/assets/imgs/template/vitamind-night.svg"
-                }
+                src="/assets/imgs/template/vitamind-day.svg"
                 alt="Vitamind"
                 width={120}
                 height={22}
                 priority
+                className={`${styles.logoImage} ${styles.logoDay}`}
+              />
+              <Image
+                src="/assets/imgs/template/vitamind-night.svg"
+                alt=""
+                width={120}
+                height={22}
+                priority
+                aria-hidden="true"
+                className={`${styles.logoImage} ${styles.logoNight}`}
               />
             </Link>
           </div>
@@ -401,7 +402,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
               </div>
             ) : isSignIn ? (
               <>
-                {/* Step 1: enter email */}
                 {signInStep === "identifier" && (
                   <form className={styles.form} onSubmit={handleResolveIdentifier}>
                     <label className={styles.field}>
@@ -416,14 +416,9 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       />
                     </label>
 
-
                     {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
-                    <button
-                      type="submit"
-                      className={styles.primaryButton}
-                      disabled={signInSubmitting}
-                    >
+                    <button type="submit" className={styles.primaryButton} disabled={signInSubmitting}>
                       {signInSubmitting ? "Đang kiểm tra..." : "Tiếp tục"}
                     </button>
 
@@ -434,7 +429,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.socialButton}
                         onClick={handleGoogleSignIn}
-                        disabled={signInOauthLoading}
+                        disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
                         aria-label="Đăng nhập với Google"
                       >
                         <Image
@@ -445,14 +440,17 @@ export function AuthSplitDeck({ initialMode }: Props) {
                           className={styles.socialButtonIcon}
                         />
                         <span className={styles.socialButtonText}>
-                          {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
+                          {signInOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signInLoaded
+                              ? "Đang tải Google Sign-In..."
+                              : "Đăng nhập với Google"}
                         </span>
                       </button>
                     </div>
                   </form>
                 )}
 
-                {/* Step 2a: DB password login */}
                 {signInStep === "db-password" && (
                   <form className={styles.form} onSubmit={handleDbPasswordSignIn}>
                     <p className={styles.subtitle} style={{ marginBottom: 0 }}>
@@ -478,7 +476,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         onChange={(event) => setSignInPassword(event.target.value)}
                         placeholder="Nhập mật khẩu"
                         required
-                        // eslint-disable-next-line jsx-a11y/no-autofocus
                         autoFocus
                       />
                       <button
@@ -503,11 +500,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
                     {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
-                    <button
-                      type="submit"
-                      className={styles.primaryButton}
-                      disabled={signInSubmitting}
-                    >
+                    <button type="submit" className={styles.primaryButton} disabled={signInSubmitting}>
                       {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
                     </button>
 
@@ -525,7 +518,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   </form>
                 )}
 
-                {/* Step 2b: Clerk / Google OAuth */}
                 {signInStep === "clerk-oauth" && (
                   <div className={styles.form}>
                     <p className={styles.subtitle} style={{ marginBottom: 0 }}>
@@ -539,7 +531,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.socialButton}
                         onClick={handleGoogleSignIn}
-                        disabled={signInOauthLoading}
+                        disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
                         aria-label="Đăng nhập với Google"
                       >
                         <Image
@@ -550,7 +542,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
                           className={styles.socialButtonIcon}
                         />
                         <span className={styles.socialButtonText}>
-                          {signInOauthLoading ? "Đang chuyển sang Google..." : "Đăng nhập với Google"}
+                          {signInOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signInLoaded
+                              ? "Đang tải Google Sign-In..."
+                              : "Đăng nhập với Google"}
                         </span>
                       </button>
                     </div>
@@ -579,7 +575,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   </div>
                 )}
               </>
-
             ) : (
               <>
                 {!verifying ? (
@@ -659,7 +654,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.socialButton}
                         onClick={handleGoogleSignUp}
-                        disabled={!signUpLoaded || signUpOauthLoading}
+                        disabled={signUpOauthLoading || (isClerkConfigured && !signUpLoaded)}
                         aria-label="Đăng ký với Google"
                       >
                         <Image
@@ -670,7 +665,11 @@ export function AuthSplitDeck({ initialMode }: Props) {
                           className={styles.socialButtonIcon}
                         />
                         <span className={styles.socialButtonText}>
-                          {signUpOauthLoading ? "Đang chuyển sang Google..." : "Đăng ký với Google"}
+                          {signUpOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signUpLoaded
+                              ? "Đang tải Google Sign-Up..."
+                              : "Đăng ký với Google"}
                         </span>
                       </button>
                     </div>
