@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useOptionalUser } from "@/components/auth/useOptionalClerk";
 import { Button } from "@/components/ui";
-import { GID_RULE_MESSAGE, hasGidValue, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 
 export type AccountUser = {
   id: string;
   email: string;
   contact_email: string | null;
   name: string | null;
-  gid: string | null;
   phone: string | null;
   bio: string | null;
   location: string | null;
@@ -34,11 +32,10 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/g
 
 export function AccountProfile({ user }: Props) {
   const router = useRouter();
-  const { user: clerkUser, isLoaded } = useUser();
+  const { user: clerkUser, isLoaded } = useOptionalUser();
   const [profile, setProfile] = useState({
     name: user.name ?? "",
     contactEmail: user.contact_email ?? user.email ?? "",
-    gid: user.gid ?? "",
     phone: user.phone ?? "",
     location: user.location ?? "",
     company: user.company ?? "",
@@ -50,7 +47,6 @@ export function AccountProfile({ user }: Props) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const gidError = profile.gid.length > 0 && !normalizeGid(profile.gid) ? GID_RULE_MESSAGE : null;
 
   useEffect(() => {
     if (clerkUser?.imageUrl) {
@@ -60,22 +56,15 @@ export function AccountProfile({ user }: Props) {
 
   const handleChange =
     (field: keyof typeof profile) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const nextValue =
-        field === "gid" ? sanitizeGid(event.target.value).slice(0, 10) : event.target.value;
-      setProfile((prev) => ({ ...prev, [field]: nextValue }));
-    };
+      (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setProfile((prev) => ({ ...prev, [field]: event.target.value }));
+      };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
     setMessage(null);
     setError(null);
-
-    if (gidError) {
-      setSaving(false);
-      return;
-    }
 
     const response = await fetch("/api/account/profile", {
       method: "PUT",
@@ -96,7 +85,6 @@ export function AccountProfile({ user }: Props) {
       setProfile({
         name: updated.name ?? "",
         contactEmail: updated.contact_email ?? updated.email ?? "",
-        gid: updated.gid ?? "",
         phone: updated.phone ?? "",
         location: updated.location ?? "",
         company: updated.company ?? "",
@@ -165,11 +153,6 @@ export function AccountProfile({ user }: Props) {
           <div className="account-summary-text">
             <h4 className="color-white mb-5">{profile.name || "Chưa đặt tên"}</h4>
             <p className="color-gray-500 mb-0">{profile.contactEmail || user.email}</p>
-            {hasGidValue(profile.gid) ? (
-              <p className="color-gray-500 mb-0">
-                <span className="color-white">{profile.gid}</span>
-              </p>
-            ) : null}
           </div>
           <div className="account-upload mt-20">
             <label className="btn btn-linear w-100">
@@ -218,21 +201,6 @@ export function AccountProfile({ user }: Props) {
                   onChange={handleChange("contactEmail")}
                   placeholder="ban@gmail.com"
                 />
-              </div>
-
-              <div className="form-group">
-                <label className="color-gray-700 text-sm mb-10 d-block">GID</label>
-                <input
-                  className="form-control bg-gray-900 border-gray-800 bdrd16 color-gray-500"
-                  value={profile.gid}
-                  onChange={handleChange("gid")}
-                  placeholder="5015114132"
-                  inputMode="numeric"
-                  maxLength={10}
-                />
-                <small className={`account-field-hint${gidError ? " error" : ""}`}>
-                  {gidError ?? "GID gồm đúng 10 chữ số."}
-                </small>
               </div>
 
               <div className="form-group">
@@ -295,7 +263,7 @@ export function AccountProfile({ user }: Props) {
                 unstyled
                 className="btn btn-linear"
                 type="submit"
-                disabled={saving || Boolean(gidError)}
+                disabled={saving}
               >
                 {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>

@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useOptionalSignIn, useOptionalSignUp } from "@/components/auth/useOptionalClerk";
+import { useSessionUser } from "./useSessionUser";
 import styles from "./AuthSplitDeck.module.css";
 
 type Mode = "sign-in" | "sign-up";
@@ -113,11 +114,25 @@ function EyeClosedMark() {
 export function AuthSplitDeck({ initialMode }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoaded: signInLoaded, signIn, setActive: setActiveSignIn } = useSignIn();
-  const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp();
+  const { isLoaded: signInLoaded, signIn, setActive: setActiveSignIn } = useOptionalSignIn();
+  const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useOptionalSignUp();
+  const { isSignedIn, isLoaded: sessionLoaded } = useSessionUser();
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [isDay, setIsDay] = useState(false);
+
+  // Sync with html class set by the blocking theme init script
+  useEffect(() => {
+    const update = () => {
+      setIsDay(document.documentElement.classList.contains("theme-day"));
+    };
+    update();
+    // Re-check when system preference changes
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -167,7 +182,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const handleResolveIdentifier = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!signInLoaded) return;
 
     setSignInSubmitting(true);
     setSignInError(null);
@@ -176,20 +190,32 @@ export function AuthSplitDeck({ initialMode }: Props) {
       const resolved = await resolveSignInIdentifier(signInEmail);
 
       if (resolved.mode === "db") {
+        setSignInSubmitting(false);
         setResolvedIdentifier(resolved.identifier);
         setSignInStep("db-password");
         return;
       }
 
       if (resolved.mode === "clerk") {
+        setSignInSubmitting(false);
         setResolvedIdentifier(resolved.identifier);
         setSignInStep("clerk-oauth");
         return;
       }
 
-      // unknown
-      setSignInError("Không tìm thấy tài khoản tương ứng với email hoặc GID này.");
+      // unknown: allow DB password flow as a fallback
+      setSignInSubmitting(false);
+      setResolvedIdentifier(resolved.identifier);
+      setSignInStep("db-password");
+      return;
     } catch (error) {
+      const fallbackIdentifier = signInEmail.trim();
+      if (fallbackIdentifier) {
+        setSignInSubmitting(false);
+        setResolvedIdentifier(fallbackIdentifier);
+        setSignInStep("db-password");
+        return;
+      }
       setSignInError(getErrorMessage(error, "Không thể kiểm tra email lúc này."));
     } finally {
       setSignInSubmitting(false);
@@ -231,7 +257,10 @@ export function AuthSplitDeck({ initialMode }: Props) {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!signInLoaded) return;
+    if (!signInLoaded) {
+      setSignInError("Clerk chưa được cấu hình. Không thể đăng nhập bằng Google.");
+      return;
+    }
 
     setSignInOauthLoading(true);
     setSignInError(null);
@@ -336,7 +365,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
         <section className={styles.card}>
           <div className={styles.logoWrap}>
             <Link href="/" className={styles.logoLink}>
-              <Image src="/assets/imgs/template/vitamind-day.svg" alt="Vitamind" width={160} height={30} />
+              <Image
+                src={isDay
+                  ? "/assets/imgs/template/vitamind-day.svg"
+                  : "/assets/imgs/template/vitamind-night.svg"
+                }
+                alt="Vitamind"
+                width={120}
+                height={22}
+                priority
+              />
             </Link>
           </div>
 
@@ -344,29 +382,47 @@ export function AuthSplitDeck({ initialMode }: Props) {
           {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
 
           <div className={styles.formWrap}>
-            {isSignIn ? (
+            {isSignedIn ? (
+              <div className={styles.form} style={{ textAlign: "center" }}>
+                <div className={styles.feedbackSuccess} style={{ marginBottom: "16px" }}>
+                  Bạn đã đăng nhập vào hệ thống.
+                </div>
+                <Link href="/" className={styles.primaryButton} style={{ textDecoration: "none" }}>
+                  Quay về trang chủ
+                </Link>
+                <button
+                  type="button"
+                  className={styles.textLinkStandalone}
+                  onClick={() => window.location.assign("/logout")}
+                  style={{ marginTop: "12px" }}
+                >
+                  Đăng xuất tài khoản hiện tại
+                </button>
+              </div>
+            ) : isSignIn ? (
               <>
-                {/* Step 1: enter email / GID */}
+                {/* Step 1: enter email */}
                 {signInStep === "identifier" && (
                   <form className={styles.form} onSubmit={handleResolveIdentifier}>
                     <label className={styles.field}>
-                      <span>Email hoặc GID</span>
+                      <span>Email</span>
                       <input
                         type="text"
                         autoComplete="username"
                         value={signInEmail}
                         onChange={(event) => setSignInEmail(event.target.value)}
-                        placeholder="Nhập email hoặc GID"
+                        placeholder="Nhập địa chỉ email của bạn"
                         required
                       />
                     </label>
+
 
                     {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
                     <button
                       type="submit"
                       className={styles.primaryButton}
-                      disabled={!signInLoaded || signInSubmitting}
+                      disabled={signInSubmitting}
                     >
                       {signInSubmitting ? "Đang kiểm tra..." : "Tiếp tục"}
                     </button>
@@ -378,7 +434,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.socialButton}
                         onClick={handleGoogleSignIn}
-                        disabled={!signInLoaded || signInOauthLoading}
+                        disabled={signInOauthLoading}
                         aria-label="Đăng nhập với Google"
                       >
                         <Image
@@ -483,7 +539,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.socialButton}
                         onClick={handleGoogleSignIn}
-                        disabled={!signInLoaded || signInOauthLoading}
+                        disabled={signInOauthLoading}
                         aria-label="Đăng nhập với Google"
                       >
                         <Image
@@ -498,6 +554,17 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         </span>
                       </button>
                     </div>
+
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setSignInStep("db-password");
+                        setSignInError(null);
+                      }}
+                    >
+                      Dùng mật khẩu thay thế
+                    </button>
 
                     <button
                       type="button"

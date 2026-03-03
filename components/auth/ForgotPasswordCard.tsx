@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, useClerk, useSignIn } from "@clerk/nextjs";
+import { useOptionalAuth, useOptionalClerk, useOptionalSignIn } from "@/components/auth/useOptionalClerk";
 import styles from "./AuthSplitDeck.module.css";
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -42,9 +42,9 @@ async function resolveIdentifierMode(identifier: string) {
 
 export function ForgotPasswordCard() {
   const router = useRouter();
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const { signOut } = useClerk();
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { isLoaded: authLoaded, isSignedIn } = useOptionalAuth();
+  const { signOut } = useOptionalClerk();
+  const { isLoaded, signIn, setActive } = useOptionalSignIn();
 
   const [step, setStep] = useState<"request" | "reset">("request");
   const [email, setEmail] = useState("");

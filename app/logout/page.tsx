@@ -1,45 +1,73 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth, useClerk } from "@clerk/nextjs";
-import { Layout } from "@/components/layout/Layout";
+import { useOptionalAuth, useOptionalClerk } from "@/components/auth/useOptionalClerk";
 
 export default function Page() {
-  const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
-  const { signOut } = useClerk();
+  const { isLoaded, isSignedIn } = useOptionalAuth();
+  const { signOut } = useOptionalClerk();
 
   useEffect(() => {
     const run = async () => {
+      // Fire sign-out API silently in background
       await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => undefined);
 
       if (!isLoaded) return;
+
       if (isSignedIn) {
-        signOut(() => router.replace("/"));
-        return;
+        // signOut then go home — no intermediate page shown
+        await signOut();
       }
-      router.replace("/");
+
+      window.location.replace("/");
     };
 
     run();
-  }, [isLoaded, isSignedIn, signOut, router]);
+  }, [isLoaded, isSignedIn, signOut]);
 
+  // Minimal full-screen spinner — no header, no footer, no layout shift
   return (
-    <Layout>
-      <div className="cover-home1">
-        <div className="container">
-          <div className="row">
-            <div className="col-xl-1" />
-            <div className="col-xl-10 col-lg-12">
-              <div className="mt-70">
-                <h2 className="color-linear d-inline-block mb-10">Đang đăng xuất…</h2>
-                <p className="text-lg color-gray-500">Vui lòng chờ trong giây lát.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Layout>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--page-bg, #050d1a)",
+        zIndex: 9999,
+      }}
+    >
+      <svg
+        width="36"
+        height="36"
+        viewBox="0 0 36 36"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ animation: "spin 0.9s linear infinite" }}
+      >
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <circle
+          cx="18"
+          cy="18"
+          r="15"
+          stroke="rgba(148,163,184,0.12)"
+          strokeWidth="3"
+        />
+        <path
+          d="M18 3 A15 15 0 0 1 33 18"
+          stroke="url(#lg2)"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <defs>
+          <linearGradient id="lg2" x1="18" y1="3" x2="33" y2="18" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#38bdf8" />
+            <stop offset="1" stopColor="#818cf8" stopOpacity="0.5" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
   );
 }

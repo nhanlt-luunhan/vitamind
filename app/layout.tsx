@@ -10,6 +10,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ClerkProvider, RedirectToTasks } from "@clerk/nextjs";
+import { hasConfiguredClerkPublishableKey } from "@/lib/auth/clerk-config";
 import { getSiteUrl } from "@/lib/utils/site-url";
 
 const siteUrl = getSiteUrl();
@@ -27,7 +28,10 @@ const themeInitScript = `
     document.documentElement.classList.toggle("theme-night", isDark);
     document.documentElement.classList.toggle("theme-day", !isDark);
   } catch (error) {}
+  /* Ensure html is always visible even if script partially fails */
+  document.documentElement.style.visibility = "";
 `;
+
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -64,21 +68,30 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const isClerkEnabled = hasConfiguredClerkPublishableKey();
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <ClerkProvider
-          taskUrls={{
-            "reset-password": "/tasks/reset-password",
-            "setup-mfa": "/tasks/setup-mfa",
-          }}
-        >
-          <RedirectToTasks />
+        {isClerkEnabled ? (
+          <ClerkProvider
+            taskUrls={{
+              "reset-password": "/tasks/reset-password",
+              "setup-mfa": "/tasks/setup-mfa",
+            }}
+          >
+            <RedirectToTasks />
+            <ThemeProvider>{children}</ThemeProvider>
+          </ClerkProvider>
+        ) : (
           <ThemeProvider>{children}</ThemeProvider>
-        </ClerkProvider>
+        )}
       </body>
     </html>
   );
