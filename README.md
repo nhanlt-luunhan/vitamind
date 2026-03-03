@@ -100,7 +100,7 @@ Script `synology-full-sync.sh` sẽ:
 
 - deploy lại stack
 - chạy DB sync có chủ đích
-- ép sync toàn bộ user từ Clerk về Postgres qua `INTERNAL_API_BASE_URL`, và tự fallback về `http://127.0.0.1:3333` nếu domain public chưa resolve được ngay trên NAS
+- chờ app local trong stack sẵn sàng rồi ép sync toàn bộ user từ Clerk về Postgres qua `INTERNAL_API_BASE_URL`, fallback về `http://127.0.0.1:3333`, và chỉ cuối cùng mới dùng `SITE_URL`
 - in ra danh sách user hiện có trong DB để đối chiếu với local
 
 Nếu cần đồng bộ avatar nội bộ và file upload từ local sang Synology:

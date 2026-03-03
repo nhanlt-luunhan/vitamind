@@ -24,16 +24,40 @@ INTERNAL_API_SECRET="${INTERNAL_API_SECRET:-change-me-now}"
 POSTGRES_USER="${POSTGRES_USER:-vitamind}"
 POSTGRES_DB="${POSTGRES_DB:-vitamind}"
 SYNC_BASE_URL="$INTERNAL_API_BASE_URL"
+HEALTH_WAIT_SECONDS="${HEALTH_WAIT_SECONDS:-60}"
+
+wait_for_health() {
+  base_url="$1"
+  timeout_seconds="$2"
+  attempt=0
+
+  while [ "$attempt" -lt "$timeout_seconds" ]; do
+    if curl -fsS "$base_url/api/health" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+
+  return 1
+}
 
 echo "Deploying stack with DB sync enabled"
 RUN_DB_SYNC=true sh ./scripts/deploy-synology-safe.sh
 
-if ! curl -fsS "$SYNC_BASE_URL/api/health" >/dev/null 2>&1; then
+echo "Waiting for app health on $SYNC_BASE_URL"
+if ! wait_for_health "$SYNC_BASE_URL" "$HEALTH_WAIT_SECONDS"; then
   SYNC_BASE_URL="http://127.0.0.1:3333"
 fi
 
-if ! curl -fsS "$SYNC_BASE_URL/api/health" >/dev/null 2>&1; then
+if ! wait_for_health "$SYNC_BASE_URL" "$HEALTH_WAIT_SECONDS"; then
   SYNC_BASE_URL="$SITE_URL"
+fi
+
+if ! wait_for_health "$SYNC_BASE_URL" 10; then
+  echo "App is not reachable for Clerk sync. Tried INTERNAL_API_BASE_URL, localhost, and SITE_URL." >&2
+  exit 1
 fi
 
 echo "Syncing all Clerk users into Postgres"
