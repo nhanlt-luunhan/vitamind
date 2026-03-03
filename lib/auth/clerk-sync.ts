@@ -270,7 +270,7 @@ export async function upsertClerkUser(payload: ClerkUserPayload): Promise<DbUser
            name = $4,
            display_name = $5,
            phone = $6,
-           avatar_url = $7,
+           avatar_url = coalesce(avatar_url, $7),
            gid = coalesce($8, gid),
            updated_at = now()
       where clerk_user_id = $1
@@ -292,7 +292,7 @@ export async function upsertClerkUser(payload: ClerkUserPayload): Promise<DbUser
            name = $4,
            display_name = $5,
            phone = $6,
-           avatar_url = $7,
+           avatar_url = coalesce(avatar_url, $7),
            gid = coalesce($8, gid),
            updated_at = now()
        where lower(email) = $2
@@ -316,7 +316,7 @@ export async function upsertClerkUser(payload: ClerkUserPayload): Promise<DbUser
            display_name = excluded.display_name,
            gid = coalesce(excluded.gid, users.gid),
            phone = excluded.phone,
-           avatar_url = excluded.avatar_url,
+           avatar_url = coalesce(users.avatar_url, excluded.avatar_url),
            updated_at = now()
        returning id, clerk_user_id, email, contact_email, name, display_name, gid, phone, avatar_url, role, status, created_at, updated_at`,
       [payload.id, email, contactEmail, displayName, displayName, nextGid, phone, avatarUrl],

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useOptionalUser } from "@/components/auth/useOptionalClerk";
 import { Button } from "@/components/ui";
 
 export type AccountUser = {
@@ -32,7 +31,6 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/g
 
 export function AccountProfile({ user }: Props) {
   const router = useRouter();
-  const { user: clerkUser, isLoaded } = useOptionalUser();
   const [profile, setProfile] = useState({
     name: user.name ?? "",
     contactEmail: user.contact_email ?? user.email ?? "",
@@ -49,10 +47,8 @@ export function AccountProfile({ user }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (clerkUser?.imageUrl) {
-      setAvatarUrl(clerkUser.imageUrl);
-    }
-  }, [clerkUser?.imageUrl]);
+    setAvatarUrl(user.avatar_url ?? "");
+  }, [user.avatar_url]);
 
   const handleChange =
     (field: keyof typeof profile) =>
@@ -118,18 +114,24 @@ export function AccountProfile({ user }: Props) {
       return;
     }
 
-    if (!isLoaded || !clerkUser) {
-      setError("Chưa sẵn sàng cập nhật avatar.");
-      setUploading(false);
-      return;
-    }
-
     try {
-      await clerkUser.setProfileImage({ file });
-      await clerkUser.reload();
-      if (clerkUser.imageUrl) {
-        setAvatarUrl(clerkUser.imageUrl);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/account/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(data?.error ?? "Không thể tải ảnh đại diện.");
+        return;
       }
+
+      const nextAvatar = String(data?.user?.avatar_url ?? "").trim();
+      setAvatarUrl(nextAvatar);
+      window.dispatchEvent(new CustomEvent("account-profile-updated"));
       setMessage("Ảnh đại diện đã được cập nhật.");
       router.refresh();
     } catch {

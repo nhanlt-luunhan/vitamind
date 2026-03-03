@@ -105,7 +105,7 @@ export function useSessionUser() {
         phone: null,
         role: bootstrapUser?.role ?? null,
         status: bootstrapUser?.status ?? null,
-        avatar_url: clerkUser.imageUrl ?? bootstrapUser?.avatar_url ?? null,
+        avatar_url: bootstrapUser?.avatar_url ?? clerkUser.imageUrl ?? null,
         updated_at: null,
       }
       : null;
