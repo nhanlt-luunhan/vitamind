@@ -1,32 +1,40 @@
 import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
+import { hasConfiguredClerkPublishableKey } from "@/lib/auth/clerk-config";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)", "/api/admin(.*)"]);
 const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
+const isClerkEnabled = hasConfiguredClerkPublishableKey();
 
-function isLoopbackOrigin(value: string) {
-  try {
-    const url = new URL(value);
-    return url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "::1";
-  } catch {
-    return false;
-  }
+function getInternalApiBaseUrl() {
+  return process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;
 }
 
-function getInternalApiBaseUrl(requestUrl: string) {
-  const requestOrigin = new URL(requestUrl).origin;
-  const configuredBaseUrl =
-    process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;
+async function handleWithoutClerk(req: NextRequest) {
+  const dbSession = await verifySessionToken(req.cookies.get(SESSION_COOKIE_NAME)?.value ?? null);
+  const hasDbSession = Boolean(dbSession?.sub);
 
-  if (isLoopbackOrigin(configuredBaseUrl) && !isLoopbackOrigin(requestOrigin)) {
-    return requestOrigin;
+  if ((isAdminRoute(req) || isAccountRoute(req)) && !hasDbSession) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  return configuredBaseUrl;
+  if (isAdminRoute(req) && hasDbSession) {
+    const blocked = dbSession?.status === "blocked" || dbSession?.status === "disabled";
+    if (dbSession?.role === "admin" && !blocked) {
+      return NextResponse.next();
+    }
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/not-authorized", req.url));
+  }
+
+  return NextResponse.next();
 }
 
-export default clerkMiddleware(async (auth, req) => {
+const handleWithClerk = clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const dbSession = await verifySessionToken(req.cookies.get(SESSION_COOKIE_NAME)?.value ?? null);
   const hasDbSession = Boolean(dbSession?.sub);
@@ -39,13 +47,10 @@ export default clerkMiddleware(async (auth, req) => {
     const role = (sessionClaims as any)?.publicMetadata?.role;
     const status = (sessionClaims as any)?.publicMetadata?.status;
 
-    if (role) {
+    if (role === "admin") {
       const blocked = status === "blocked" || status === "disabled";
-      if (role === "admin" && !blocked) {
+      if (!blocked) {
         return NextResponse.next();
-      }
-      if (req.nextUrl.pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
@@ -58,7 +63,7 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL("/not-authorized", req.url));
     }
 
-    const checkUrl = new URL("/api/internal/admin-check", getInternalApiBaseUrl(req.url));
+    const checkUrl = new URL("/api/internal/admin-check", getInternalApiBaseUrl());
 
     let res: Response | null = null;
 
@@ -96,6 +101,14 @@ export default clerkMiddleware(async (auth, req) => {
 
   return NextResponse.next();
 });
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (!isClerkEnabled) {
+    return handleWithoutClerk(req);
+  }
+
+  return handleWithClerk(req, event);
+}
 
 export const config = {
   matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
