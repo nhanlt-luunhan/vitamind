@@ -124,6 +124,7 @@ Lưu ý:
 - `sync-uploads-to-synology.sh` chỉ copy file trong `public/uploads`
 - `sync-avatar-to-synology.sh` chỉ cập nhật trường `users.avatar_url` trên DB Synology
 - nếu `avatar_url` local là đường dẫn `/uploads/...` thì nên chạy script copy uploads trước
+- theo quy tắc vận hành của dự án, file upload tạo ở local không được xem là dữ liệu tạm; nếu production tham chiếu đến chúng thì phải sync sang Synology
 
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
 `pgAdmin` được map ra `127.0.0.1:35050`, nên nếu cần truy cập từ máy khác phải tự cấu hình reverse proxy hoặc đổi publish rule.

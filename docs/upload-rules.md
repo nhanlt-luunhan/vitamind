@@ -56,3 +56,14 @@ Gia tri tra ve gom:
 - Anh blog dung scope `posts`
 - Anh san pham dung scope `products`
 - Tai lieu tong hop hoac file khac dung `media` hoac `documents`
+
+## Quy tac dong bo Synology
+
+- Moi file moi tao trong `public/uploads` o local phai duoc xem la du lieu can dong bo sang Synology neu DB production co tham chieu toi file do.
+- `git pull` khong dong bo noi dung `public/uploads`, vi vay phai dung script sync upload rieng.
+- Quy trinh uu tien:
+  - sync file upload len Synology truoc
+  - sau do moi cap nhat `avatar_url` hoac cac URL `/uploads/...` trong DB Synology
+- Script tham chieu:
+  - `scripts/sync-uploads-to-synology.sh`
+  - `scripts/sync-avatar-to-synology.sh`
