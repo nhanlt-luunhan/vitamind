@@ -103,6 +103,28 @@ Script `synology-full-sync.sh` sẽ:
 - ép sync toàn bộ user từ Clerk về Postgres qua `INTERNAL_API_BASE_URL`, và tự fallback về `http://127.0.0.1:3333` nếu domain public chưa resolve được ngay trên NAS
 - in ra danh sách user hiện có trong DB để đối chiếu với local
 
+Nếu cần đồng bộ avatar nội bộ và file upload từ local sang Synology:
+
+```bash
+SYNOLOGY_SSH_TARGET=root@PalletHub \
+SYNOLOGY_REMOTE_PROJECT_DIR=/volume1/docker/vitamind \
+sh ./scripts/sync-uploads-to-synology.sh
+```
+
+Nếu cần ép `avatar_url` của một user trên Synology theo đúng local DB:
+
+```bash
+SYNOLOGY_SSH_TARGET=root@PalletHub \
+SYNOLOGY_REMOTE_PROJECT_DIR=/volume1/docker/vitamind \
+sh ./scripts/sync-avatar-to-synology.sh nhanlt.luunhan@gmail.com
+```
+
+Lưu ý:
+
+- `sync-uploads-to-synology.sh` chỉ copy file trong `public/uploads`
+- `sync-avatar-to-synology.sh` chỉ cập nhật trường `users.avatar_url` trên DB Synology
+- nếu `avatar_url` local là đường dẫn `/uploads/...` thì nên chạy script copy uploads trước
+
 Ở production, Postgres không mở ra Internet; chỉ container app mới truy cập được.
 `pgAdmin` được map ra `127.0.0.1:35050`, nên nếu cần truy cập từ máy khác phải tự cấu hình reverse proxy hoặc đổi publish rule.
 Repo hiện hỗ trợ đổi trực tiếp bind IP qua env:
