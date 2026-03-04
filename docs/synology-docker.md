@@ -8,7 +8,7 @@ Muc tieu moi cua repo la:
 
 ## File dung tren Synology
 
-- Compose: `compose.yml` hoac `docker-compose.synology.yml`
+- Compose: `compose.yml`
 - Env: `.env.synology`
 
 ## Lenh deploy

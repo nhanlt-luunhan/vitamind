@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.synology.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-compose.yml}"
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 BACKUP_DIR="${BACKUP_DIR:-$PROJECT_DIR/backups}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"

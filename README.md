@@ -19,8 +19,6 @@ Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `dock
 ## File can commit
 
 - `compose.yml`
-- `docker-compose.yml`
-- `docker-compose.synology.yml`
 - `docker/Dockerfile`
 - `docker/entrypoint.sh`
 - `docker/db-init/*.sql`
