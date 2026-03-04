@@ -1,0 +1,25 @@
+-- Run this on the Synology Postgres instance as the admin/superuser role.
+-- Replace the password before executing.
+
+create role vitamind_dev
+  with login
+  password 'change-me-vitamind-dev-password';
+
+create database vitamind_dev
+  owner vitamind_dev;
+
+\connect vitamind_dev
+
+create extension if not exists pgcrypto;
+
+grant all privileges on database vitamind_dev to vitamind_dev;
+grant all privileges on schema public to vitamind_dev;
+
+alter default privileges for role vitamind_dev in schema public
+grant all on tables to vitamind_dev;
+
+alter default privileges for role vitamind_dev in schema public
+grant all on sequences to vitamind_dev;
+
+alter default privileges for role vitamind_dev in schema public
+grant all on functions to vitamind_dev;

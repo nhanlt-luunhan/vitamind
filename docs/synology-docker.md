@@ -63,3 +63,17 @@ Stack cung chay `pgadmin`, mac dinh bind:
 - `127.0.0.1:5050`
 
 Neu can expose qua reverse proxy, cau hinh o DSM/Nginx, khong sua code app.
+
+## Shared Postgres cho local dev
+
+Neu muon Mac/Windows chay `npm run dev` nhung dung DB tren cung NAS, khong cho local dung chung DB production.
+
+Dung mo hinh:
+
+- production app tren Synology -> DB `vitamind`
+- local dev Mac/Windows -> DB `vitamind_dev`
+
+Xem them:
+
+- `docs/shared-postgres-dev.md`
+- `docs/create-vitamind-dev.sql.example`

@@ -135,3 +135,4 @@ Dieu nay giu local va Synology cung mot quy tac boot.
 
 - `docs/db-sync.md`
 - `docs/synology-docker.md`
+- `docs/shared-postgres-dev.md`
