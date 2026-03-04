@@ -41,10 +41,18 @@ async function fetchUsersPreview() {
     method: "GET",
     cache: "no-store",
   });
-  const data = await response.json().catch(() => ({}));
+  const contentType = response.headers.get("content-type") ?? "";
+  const data = contentType.includes("application/json")
+    ? await response.json().catch(() => ({}))
+    : {};
+
   if (!response.ok) {
-    throw new Error((data as { error?: string }).error ?? "Không tải được danh sách user.");
+    throw new Error(
+      (data as { error?: string }).error ??
+        "Khong tai duoc danh sach user. Kiem tra lai session admin.",
+    );
   }
+
   return (data as { users?: UserPreviewRow[] }).users ?? [];
 }
 
@@ -94,7 +102,7 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
 
     const handleProblem = (event: MessageEvent<string>) => {
       const payload = JSON.parse(event.data) as StreamPayload;
-      setError(payload.error ?? "Luồng realtime đang gặp lỗi.");
+      setError(payload.error ?? "Luong realtime dang gap loi.");
     };
 
     const handleError = () => {
@@ -152,18 +160,22 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
           };
 
           if (!response.ok) {
-            throw new Error(data.error ?? "Import user thất bại.");
+            throw new Error(data.error ?? "Import user that bai.");
           }
 
           const failed = Number(data.failed ?? 0);
           const imported = Number(data.imported ?? 0);
           if (failed > 0) {
-            const preview = data.errors?.slice(0, 2).map((item) => `dòng ${item.index}: ${item.error}`);
+            const preview = data.errors
+              ?.slice(0, 2)
+              .map((item) => `dong ${item.index}: ${item.error}`);
             setNotice(
-              `Đã import ${imported} user, lỗi ${failed}${preview?.length ? ` (${preview.join("; ")})` : ""}.`,
+              `Da import ${imported} user, loi ${failed}${
+                preview?.length ? ` (${preview.join("; ")})` : ""
+              }.`,
             );
           } else {
-            setNotice(`Đã import ${imported} user vào Postgres.`);
+            setNotice(`Da import ${imported} user vao Postgres.`);
           }
           await refreshUsers(true);
         } catch (nextError) {
@@ -184,11 +196,11 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
       <div className={shellStyles.panelHead}>
         <div>
           <span className={shellStyles.panelEyebrow}>Users realtime</span>
-          <h2>Danh sách user trực tiếp từ Postgres</h2>
+          <h2>Danh sach user truc tiep tu Postgres</h2>
         </div>
         <div className={shellStyles.inlineActions}>
           <label className="btn btn-admin-outline">
-            {importing ? "Đang import..." : "Import user"}
+            {importing ? "Dang import..." : "Import user"}
             <input
               className="admin-file"
               type="file"
@@ -206,42 +218,42 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
             disabled={loading}
             onClick={() => void refreshUsers(false)}
           >
-            {loading ? "Đang tải..." : "Làm mới"}
+            {loading ? "Dang tai..." : "Lam moi"}
           </button>
           <Link className="studio-link-inline" href="/admin?tab=users">
-            Mở quản lý user
+            Mo quan ly user
           </Link>
         </div>
       </div>
 
       <div className={shellStyles.timelineSummary}>
         <div className={shellStyles.timelineSummaryCard}>
-          <span>Bản ghi hiển thị</span>
+          <span>Ban ghi hien thi</span>
           <strong>{stats.total}</strong>
           <p>
             {streamState === "live"
-              ? "Luồng SSE đang đẩy thay đổi trực tiếp từ Postgres."
-              : "Luồng realtime đang kết nối lại với dashboard."}
+              ? "Luong SSE dang day thay doi truc tiep tu Postgres."
+              : "Luong realtime dang ket noi lai voi dashboard."}
           </p>
         </div>
         <div className={shellStyles.timelineSummaryCard}>
           <span>Admin trong snapshot</span>
           <strong>{stats.admin}</strong>
-          <p>Đọc trực tiếp từ `users`, không cần mở pgAdmin để rà nhanh.</p>
+          <p>Doc truc tiep tu `users`, khong can mo pgAdmin de ra nhanh.</p>
         </div>
         <div className={shellStyles.timelineSummaryCard}>
-          <span>Bị khóa trong snapshot</span>
+          <span>Bi khoa trong snapshot</span>
           <strong>{stats.blocked}</strong>
           <p>
-            {streamState === "live" ? "Realtime hoạt động" : "Đang reconnect"}.
-            {" "}Lần nhận gần nhất: {formatDateTime(lastSyncedAt)}
+            {streamState === "live" ? "Realtime hoat dong" : "Dang reconnect"}. Lan nhan gan
+            nhat: {formatDateTime(lastSyncedAt)}
           </p>
         </div>
       </div>
 
       <div className={shellStyles.panelSubcopy}>
         <p>
-          Import nhận file CSV với các cột như `email`, `name`, `display_name`, `role`,
+          Import nhan file CSV voi cac cot nhu `email`, `name`, `display_name`, `role`,
           `status`, `password`, `phone`.
         </p>
       </div>
@@ -254,17 +266,18 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
           <thead>
             <tr>
               <th>Email</th>
-              <th>Tên</th>
-              <th>Vai trò</th>
-              <th>Trạng thái</th>
-              <th>Cập nhật</th>
+              <th>Ten</th>
+              <th>GID</th>
+              <th>Vai tro</th>
+              <th>Trang thai</th>
+              <th>Cap nhat</th>
             </tr>
           </thead>
           <tbody>
             {!users.length ? (
               <tr>
                 <td colSpan={6} className={shellStyles.dataTableEmpty}>
-                  Chưa có user nào trong bảng `users`.
+                  Chua co user nao trong bang `users`.
                 </td>
               </tr>
             ) : null}
@@ -276,6 +289,7 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
                   </div>
                 </td>
                 <td>{row.display_name ?? row.name ?? "-"}</td>
+                <td>{row.gid ?? "-"}</td>
                 <td>
                   <span className={shellStyles.dataPill}>{row.role ?? "viewer"}</span>
                 </td>

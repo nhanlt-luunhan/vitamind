@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   output: "standalone",
-  allowedDevOrigins: ["http://192.168.31.16:3333"],
+  allowedDevOrigins: ["http://localhost:3333", "http://127.0.0.1:3333"],
   turbopack: {
     root: __dirname,
   },

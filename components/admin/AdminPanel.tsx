@@ -222,10 +222,12 @@ export type AdminTabKey = "users" | "products" | "orders" | "blog" | "media" | "
 export function AdminPanel({
   user,
   initialTab,
+  initialUsers = [],
   showSidebar = true,
 }: {
   user: SessionUser;
   initialTab?: AdminTabKey;
+  initialUsers?: UserRow[];
   showSidebar?: boolean;
 }) {
   const role = normalizeRole(user.role);
@@ -335,7 +337,9 @@ export function AdminPanel({
         ) : null}
 
         <div className="admin-stage__content">
-          {activeTab === "users" && canAdmin ? <UsersTab canManage={canAdmin} /> : null}
+          {activeTab === "users" && canAdmin ? (
+            <UsersTab canManage={canAdmin} initialUsers={initialUsers} />
+          ) : null}
           {activeTab === "products" ? <ProductsTab canEdit={canEdit} /> : null}
           {activeTab === "orders" ? <OrdersTab canEdit={canAdmin} /> : null}
           {activeTab === "blog" ? <BlogTab canEdit={canEdit} /> : null}
@@ -353,9 +357,15 @@ export function AdminPanel({
   );
 }
 
-function UsersTab({ canManage }: { canManage: boolean }) {
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(false);
+function UsersTab({
+  canManage,
+  initialUsers,
+}: {
+  canManage: boolean;
+  initialUsers: UserRow[];
+}) {
+  const [users, setUsers] = useState<UserRow[]>(initialUsers);
+  const [loading, setLoading] = useState(initialUsers.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<UserRow | null>(null);
@@ -374,8 +384,10 @@ function UsersTab({ canManage }: { canManage: boolean }) {
   };
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (!initialUsers.length) {
+      loadUsers();
+    }
+  }, [initialUsers.length]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return users;

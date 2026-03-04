@@ -1,152 +1,110 @@
 # Vitamind
 
-Blog va trang quan tri duoc xay dung bang Next.js App Router, PostgreSQL va Clerk.
+Vitamind duoc chuan hoa theo mot luong chay duy nhat:
 
-## Yeu cau
+- local Mac/Win chay bang Docker Compose
+- Synology chay bang Docker Compose
+- app luon boot theo kieu production-like: `next build` -> `next start`
+- DB schema luon duoc sync khi container `app` khoi dong
 
-- Node.js 20 LTS
-- npm 9+
-- Docker Desktop neu muon chay Postgres local
+Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `docker/db-init` va script `scripts/sync-db.mjs`.
 
-## Chay local
+## Runtime chung
 
-1. Cai dependency:
+- App ngoai host: `http://localhost:3333`
+- App trong container: `http://app:3000`
+- Postgres ngoai host: `127.0.0.1:5432`
+- pgAdmin ngoai host: `http://127.0.0.1:5050`
 
-```bash
-npm install
-```
+## File can commit
 
-2. Khoi dong Postgres local:
+- `compose.yml`
+- `docker-compose.yml`
+- `docker-compose.synology.yml`
+- `docker/Dockerfile`
+- `docker/entrypoint.sh`
+- `docker/db-init/*.sql`
+- `package-lock.json`
 
-```bash
-docker compose up -d db
-```
+## File khong commit
 
-Neu can pgAdmin:
+- `.env.local`
+- `.env.synology`
+- `.env.docker`
+- `.next/`
+- `node_modules/`
 
-```bash
-docker compose --profile tools up -d pgadmin
-```
+## Cach chay local Mac/Win
 
-- pgAdmin: `http://127.0.0.1:35050`
-- Email mac dinh: `admin@vitamind.com.vn`
-- Password mac dinh: `change-me-pgadmin`
-
-3. Tao `.env.local` tu `.env.example`.
-
-Mau topology khuyen nghi:
-
-- local/dev dung `DATABASE_URL` rieng, vi du `postgresql://vitamind:vitamind@127.0.0.1:33542/vitamind`
-- production dung `DATABASE_URL` rieng
-- co the dung chung Clerk giua local va production neu muon cung tap user
-- bang `users` cua moi DB la mirror tu Clerk, khong phai source of truth chung
-
-4. Chay app:
+1. Tao env local:
 
 ```bash
-npm run dev
+cp .env.local.example .env.local
 ```
 
-App chay tai `http://127.0.0.1:3333`.
+2. Dien Clerk keys va cac secret can thiet trong `.env.local`.
 
-## Shared Clerk, Separate DB
-
-Neu muon dev va production dung cung mot tap user:
-
-- dung cung `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` va `CLERK_SECRET_KEY`
-- khong tro local vao DB production
-- bat webhook Clerk cho tung moi truong can sync
-- backfill user tu Clerk xuong DB local bang:
+3. Chay toan bo stack:
 
 ```bash
-npm run clerk:sync
+docker compose --env-file .env.local up --build
 ```
 
-Script nay goi:
+Khong can `npm run dev`.
 
-- `POST /api/internal/clerk-sync`
+## Cach chay Synology
 
-Yeu cau:
-
-- app local dang chay
-- `INTERNAL_API_BASE_URL` dung
-- `INTERNAL_API_SECRET` dung
-
-## Guard cho local/dev
-
-Repo co 2 env de bao ve khi local dung chung Clerk voi production:
-
-- `SHARED_CLERK_MODE=true`
-- `PROTECT_SHARED_IDENTITY_FIELDS=true`
-
-Khi bat hai flag nay, local/dev se bi chan:
-
-- sua `role`
-- sua `status`
-- import user co `gid`, `role`, `status`
-- xoa user trong admin
-
-Muc tieu la tranh local/dev vo tinh sua du lieu nhay cam anh huong moi truong khac.
-
-## Sync schema DB
-
-Schema SQL nam trong `docker/db-init`.
-
-Chay:
+1. Tao file env rieng tren NAS:
 
 ```bash
-npm run db:sync
+cp .env.synology.example .env.synology
 ```
 
-Tham khao them:
+2. Dien domain, Clerk keys va secret that.
+
+3. Deploy:
+
+```bash
+docker compose --env-file .env.synology up -d --build
+```
+
+## Clerk va dong bo user
+
+- Clerk la source of truth cho identity.
+- Bang `users` trong Postgres la mirror noi bo.
+- Webhook Clerk:
+  - `POST /api/webhooks/clerk`
+- Backfill thu cong:
+
+```bash
+docker compose --env-file .env.local exec app node ./scripts/clerk-sync.mjs
+```
+
+Hoac tren host:
+
+```bash
+set -a; source .env.local; set +a
+node ./scripts/clerk-sync.mjs
+```
+
+## DB schema
+
+Moi lan container `app` boot:
+
+1. Cho Postgres san sang
+2. Chay `node /app/scripts/sync-db.mjs --mode url`
+3. Moi `npm run start`
+
+Dieu nay giu local va Synology cung mot quy tac boot.
+
+## Ghi chu
+
+- `NEXT_PUBLIC_APP_URL` la bien URL canonical moi.
+- `SITE_URL` van duoc giu lam fallback de tuong thich code cu.
+- Neu local can bind port khac, doi trong `.env.local`, khong sua compose.
+
+## Tai lieu lien quan
 
 - `docs/db-sync.md`
 - `docs/auth-topology.md`
-
-## Clerk webhook
-
-Cau hinh Clerk webhook tro vao:
-
-- `POST /api/webhooks/clerk`
-
-Bat cac event:
-
-- `user.created`
-- `user.updated`
-- `user.deleted`
-
-Neu can dong bo toan bo user Clerk ve Postgres sau khi deploy hoac sau khi thieu webhook cu, goi endpoint noi bo:
-
-```bash
-curl -X POST https://vitamind.com.vn/api/internal/clerk-sync \
-  -H "x-internal-secret: YOUR_INTERNAL_API_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-Neu chi muon sync mot user Clerk cu the:
-
-```bash
-curl -X POST https://vitamind.com.vn/api/internal/clerk-sync \
-  -H "x-internal-secret: YOUR_INTERNAL_API_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"clerkUserId":"user_xxx"}'
-```
-
-## Production
-
-Production dung `.env.docker` va `docker compose up -d --build`.
-
-Khong publish Postgres ra Internet. Chi app production moi nen truy cap DB production.
-
-## Synology Docker
-
-Co the chay tren Synology Docker/Container Manager, nhung can hieu dung muc do cam ket:
-
-- tuong thich tot voi stack Compose hien tai
-- khong co co so de khang dinh "100%" neu chua test tren dung model NAS, dung reverse proxy va dung Clerk env that
-- DB duoc bao toan neu giu nguyen volume `db_data`
-
-Chi tiet van hanh:
-
 - `docs/synology-docker.md`

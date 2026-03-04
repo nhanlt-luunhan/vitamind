@@ -15,8 +15,12 @@ function getInternalApiBaseUrl() {
 async function handleWithoutClerk(req: NextRequest) {
   const dbSession = await verifySessionToken(req.cookies.get(SESSION_COOKIE_NAME)?.value ?? null);
   const hasDbSession = Boolean(dbSession?.sub);
+  const isApiRoute = req.nextUrl.pathname.startsWith("/api/");
 
   if ((isAdminRoute(req) || isAccountRoute(req)) && !hasDbSession) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
@@ -38,8 +42,12 @@ const handleWithClerk = clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const dbSession = await verifySessionToken(req.cookies.get(SESSION_COOKIE_NAME)?.value ?? null);
   const hasDbSession = Boolean(dbSession?.sub);
+  const isApiRoute = req.nextUrl.pathname.startsWith("/api/");
 
   if ((isAdminRoute(req) || isAccountRoute(req)) && !userId && !hasDbSession) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 

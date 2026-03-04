@@ -34,6 +34,7 @@ type UserPreviewRow = {
   gid: string | null;
   role: string | null;
   status: string | null;
+  avatar_url: string | null;
   updated_at: string | null;
   created_at: string;
 };
@@ -118,6 +119,7 @@ export default async function Page({ searchParams }: PageProps) {
                 gid,
                 role,
                 status,
+                avatar_url,
                 updated_at,
                 created_at
          from users
@@ -384,7 +386,12 @@ export default async function Page({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        <AdminPanel user={user} initialTab={currentTab} showSidebar={false} />
+        <AdminPanel
+          user={user}
+          initialTab={currentTab}
+          initialUsers={usersPreview.rows}
+          showSidebar={false}
+        />
       </section>
     </AdminShell>
   );

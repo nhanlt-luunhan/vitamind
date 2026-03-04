@@ -24,7 +24,11 @@ function loadEnvFile(filename) {
 loadEnvFile(".env.local");
 loadEnvFile(".env");
 
-const baseUrl = process.env.INTERNAL_API_BASE_URL ?? "http://127.0.0.1:3333";
+const baseUrl =
+  process.env.INTERNAL_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.SITE_URL ??
+  "http://127.0.0.1:3333";
 const secret = process.env.INTERNAL_API_SECRET;
 
 if (!secret) {
