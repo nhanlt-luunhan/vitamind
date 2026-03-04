@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ThemeSwitch } from "@/components/elements/SwitchButton";
-import { useSessionUser } from "@/components/auth/useSessionUser";
-import { hasGidValue } from "@/lib/utils/gid";
+import type { ClientSessionUser } from "@/components/auth/useSessionUser";
 import styles from "./HeaderUserMenu.module.css";
 
-export function HeaderUserMenu() {
-  const { user, isLoaded } = useSessionUser();
+type HeaderUserMenuProps = {
+  user: ClientSessionUser | null;
+  isLoaded: boolean;
+};
+
+export function HeaderUserMenu({ user, isLoaded }: HeaderUserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -38,9 +41,9 @@ export function HeaderUserMenu() {
       { href: "/account", label: "Thông tin tài khoản" },
       ...(isAdmin
         ? [
-            { href: "/admin", label: "Trang quản trị" },
-            { href: "/admin/database", label: "Cơ sở dữ liệu" },
-          ]
+          { href: "/admin", label: "Trang quản trị" },
+          { href: "/admin/database", label: "Cơ sở dữ liệu" },
+        ]
         : []),
     ],
     [isAdmin],
@@ -79,9 +82,13 @@ export function HeaderUserMenu() {
               <strong>{displayName}</strong>
               <p>{user.email}</p>
               <span className={styles.roleBadge}>
-                {isAdmin ? "Quản trị viên" : "Người dùng"}
+                {user.role === "admin"
+                  ? "Quản trị viên"
+                  : user.role === "editor"
+                    ? "Biên tập viên"
+                    : "Người dùng"}
               </span>
-              {hasGidValue(user.gid) ? <small className={styles.gid}>{user.gid}</small> : null}
+
             </div>
           </div>
 

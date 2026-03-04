@@ -1,54 +1,84 @@
-﻿version: "3.8"
+version: "3.8"
 services:
   app:
-    # Portainer Git stack: build from repo.
     build:
       context: .
       dockerfile: Dockerfile
-    # Portainer Web Editor: use a prebuilt image instead.
-    # image: your-registry/vitamind:latest
+    env_file:
+      - .env.docker
     ports:
       - "3333:3333"
     environment:
       NODE_ENV: "production"
       PORT: "3333"
-      NEXTAUTH_URL: "https://vitamind.com.vn"
-      NEXTAUTH_SECRET: "change_me"
-      DATABASE_URL: "postgresql://vitamind:vitamind@db:5432/vitamind"
-      GOOGLE_CLIENT_ID: ""
-      GOOGLE_CLIENT_SECRET: ""
-      ALLOW_EMAILS: ""
+      HOSTNAME: "0.0.0.0"
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: "--max-old-space-size=512"
     depends_on:
       - db
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./content:/app/content
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3333/"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3333/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
     restart: unless-stopped
+    init: true
+    mem_limit: 768m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_BIND_IP:-127.0.0.1}:${POSTGRES_PORT:-33542}:5432"
     environment:
       POSTGRES_USER: "vitamind"
       POSTGRES_PASSWORD: "vitamind"
       POSTGRES_DB: "vitamind"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vitamind"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    mem_limit: 512m
+    shm_size: "256mb"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=128MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "effective_cache_size=256MB"
+      - "-c"
+      - "max_connections=50"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   pgadmin:
     image: dpage/pgadmin4:9
+    profiles:
+      - tools
     environment:
-      PGADMIN_DEFAULT_EMAIL: "admin@vitamind.com.vn"
-      PGADMIN_DEFAULT_PASSWORD: "change-me-pgadmin"
-      PGADMIN_SERVER_JSON_FILE: "/pgadmin4/servers.json"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@vitamind.com.vn}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change-me-pgadmin}
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
       PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
     ports:
       - "${PGADMIN_BIND_IP:-127.0.0.1}:${PGADMIN_PORT:-35050}:80"
@@ -58,6 +88,7 @@ services:
       - pgadmin_data:/var/lib/pgadmin
       - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
     restart: unless-stopped
+    mem_limit: 256m
 
 volumes:
   db_data:

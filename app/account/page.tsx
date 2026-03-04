@@ -7,17 +7,58 @@ export const dynamic = "force-dynamic";
 
 type AccountRow = AccountUser;
 
+function isMissingUsersColumnError(error: string | undefined) {
+  return Boolean(error && /column .* does not exist/i.test(error));
+}
+
+function toLegacyAccountUser(
+  row: Record<string, unknown>,
+  sessionUser: Awaited<ReturnType<typeof requireUser>>,
+): AccountUser {
+  const email = typeof row.email === "string" ? row.email : sessionUser.email;
+  const name = typeof row.name === "string" ? row.name : sessionUser.name;
+
+  return {
+    id: String(row.id ?? sessionUser.id),
+    email,
+    contact_email: email,
+    name,
+    phone: null,
+    bio: null,
+    location: null,
+    company: null,
+    website: null,
+    avatar_url: null,
+  };
+}
+
 export default async function Page() {
   const sessionUser = await requireUser();
-  const { rows, error } = await query<AccountRow>(
-    `select id, email, contact_email, name, gid, phone, bio, location, company, website, avatar_url
+  const current = await query<AccountRow>(
+    `select id, email, contact_email, name, phone, bio, location, company, website, avatar_url
      from users
      where id = $1
      limit 1`,
     [sessionUser.id],
   );
 
-  const user = rows[0] ?? null;
+  let error = current.error;
+  let user = current.rows[0] ?? null;
+
+  if (!user && isMissingUsersColumnError(current.error)) {
+    const legacy = await query<Record<string, unknown>>(
+      `select id, email, name
+       from users
+       where id = $1
+       limit 1`,
+      [sessionUser.id],
+    );
+
+    if (!legacy.error && legacy.rows[0]) {
+      user = toLegacyAccountUser(legacy.rows[0], sessionUser);
+      error = undefined;
+    }
+  }
 
   return (
     <>

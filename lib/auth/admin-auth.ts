@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { query } from "@/lib/db/admin-db";
 import { syncClerkUserById } from "@/lib/auth/clerk-sync";
@@ -24,26 +25,86 @@ export function getSignedInDestination(user: Pick<SessionUser, "role">) {
   return user.role === "admin" ? "/admin" : "/";
 }
 
-async function fetchUserByClerkId(clerkUserId: string): Promise<SessionUser | null> {
-  const { rows } = await query<SessionUser>(
-    `select id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
+const SESSION_USER_SELECT =
+  "id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at";
+const LEGACY_SESSION_USER_SELECT = "id, email, name, role, updated_at";
+
+function isMissingUsersColumnError(error: string | undefined) {
+  return Boolean(error && /column .* does not exist/i.test(error));
+}
+
+function toLegacySessionUser(row: Record<string, unknown>): SessionUser {
+  const name = typeof row.name === "string" ? row.name : null;
+  const email = typeof row.email === "string" ? row.email : "";
+
+  return {
+    id: String(row.id ?? ""),
+    clerk_user_id: null,
+    email,
+    contact_email: email || null,
+    name,
+    display_name: name,
+    gid: null,
+    phone: null,
+    role: typeof row.role === "string" ? row.role : null,
+    status: "active",
+    avatar_url: null,
+    updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+  };
+}
+
+async function selectSessionUser(whereClause: string, params: Array<unknown>) {
+  const current = await query<SessionUser>(
+    `select ${SESSION_USER_SELECT}
      from users
-     where clerk_user_id = $1
+     where ${whereClause}
      limit 1`,
-    [clerkUserId],
+    params,
   );
-  return rows[0] ?? null;
+
+  if (!current.error) {
+    return current.rows[0] ?? null;
+  }
+
+  if (!isMissingUsersColumnError(current.error)) {
+    return null;
+  }
+
+  const legacy = await query<Record<string, unknown>>(
+    `select ${LEGACY_SESSION_USER_SELECT}
+     from users
+     where ${whereClause}
+     limit 1`,
+    params,
+  );
+
+  if (legacy.error) {
+    return null;
+  }
+
+  return legacy.rows[0] ? toLegacySessionUser(legacy.rows[0]) : null;
+}
+
+async function fetchUserByClerkId(clerkUserId: string): Promise<SessionUser | null> {
+  return selectSessionUser("clerk_user_id = $1", [clerkUserId]);
 }
 
 async function fetchUserById(userId: string): Promise<SessionUser | null> {
-  const { rows } = await query<SessionUser>(
-    `select id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
-     from users
-     where id = $1
-     limit 1`,
-    [userId],
-  );
-  return rows[0] ?? null;
+  return selectSessionUser("id = $1", [userId]);
+}
+
+async function fetchUserByEmail(email: string): Promise<SessionUser | null> {
+  return selectSessionUser("lower(email) = lower($1)", [email]);
+}
+
+async function fetchClerkPrimaryEmail(clerkUserId: string) {
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(clerkUserId);
+    return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -58,13 +119,21 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       } catch {
         // Fall back to the last synced internal profile if Clerk is temporarily unreachable.
       }
-      const user = syncedUser ?? (await fetchUserByClerkId(userId));
+      let user = syncedUser ?? (await fetchUserByClerkId(userId));
+      if (!user) {
+        const clerkEmail = await fetchClerkPrimaryEmail(userId);
+        if (clerkEmail) {
+          user = await fetchUserByEmail(clerkEmail);
+        }
+      }
       if (user?.status && user.status !== "active") {
         return null;
       }
       if (user) {
         return user;
       }
+      // No DB record found for this Clerk user — return null so the caller
+      // can redirect appropriately (e.g. to /sign-in or show an error).
     }
   } catch {
     // Clerk not configured or threw — fall through to cookie-based session

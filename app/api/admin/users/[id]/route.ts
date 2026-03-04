@@ -5,6 +5,7 @@ import { query, withTransaction } from "@/lib/db/admin-db";
 import { logAudit } from "@/lib/audit";
 import { normalizeRole, canManageUsers } from "@/lib/auth/rbac";
 import { processQueuedClerkDeletion, queueClerkUserDeletion } from "@/lib/auth/clerk-sync";
+import { isProtectedSharedClerkMode } from "@/lib/auth/environment";
 import { GID_RULE_MESSAGE, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 import { fetchDecoratedUserById, fetchUserAudit } from "@/lib/access-control/admin";
 
@@ -57,9 +58,7 @@ const normalizeStatus = (value: unknown) => {
 
 function normalizeIdArray(value: unknown) {
   if (!Array.isArray(value)) return undefined;
-  return value
-    .map((item) => String(item ?? "").trim())
-    .filter(Boolean);
+  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
 }
 
 async function syncClerkMetadata({
@@ -120,7 +119,7 @@ async function loadDecoratedPayload(userId: string) {
   }
 
   if (!row) {
-    return { error: "Không tìm thấy user.", status: 404 as const };
+    return { error: "Khong tim thay user.", status: 404 as const };
   }
 
   return {
@@ -154,7 +153,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const body = await request.json().catch(() => null);
   if (!body) {
-    return NextResponse.json({ error: "Dữ liệu không hợp lệ." }, { status: 400 });
+    return NextResponse.json({ error: "Du lieu khong hop le." }, { status: 400 });
   }
 
   const role = body?.role ? normalizeRole(body.role.toString().trim()) : undefined;
@@ -176,6 +175,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: GID_RULE_MESSAGE }, { status: 400 });
   }
 
+  if (isProtectedSharedClerkMode() && (role !== undefined || status !== undefined)) {
+    return NextResponse.json(
+      { error: "Shared Clerk mode is enabled. Role/status changes are blocked in this environment." },
+      { status: 403 },
+    );
+  }
+
   const { rows: existingRows } = await query<UserRow>(
     `${baseSelect}
      where id = $1
@@ -184,12 +190,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   );
   const existing = existingRows[0];
   if (!existing) {
-    return NextResponse.json({ error: "Không tìm thấy user." }, { status: 404 });
+    return NextResponse.json({ error: "Khong tim thay user." }, { status: 404 });
   }
 
   if (id === currentUser?.id && status === "blocked") {
     return NextResponse.json(
-      { error: "Không thể khóa tài khoản đang đăng nhập." },
+      { error: "Khong the khoa tai khoan dang dang nhap." },
       { status: 400 },
     );
   }
@@ -271,8 +277,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
 
   if (transaction.error) {
-    if (transaction.error.includes("idx_users_gid_unique") || transaction.error.includes("duplicate key")) {
-      return NextResponse.json({ error: "GID này đã được sử dụng." }, { status: 400 });
+    if (
+      transaction.error.includes("idx_users_gid_unique") ||
+      transaction.error.includes("duplicate key")
+    ) {
+      return NextResponse.json({ error: "GID nay da duoc su dung." }, { status: 400 });
     }
     return NextResponse.json({ error: transaction.error }, { status: 400 });
   }
@@ -313,9 +322,16 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (isProtectedSharedClerkMode()) {
+    return NextResponse.json(
+      { error: "Shared Clerk mode is enabled. User deletion is blocked in this environment." },
+      { status: 403 },
+    );
+  }
+
   if (id === currentUser?.id) {
     return NextResponse.json(
-      { error: "Không thể xóa tài khoản đang đăng nhập." },
+      { error: "Khong the xoa tai khoan dang dang nhap." },
       { status: 400 },
     );
   }
@@ -328,7 +344,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   );
   const existing = existingRows[0];
   if (!existing) {
-    return NextResponse.json({ error: "Không tìm thấy user." }, { status: 404 });
+    return NextResponse.json({ error: "Khong tim thay user." }, { status: 404 });
   }
 
   if (existing.clerk_user_id) {

@@ -21,8 +21,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu thông tin đăng nhập." }, { status: 400 });
   }
 
-  const client = await clerkClient();
-
   if (identifier.includes("@")) {
     const email = identifier.toLowerCase();
     const { rows } = await query<UserLookupRow>(
@@ -47,6 +45,7 @@ export async function POST(request: Request) {
     }
 
     try {
+      const client = await clerkClient();
       const users = await client.users.getUserList({
         emailAddress: [email],
         limit: 1,
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
   );
 
   if (error) {
-    return NextResponse.json({ error: "Không thể xử lý GID lúc này." }, { status: 500 });
+    return NextResponse.json({ error: "Không thể xử lý yêu cầu lúc này." }, { status: 500 });
   }
 
   if (!rows[0]?.email) {

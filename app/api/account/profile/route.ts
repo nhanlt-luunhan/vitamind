@@ -3,6 +3,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query } from "@/lib/db/admin-db";
 import { GID_RULE_MESSAGE, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
+import { isProtectedSharedClerkMode } from "@/lib/auth/environment";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: GID_RULE_MESSAGE }, { status: 400 });
   }
 
+  if (isProtectedSharedClerkMode() && rawGid !== sanitizeGid(user.gid)) {
+    return NextResponse.json(
+      { error: "Shared Clerk mode is enabled. GID changes are blocked in this environment." },
+      { status: 403 },
+    );
+  }
+
   const { rows, error } = await query<ProfileRow>(
     `update users
      set name = $2,
@@ -118,18 +126,9 @@ export async function PUT(request: Request) {
   }
 
   const client = await clerkClient();
-  const currentClerk = await client.users.getUser(user.clerk_user_id);
-  const nextPublicMetadata = {
-    ...(currentClerk.publicMetadata ?? {}),
-    phone: phone ?? null,
-    gid: gid ?? null,
-    contactEmail: contactEmail ?? null,
-  };
-
   await client.users.updateUser(user.clerk_user_id, {
     firstName: firstName ?? undefined,
     lastName: lastName ?? undefined,
-    publicMetadata: nextPublicMetadata,
   });
 
   return NextResponse.json({ user: rows[0] });

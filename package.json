@@ -8,6 +8,7 @@
     "dev": "next dev -H 0.0.0.0 -p 3333",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3333",
+    "clerk:sync": "node ./scripts/clerk-sync.mjs",
     "db:sync": "node ./scripts/sync-db.mjs",
     "db:sync:docker": "node ./scripts/sync-db.mjs --mode docker",
     "db:sync:url": "node ./scripts/sync-db.mjs --mode url",

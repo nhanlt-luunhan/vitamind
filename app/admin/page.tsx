@@ -71,36 +71,36 @@ export default async function Page({ searchParams }: PageProps) {
     auditPreview,
     usersPreview,
   ] = await Promise.all([
-      query<CountRow>(
-        `select count(*)::int as total
+    query<CountRow>(
+      `select count(*)::int as total
          from users
          where coalesce(status, 'active') <> 'deleted'`,
-      ),
-      query<CountRow>(
-        `select count(*)::int as total
+    ),
+    query<CountRow>(
+      `select count(*)::int as total
          from products
          where deleted_at is null`,
-      ),
-      query<CountRow>(
-        `select count(*)::int as total
+    ),
+    query<CountRow>(
+      `select count(*)::int as total
          from orders
          where deleted_at is null`,
-      ),
-      query<CountRow>(
-        `select count(*)::int as total
+    ),
+    query<CountRow>(
+      `select count(*)::int as total
          from media
          where deleted_at is null`,
-      ),
-      query<CountRow>(`select count(*)::int as total from audit_log`),
-      query<OrderStatusRow>(
-        `select coalesce(status, 'new') as status, count(*)::int as total
+    ),
+    query<CountRow>(`select count(*)::int as total from audit_log`),
+    query<OrderStatusRow>(
+      `select coalesce(status, 'new') as status, count(*)::int as total
          from orders
          where deleted_at is null
          group by 1
          order by 2 desc`,
-      ),
-      query<AuditPreviewRow>(
-        `select a.id,
+    ),
+    query<AuditPreviewRow>(
+      `select a.id,
                 u.email as actor_email,
                 a.action,
                 a.table_name,
@@ -109,9 +109,9 @@ export default async function Page({ searchParams }: PageProps) {
          left join users u on u.id = a.actor_user_id
          order by a.created_at desc
          limit 5`,
-      ),
-      query<UserPreviewRow>(
-        `select id,
+    ),
+    query<UserPreviewRow>(
+      `select id,
                 email,
                 name,
                 display_name,
@@ -123,8 +123,8 @@ export default async function Page({ searchParams }: PageProps) {
          from users
          order by coalesce(updated_at, created_at) desc, created_at desc
          limit 8`,
-      ),
-    ]);
+    ),
+  ]);
   const posts = await getAllPostsAdmin();
 
   const usersTotal = Number(usersCount.rows[0]?.total ?? 0);
@@ -282,7 +282,7 @@ export default async function Page({ searchParams }: PageProps) {
             <article className={shellStyles.signalCard}>
               <span className={shellStyles.signalEyebrow}>Liên hệ và định danh</span>
               <strong>{user.contact_email ?? user.email}</strong>
-              <p>{user.gid ? `GID nội bộ: ${user.gid}` : "Chưa có GID nội bộ, nên chuẩn hóa hồ sơ."}</p>
+              <p>Tài khoản dùng để nhận thông báo và xác thực nội bộ.</p>
             </article>
             <article className={shellStyles.signalCard}>
               <span className={shellStyles.signalEyebrow}>Đồng bộ hồ sơ</span>

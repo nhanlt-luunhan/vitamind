@@ -241,7 +241,7 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
 
       <div className={shellStyles.panelSubcopy}>
         <p>
-          Import nhận file CSV với các cột như `email`, `name`, `display_name`, `gid`, `role`,
+          Import nhận file CSV với các cột như `email`, `name`, `display_name`, `role`,
           `status`, `password`, `phone`.
         </p>
       </div>
@@ -255,7 +255,6 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
             <tr>
               <th>Email</th>
               <th>Tên</th>
-              <th>GID</th>
               <th>Vai trò</th>
               <th>Trạng thái</th>
               <th>Cập nhật</th>
@@ -277,7 +276,6 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
                   </div>
                 </td>
                 <td>{row.display_name ?? row.name ?? "-"}</td>
-                <td>{row.gid ?? "-"}</td>
                 <td>
                   <span className={shellStyles.dataPill}>{row.role ?? "viewer"}</span>
                 </td>

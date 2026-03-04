@@ -107,8 +107,7 @@ const pickMetadataContactEmail = (payload: ClerkUserPayload) => {
     typeof publicMeta?.contactEmail === "string" ? publicMeta.contactEmail : null;
   const fromUnsafe =
     typeof unsafeMeta?.contactEmail === "string" ? unsafeMeta.contactEmail : null;
-  const value = normalizeEmail(fromPublic ?? fromUnsafe);
-  return value;
+  return normalizeEmail(fromPublic ?? fromUnsafe);
 };
 
 const buildDisplayName = (payload: ClerkUserPayload, email: string | null) => {
@@ -175,6 +174,17 @@ async function markQueuedClerkDeletionFailed(clerkUserId: string, error: unknown
   );
 }
 
+async function detachClerkUser(clerkUserId: string | null | undefined) {
+  if (!clerkUserId) return;
+  await query(
+    `update users
+     set clerk_user_id = null,
+         updated_at = now()
+     where clerk_user_id = $1`,
+    [clerkUserId],
+  );
+}
+
 export async function queueClerkUserDeletion(
   clerkUserId: string | null | undefined,
   email: string | null = null,
@@ -238,6 +248,7 @@ export async function drainClerkDeletionQueue(limit = 50) {
 
 export async function markClerkDeletionProcessed(clerkUserId: string | null | undefined) {
   if (!clerkUserId) return;
+  await detachClerkUser(clerkUserId);
   await queueClerkUserDeletion(clerkUserId);
   await markQueuedClerkDeletionProcessed(clerkUserId);
 }

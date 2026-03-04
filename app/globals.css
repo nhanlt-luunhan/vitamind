@@ -177,6 +177,34 @@
   box-sizing: border-box;
 }
 
+/* ─── Anti-FOUC: hide until theme class is applied ─── */
+html:not(.theme-day):not(.theme-night) {
+  visibility: hidden;
+}
+
+/* ─── Animations ─── */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 html {
   font-family:
     var(--font-sans),
@@ -208,6 +236,8 @@ body {
   color: var(--page-text);
   background-color: var(--page-bg);
   line-height: 1.6;
+  /* Prevent content jump when sticky header activates */
+  /* padding-top is set dynamically by JS on scroll */
 }
 
 button,
@@ -216,6 +246,7 @@ select,
 textarea {
   font: inherit;
 }
+
 
 .container {
   width: min(var(--site-shell-max), calc(100vw - (var(--site-shell-gutter) * 2)));
@@ -306,7 +337,7 @@ p {
 .floating-actions {
   position: fixed;
   right: 24px;
-  bottom: 24px;
+  bottom: 96px;
   z-index: 2147483647;
   display: flex;
   flex-direction: column;
@@ -368,7 +399,7 @@ p {
 @media (max-width: 767px) {
   .floating-actions {
     right: 16px;
-    bottom: 16px;
+    bottom: 88px;
     gap: 10px;
   }
 

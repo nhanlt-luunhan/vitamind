@@ -7,7 +7,14 @@ type GlobalWithPg = typeof globalThis & { adminPgPool?: Pool };
 const globalForPg = globalThis as GlobalWithPg;
 
 const pool = connectionString
-  ? (globalForPg.adminPgPool ?? new Pool({ connectionString, max: 5 }))
+  ? (globalForPg.adminPgPool ??
+    new Pool({
+      connectionString,
+      max: 5,
+      connectionTimeoutMillis: 3_000,  // fail fast if DB unreachable
+      idleTimeoutMillis: 30_000,
+      statement_timeout: 8_000,        // kill queries running > 8s
+    }))
   : null;
 
 if (pool && process.env.NODE_ENV !== "production") {

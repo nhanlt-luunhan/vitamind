@@ -821,9 +821,9 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
       setEditing((prev) =>
         prev
           ? {
-              ...prev,
-              images: [...(prev.images ?? []), url],
-            }
+            ...prev,
+            images: [...(prev.images ?? []), url],
+          }
           : prev,
       );
     } catch (err) {
@@ -990,12 +990,12 @@ function ProductsTab({ canEdit }: { canEdit: boolean }) {
                             setEditing((prev) =>
                               prev
                                 ? {
-                                    ...prev,
-                                    images: event.target.value
-                                      .split(",")
-                                      .map((item) => item.trim())
-                                      .filter(Boolean),
-                                  }
+                                  ...prev,
+                                  images: event.target.value
+                                    .split(",")
+                                    .map((item) => item.trim())
+                                    .filter(Boolean),
+                                }
                                 : prev,
                             )
                           }

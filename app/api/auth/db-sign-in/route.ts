@@ -18,6 +18,30 @@ const normalizeIdentifier = (value: unknown) => {
   return normalizeGid(text) ?? text;
 };
 
+function isMissingUsersColumnError(error: string | undefined) {
+  return Boolean(error && /column .* does not exist/i.test(error));
+}
+
+function toLegacyLoginRow(row: Record<string, unknown>): LoginRow {
+  const name = typeof row.name === "string" ? row.name : null;
+  const email = typeof row.email === "string" ? row.email : "";
+
+  return {
+    id: String(row.id ?? ""),
+    clerk_user_id: null,
+    email,
+    contact_email: email || null,
+    name,
+    display_name: name,
+    gid: null,
+    phone: null,
+    role: typeof row.role === "string" ? row.role : null,
+    status: "active",
+    avatar_url: null,
+    updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+  };
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const identifier = normalizeIdentifier(body?.identifier);
@@ -28,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu thông tin đăng nhập." }, { status: 400 });
   }
 
-  const { rows, error } = await query<LoginRow>(
+  const current = await query<LoginRow>(
     `select id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
      from users
      where (lower(email) = lower($1) or lower(coalesce(gid, '')) = lower($1))
@@ -39,13 +63,31 @@ export async function POST(request: Request) {
     [identifier, password],
   );
 
-  if (error) {
-    return NextResponse.json({ error: "Không thể xác thực lúc này." }, { status: 500 });
+  let user: LoginRow | null = current.rows[0] ?? null;
+  if (current.error) {
+    if (!isMissingUsersColumnError(current.error)) {
+      return NextResponse.json({ error: "Không thể xác thực lúc này." }, { status: 500 });
+    }
+
+    const legacy = await query<Record<string, unknown>>(
+      `select id, email, name, role, updated_at
+       from users
+       where lower(email) = lower($1)
+         and password_hash is not null
+         and password_hash = crypt($2, password_hash)
+       limit 1`,
+      [identifier, password],
+    );
+
+    if (legacy.error) {
+      return NextResponse.json({ error: "Không thể xác thực lúc này." }, { status: 500 });
+    }
+
+    user = legacy.rows[0] ? toLegacyLoginRow(legacy.rows[0]) : null;
   }
 
-  const user = rows[0];
   if (!user) {
-    return NextResponse.json({ error: "Email, GID hoặc mật khẩu không đúng." }, { status: 401 });
+    return NextResponse.json({ error: "Email hoặc mật khẩu không đúng." }, { status: 401 });
   }
 
   const token = await createSessionToken(

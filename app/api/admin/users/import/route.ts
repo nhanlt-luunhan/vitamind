@@ -4,6 +4,7 @@ import { canManageUsers, normalizeRole } from "@/lib/auth/rbac";
 import { logAudit } from "@/lib/audit";
 import { query } from "@/lib/db/admin-db";
 import { GID_RULE_MESSAGE, normalizeGid } from "@/lib/utils/gid";
+import { isProtectedSharedClerkMode } from "@/lib/auth/environment";
 
 export const dynamic = "force-dynamic";
 
@@ -135,6 +136,23 @@ export async function POST(request: Request) {
   const items = Array.isArray(body?.items) ? (body.items as ImportInput[]) : null;
   if (!items?.length) {
     return NextResponse.json({ error: "Không có dữ liệu import." }, { status: 400 });
+  }
+
+  if (isProtectedSharedClerkMode()) {
+    const touchesProtectedFields = items.some((item) =>
+      ["gid", "GID", "gui", "GUI", "role", "vai_tro", "status", "trang_thai"].some((key) =>
+        Object.prototype.hasOwnProperty.call(item, key),
+      ),
+    );
+
+    if (touchesProtectedFields) {
+      return NextResponse.json(
+        {
+          error: "Shared Clerk mode is enabled. Import cannot modify gid/role/status in this environment.",
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const imported: ImportedUserRow[] = [];

@@ -11,17 +11,26 @@ const normalizeThemeMode = (value) => {
   return "system";
 };
 
+// Read initial state synchronously (same logic as the inline script in layout.tsx)
+// This prevents a double-render flash on hydration
+const getInitialThemeMode = () => {
+  if (typeof window === "undefined") return "system";
+  return normalizeThemeMode(localStorage.getItem(STORAGE_KEY));
+};
+
+const getInitialSystemDark = () => {
+  if (typeof window === "undefined") return true;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
 export const ThemeProvider = ({ children }) => {
-  const [themeMode, setThemeMode] = useState("system");
-  const [systemPrefersDark, setSystemPrefersDark] = useState(true);
+  // Lazy initializers read from DOM/localStorage immediately, matching the inline script
+  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
+  const [systemPrefersDark, setSystemPrefersDark] = useState(getInitialSystemDark);
 
   useEffect(() => {
-    const currentTheme = normalizeThemeMode(localStorage.getItem(STORAGE_KEY));
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const applySystemTheme = () => setSystemPrefersDark(mediaQuery.matches);
-
-    setThemeMode(currentTheme);
-    applySystemTheme();
 
     if (typeof mediaQuery.addEventListener === "function") {
       mediaQuery.addEventListener("change", applySystemTheme);
