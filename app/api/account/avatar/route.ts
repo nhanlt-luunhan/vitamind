@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
-import { query } from "@/lib/db/admin-db";
+import { queryUsersWithProfileColumns } from "@/lib/db/users-profile-schema";
 import { logAudit } from "@/lib/audit";
 import { removeProjectUploadByUrl, saveProjectUpload } from "@/lib/uploads/rules";
 
@@ -25,13 +25,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Chưa chọn ảnh đại diện." }, { status: 400 });
   }
 
-  const { rows: existingRows } = await query<AvatarRow>(
+  const { rows: existingRows, error: existingError } = await queryUsersWithProfileColumns<AvatarRow>(
     `select id, avatar_url
      from users
      where id = $1
      limit 1`,
     [user.id],
   );
+
+  if (existingError) {
+    return NextResponse.json({ error: existingError }, { status: 400 });
+  }
 
   const existing = existingRows[0];
   if (!existing) {
@@ -52,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: (error as Error).message }, { status: 400 });
   }
 
-  const { rows, error } = await query<AvatarRow>(
+  const { rows, error } = await queryUsersWithProfileColumns<AvatarRow>(
     `update users
      set avatar_url = $2,
          updated_at = now()

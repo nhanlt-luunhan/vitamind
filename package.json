@@ -12,8 +12,8 @@
     "db:sync": "node ./scripts/sync-db.mjs",
     "db:sync:docker": "node ./scripts/sync-db.mjs --mode docker",
     "db:sync:url": "node ./scripts/sync-db.mjs --mode url",
-    "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit",
+    "lint": "next typegen && tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run build"
   },
   "dependencies": {

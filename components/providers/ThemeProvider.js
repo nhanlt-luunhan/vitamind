@@ -11,8 +11,8 @@ const normalizeThemeMode = (value) => {
   return "system";
 };
 
-// Read initial state synchronously (same logic as the inline script in layout.tsx)
-// This prevents a double-render flash on hydration
+// Doc trang thai ban dau dong bo voi script khoi tao trong layout.tsx
+// Cach nay giup tranh nhay giao dien khi hydrate
 const getInitialThemeMode = () => {
   if (typeof window === "undefined") return "system";
   return normalizeThemeMode(localStorage.getItem(STORAGE_KEY));
@@ -24,7 +24,7 @@ const getInitialSystemDark = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Lazy initializers read from DOM/localStorage immediately, matching the inline script
+  // Khoi tao tu DOM/localStorage ngay lan render dau, dong bo voi script inline
   const [themeMode, setThemeMode] = useState(getInitialThemeMode);
   const [systemPrefersDark, setSystemPrefersDark] = useState(getInitialSystemDark);
 
@@ -47,8 +47,9 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.classList.toggle("theme-night", isDarkMode);
     document.documentElement.classList.toggle("theme-day", !isDarkMode);
+    document.documentElement.setAttribute("data-theme", resolvedTheme);
     localStorage.setItem(STORAGE_KEY, themeMode);
-  }, [isDarkMode, themeMode]);
+  }, [isDarkMode, resolvedTheme, themeMode]);
 
   return (
     <ThemeContext.Provider

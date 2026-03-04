@@ -1,4 +1,4 @@
-﻿import "swiper/css";
+import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
@@ -25,10 +25,12 @@ const themeInitScript = `
     var mode = stored === "day" || stored === "night" || stored === "system" ? stored : "system";
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     var isDark = mode === "night" || (mode === "system" && prefersDark);
+    var resolvedTheme = isDark ? "night" : "day";
     document.documentElement.classList.toggle("theme-night", isDark);
     document.documentElement.classList.toggle("theme-day", !isDark);
+    document.documentElement.setAttribute("data-theme", resolvedTheme);
   } catch (error) {}
-  /* Ensure html is always visible even if script partially fails */
+  /* Dam bao html luon hien thi ke ca khi script khoi tao theme gap loi */
   document.documentElement.style.visibility = "";
 `;
 
@@ -73,9 +75,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>

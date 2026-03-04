@@ -177,12 +177,12 @@
   box-sizing: border-box;
 }
 
-/* ─── Anti-FOUC: hide until theme class is applied ─── */
+/* ─── Chong nhay giao dien: an tam thoi cho den khi class theme duoc ap dung ─── */
 html:not(.theme-day):not(.theme-night) {
   visibility: hidden;
 }
 
-/* ─── Animations ─── */
+/* ─── Hoat anh ─── */
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -236,8 +236,8 @@ body {
   color: var(--page-text);
   background-color: var(--page-bg);
   line-height: 1.6;
-  /* Prevent content jump when sticky header activates */
-  /* padding-top is set dynamically by JS on scroll */
+  /* Tranh giat layout khi sticky header bat */
+  /* padding-top duoc cap nhat dong bang JS theo vi tri cuon */
 }
 
 button,
@@ -245,6 +245,109 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* Cau noi de class mau/chu legacy dong bo voi bo bien theme hien tai */
+.font-heading,
+.font-text,
+.main-menu a,
+.mobile-menu a,
+.mobile-account,
+.site-copyright,
+.btn,
+.form-control {
+  font-family:
+    var(--font-sans),
+    "Be Vietnam Pro",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.color-white {
+  color: var(--surface-text-strong) !important;
+}
+
+.color-gray-900 {
+  color: var(--surface-text-strong) !important;
+}
+
+.color-gray-700 {
+  color: var(--surface-text-soft) !important;
+}
+
+.color-gray-600,
+.color-gray-500,
+.color-gray-400,
+.text-muted {
+  color: var(--surface-text-muted) !important;
+}
+
+.bg-gray-950,
+.bg-gray-900,
+.bg-gray-850,
+.bg-gray-800 {
+  background-color: var(--surface-panel) !important;
+}
+
+.border-gray-800,
+.border-gray-500,
+.border-gray-300 {
+  border-color: var(--frame-border-soft) !important;
+}
+
+.header.sticky-bar,
+.header.sticky-bar.stick,
+.mobile-header-wrapper-style,
+.mobile-header-wrapper-style .mobile-header-wrapper-inner .mobile-header-top {
+  background: var(--surface-overlay) !important;
+}
+
+.form-control.bg-gray-950,
+.form-control.bg-gray-900,
+.form-control.bg-gray-850,
+.form-control.bg-gray-800,
+textarea.bg-gray-950,
+textarea.bg-gray-900,
+textarea.bg-gray-850,
+textarea.bg-gray-800 {
+  background: var(--surface-input) !important;
+  border-color: var(--frame-border) !important;
+  color: var(--surface-text) !important;
+}
+
+.form-control.bg-gray-950::placeholder,
+.form-control.bg-gray-900::placeholder,
+.form-control.bg-gray-850::placeholder,
+.form-control.bg-gray-800::placeholder,
+textarea.bg-gray-950::placeholder,
+textarea.bg-gray-900::placeholder,
+textarea.bg-gray-850::placeholder,
+textarea.bg-gray-800::placeholder {
+  color: var(--surface-text-soft) !important;
+}
+
+.header.sticky-bar,
+.mobile-header-wrapper-style,
+.bg-gray-950,
+.bg-gray-900,
+.bg-gray-850,
+.bg-gray-800,
+.border-gray-800,
+.border-gray-500,
+.border-gray-300,
+.color-white,
+.color-gray-900,
+.color-gray-700,
+.color-gray-600,
+.color-gray-500,
+.color-gray-400,
+.text-muted {
+  transition:
+    background-color 0.24s ease,
+    border-color 0.24s ease,
+    color 0.24s ease;
 }
 
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
-import { query } from "@/lib/db/admin-db";
+import { queryUsersWithProfileColumns } from "@/lib/db/users-profile-schema";
 import { GID_RULE_MESSAGE, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 
 export const dynamic = "force-dynamic";
@@ -33,13 +33,17 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { rows } = await query<ProfileRow>(
+  const { rows, error } = await queryUsersWithProfileColumns<ProfileRow>(
     `select id, email, contact_email, name, display_name, gid, role, status, phone, bio, location, company, website, avatar_url
      from users
      where id = $1
      limit 1`,
     [user.id],
   );
+
+  if (error) {
+    return NextResponse.json({ error }, { status: 400 });
+  }
 
   if (!rows[0]) {
     return NextResponse.json({ error: "Khong tim thay tai khoan." }, { status: 404 });
@@ -73,7 +77,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: GID_RULE_MESSAGE }, { status: 400 });
   }
 
-  const { rows, error } = await query<ProfileRow>(
+  const { rows, error } = await queryUsersWithProfileColumns<ProfileRow>(
     `update users
      set name = $2,
          display_name = $3,

@@ -1,22 +1,41 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useOptionalClerk } from "@/components/auth/useOptionalClerk";
 
 export default function Page() {
+  const router = useRouter();
   const { signOut } = useOptionalClerk();
 
   useEffect(() => {
+    let alive = true;
+
     const run = async () => {
-      await Promise.allSettled([
-        fetch("/api/auth/sign-out", { method: "POST" }),
-        signOut(),
-      ]);
-      window.location.replace("/");
+      await fetch("/api/auth/sign-out", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      }).catch(() => null);
+
+      try {
+        await signOut({ redirectUrl: "/sign-in" });
+        if (!alive) return;
+      } catch {
+        if (!alive) return;
+      }
+
+      router.replace("/sign-in");
+      if (typeof window !== "undefined") {
+        window.location.replace("/sign-in");
+      }
     };
 
     void run();
-  }, [signOut]);
+    return () => {
+      alive = false;
+    };
+  }, [router, signOut]);
 
   return (
     <div

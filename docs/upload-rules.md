@@ -11,7 +11,7 @@ Tat ca upload cua du an di qua cung mot bo quy tac trong `lib/uploads/rules.ts`.
 
 ## Rule mac dinh
 
-- `avatars`: `public/uploads/avatars`, toi da 2MB, chi nhan anh, khong ghi vao bang `media`
+- `avatars`: `public/uploads/users/avatars`, toi da 2MB, chi nhan anh, khong ghi vao bang `media`
 - `media`: `public/uploads/media`, toi da 10MB, nhan anh va tai lieu pho bien, co ghi vao bang `media`
 - `posts`: `public/uploads/posts`, toi da 10MB, chi nhan anh, co ghi vao bang `media`
 - `products`: `public/uploads/products`, toi da 10MB, chi nhan anh, co ghi vao bang `media`
@@ -52,7 +52,7 @@ Gia tri tra ve gom:
 
 - Khong luu file nguoi dung vao `public/assets/imgs`
 - Chi dung `public/uploads/...`
-- Avatar user nen dung scope `avatars`
+- Avatar user nen dung scope `avatars` (luu vao `public/uploads/users/avatars`)
 - Anh blog dung scope `posts`
 - Anh san pham dung scope `products`
 - Tai lieu tong hop hoac file khac dung `media` hoac `documents`

@@ -65,7 +65,7 @@ const EXT_BY_TYPE: Record<string, string> = {
 
 const PRESET_RULES: Record<string, Omit<UploadRule, "scope" | "source">> = {
   avatars: {
-    folder: "avatars",
+    folder: "users/avatars",
     maxSize: 2 * MB,
     allowedTypes: IMAGE_TYPES,
     trackInMedia: false,

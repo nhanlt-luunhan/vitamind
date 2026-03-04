@@ -18,6 +18,11 @@ Repo nay dung PostgreSQL truc tiep qua `pg` va bo schema SQL nam trong `docker/d
 - `docker/db-init/008_contact_email.sql`
 - `docker/db-init/009_clerk_auth_nullable_password.sql`
 - `docker/db-init/010_clerk_deletion_queue.sql`
+- `docker/db-init/011_access_control.sql`
+- `docker/db-init/012_password_reset_tokens.sql`
+- `docker/db-init/014_google_auth.sql`
+- `docker/db-init/015_email_verification_tokens.sql`
+- `docker/db-init/016_users_profile_resilience.sql`
 
 ## Van de can tranh
 

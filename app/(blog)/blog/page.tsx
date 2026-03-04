@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui";
@@ -22,7 +22,7 @@ export default async function Page() {
   const categoryOrder: string[] = [];
 
   for (const post of posts) {
-    const category = post.category ?? "KhÃ¡c";
+    const category = post.category ?? "Khác";
     if (!grouped[category]) {
       grouped[category] = [];
       categoryOrder.push(category);
@@ -42,16 +42,16 @@ export default async function Page() {
                   <div className="blog-meta-bar">
                     <span className="blog-meta-chip">Blog</span>
                     <span className="blog-meta-dot" />
-                    <span className="blog-meta-count">{posts.length} bÃ i viáº¿t</span>
+                    <span className="blog-meta-count">{posts.length} bài viết</span>
                   </div>
                   <h2 className="color-linear d-inline-block mt-20 mb-10">Blog</h2>
                 </div>
-                <p className="text-lg color-gray-500">BÃ i viáº¿t má»›i nháº¥t theo tá»«ng danh má»¥c</p>
+                <p className="text-lg color-gray-500">Bài viết mới nhất theo từng danh mục</p>
               </div>
 
               {categoryOrder.length === 0 ? (
                 <div className="mt-70">
-                  <p className="color-gray-500">ChÆ°a cÃ³ bÃ i viáº¿t nÃ o.</p>
+                  <p className="color-gray-500">Chưa có bài viết nào.</p>
                 </div>
               ) : (
                 categoryOrder.map((category) => {
@@ -66,7 +66,7 @@ export default async function Page() {
                         <div className="blog-meta-bar">
                           <span className="blog-meta-chip">{category}</span>
                           <span className="blog-meta-dot" />
-                          <span className="blog-meta-count">{categoryPosts.length} bÃ i viáº¿t</span>
+                          <span className="blog-meta-count">{categoryPosts.length} bài viết</span>
                         </div>
                         <h2 className="color-linear d-inline-block mt-20 mb-10">{category}</h2>
                       </div>
@@ -119,7 +119,7 @@ export default async function Page() {
                                       className="readmore color-gray-500 text-sm"
                                       href={`/category/${slugify(category)}`}
                                     >
-                                      <span>Xem danh má»¥c</span>
+                                      <span>Xem danh mục</span>
                                     </Link>
                                   </div>
                                 </div>
@@ -235,4 +235,3 @@ export default async function Page() {
     </Layout>
   );
 }
-

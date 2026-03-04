@@ -1,40 +1,15 @@
-﻿import { LayoutShell } from "@/components/layout/LayoutShell";
+import { LayoutShell } from "@/components/layout/LayoutShell";
 import { AccountProfile, AccountUser } from "@/components/account/AccountProfile";
-import { query } from "@/lib/db/admin-db";
 import { requireUser } from "@/lib/auth/admin-auth";
+import { queryUsersWithProfileColumns } from "@/lib/db/users-profile-schema";
 
 export const dynamic = "force-dynamic";
 
 type AccountRow = AccountUser;
 
-function isMissingUsersColumnError(error: string | undefined) {
-  return Boolean(error && /column .* does not exist/i.test(error));
-}
-
-function toLegacyAccountUser(
-  row: Record<string, unknown>,
-  sessionUser: Awaited<ReturnType<typeof requireUser>>,
-): AccountUser {
-  const email = typeof row.email === "string" ? row.email : sessionUser.email;
-  const name = typeof row.name === "string" ? row.name : sessionUser.name;
-
-  return {
-    id: String(row.id ?? sessionUser.id),
-    email,
-    contact_email: email,
-    name,
-    phone: null,
-    bio: null,
-    location: null,
-    company: null,
-    website: null,
-    avatar_url: null,
-  };
-}
-
 export default async function Page() {
   const sessionUser = await requireUser();
-  const current = await query<AccountRow>(
+  const current = await queryUsersWithProfileColumns<AccountRow>(
     `select id, email, contact_email, name, phone, bio, location, company, website, avatar_url
      from users
      where id = $1
@@ -42,23 +17,8 @@ export default async function Page() {
     [sessionUser.id],
   );
 
-  let error = current.error;
-  let user = current.rows[0] ?? null;
-
-  if (!user && isMissingUsersColumnError(current.error)) {
-    const legacy = await query<Record<string, unknown>>(
-      `select id, email, name
-       from users
-       where id = $1
-       limit 1`,
-      [sessionUser.id],
-    );
-
-    if (!legacy.error && legacy.rows[0]) {
-      user = toLegacyAccountUser(legacy.rows[0], sessionUser);
-      error = undefined;
-    }
-  }
+  const error = current.error;
+  const user = current.rows[0] ?? null;
 
   return (
     <>
