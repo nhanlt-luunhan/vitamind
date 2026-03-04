@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 type UserLookupRow = {
   email: string;
   password_hash: string | null;
+  google_subject: string | null;
 };
 
 const normalizeIdentifier = (value: unknown) => String(value ?? "").trim();
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   if (identifier.includes("@")) {
     const email = identifier.toLowerCase();
     const { rows } = await query<UserLookupRow>(
-      `select email, password_hash
+      `select email, password_hash, google_subject
        from users
        where lower(email) = lower($1)
          and coalesce(status, 'active') = 'active'
@@ -34,6 +35,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ mode: "db", identifier: email });
     }
 
+    // User tồn tại nhưng chỉ có Google — gợi ý dùng Google OAuth
+    if (rows[0]?.google_subject) {
+      return NextResponse.json({ mode: "google", identifier: email });
+    }
+
     return NextResponse.json({ mode: "unknown", identifier: email });
   }
 
@@ -43,7 +49,7 @@ export async function POST(request: Request) {
   }
 
   const { rows, error } = await query<UserLookupRow>(
-    `select email, password_hash
+    `select email, password_hash, google_subject
      from users
      where lower(gid) = lower($1)
        and coalesce(status, 'active') = 'active'

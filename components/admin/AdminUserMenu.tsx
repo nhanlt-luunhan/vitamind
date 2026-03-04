@@ -40,19 +40,19 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
     () => [
       {
         href: "/account",
-        label: "My Schedules",
+        label: "Tài khoản",
         note: "Hồ sơ, thông tin liên hệ và trạng thái tài khoản.",
         icon: "ri-calendar-2-line",
       },
       {
         href: isAdmin ? "/admin" : "/account",
-        label: "Pricing",
+        label: isAdmin ? "Quản trị" : "Khu vực cá nhân",
         note: isAdmin ? "Quay về bảng điều khiển quản trị." : "Vùng thao tác chính của tài khoản.",
         icon: "ri-wallet-3-line",
       },
       {
         href: "/admin/database",
-        label: "Help",
+        label: "Công cụ",
         note: "Mở nhanh vùng công cụ và dữ liệu hệ thống.",
         icon: "ri-lifebuoy-line",
       },
@@ -69,7 +69,7 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
         className={styles.trigger}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-label="Mở menu tài khoản admin"
+        aria-label="Mở menu tài khoản quản trị"
       >
         {avatarUrl ? (
           <img className={styles.avatar} src={avatarUrl} alt={displayName} />
@@ -84,14 +84,14 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
         <div className={styles.dropdown}>
           <div className={styles.header}>
             <strong className={styles.headerTitle} title={displayName}>
-              Welcome {displayName}!
+              Xin chào, {displayName}!
             </strong>
             <div className={styles.headerMeta}>
               <span className={styles.metaItem} title={user.email}>
                 <span className={styles.metaValue}>{user.email}</span>
               </span>
               <span className={styles.metaItem}>
-                {hasGidValue(user.gid) ? user.gid : isAdmin ? "Admin access" : "User access"}
+                {hasGidValue(user.gid) ? user.gid : isAdmin ? "Quyền quản trị" : "Quyền người dùng"}
               </span>
             </div>
           </div>
@@ -118,7 +118,7 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
               }}
             >
               <i className="ri-lock-password-line" aria-hidden="true" />
-              <span>Lock screen</span>
+              <span>Khóa màn hình</span>
             </button>
           </div>
 
@@ -128,7 +128,7 @@ export function AdminUserMenu({ onLock }: AdminUserMenuProps) {
             onClick={() => window.location.assign("/logout")}
           >
             <i className="ri-logout-box-r-line" aria-hidden="true" />
-            <span>Logout</span>
+            <span>Đăng xuất</span>
           </button>
         </div>
       ) : null}

@@ -103,3 +103,34 @@ export async function sendPasswordResetCodeEmail(to: string, code: string) {
 
   await sendMail({ to, subject, text, html });
 }
+
+export async function sendEmailVerificationCode(to: string, code: string) {
+  const subject = "Mã xác thực email Vitamind";
+  const text = [
+    "Xin chào,",
+    "",
+    `Mã xác thực email của bạn là: ${code}`,
+    "",
+    "Mã có hiệu lực trong 15 phút.",
+    "Nếu bạn không yêu cầu tạo tài khoản Vitamind, hãy bỏ qua email này.",
+    "",
+    "Vitamind",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #122033;">
+      <p>Xin chào,</p>
+      <p>Bạn vừa yêu cầu tạo tài khoản Vitamind. Vui lòng nhập mã xác thực bên dưới:</p>
+      <p style="margin: 24px 0;">
+        <span style="display: inline-block; padding: 12px 18px; border-radius: 10px; background: #eef6ff; color: #0f4c81; font-size: 24px; font-weight: 700; letter-spacing: 4px;">
+          ${code}
+        </span>
+      </p>
+      <p>Mã có hiệu lực trong <strong>15 phút</strong>.</p>
+      <p>Nếu bạn không yêu cầu tạo tài khoản, hãy bỏ qua email này.</p>
+      <p>Vitamind</p>
+    </div>
+  `;
+
+  await sendMail({ to, subject, text, html });
+}

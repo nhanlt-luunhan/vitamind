@@ -49,7 +49,7 @@ async function fetchUsersPreview() {
   if (!response.ok) {
     throw new Error(
       (data as { error?: string }).error ??
-        "Khong tai duoc danh sach user. Kiem tra lai session admin.",
+        "Không tải được danh sách người dùng. Kiểm tra lại phiên quản trị.",
     );
   }
 
@@ -102,7 +102,7 @@ export function AdminUsersLivePanel({ initialUsers }: { initialUsers: UserPrevie
 
     const handleProblem = (event: MessageEvent<string>) => {
       const payload = JSON.parse(event.data) as StreamPayload;
-      setError(payload.error ?? "Luong realtime dang gap loi.");
+      setError(payload.error ?? "Luồng realtime đang gặp lỗi.");
     };
 
     const handleError = () => {

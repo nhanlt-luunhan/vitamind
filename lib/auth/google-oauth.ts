@@ -301,9 +301,10 @@ export async function upsertGoogleUser(profile: GoogleUserInfo) {
 }
 
 export async function createGoogleSessionResponse(user: DbUser, destinationOverride?: string | null) {
+  // Google OAuth = user đã xác thực chủ động → nhớ 30 ngày
   const token = await createSessionToken(
     { sub: user.id, role: user.role, status: user.status },
-    false,
+    true,
   );
 
   return {
@@ -311,7 +312,7 @@ export async function createGoogleSessionResponse(user: DbUser, destinationOverr
     cookie: {
       name: SESSION_COOKIE_NAME,
       value: token,
-      options: getSessionCookieOptions(false),
+      options: getSessionCookieOptions(true),
     },
   };
 }

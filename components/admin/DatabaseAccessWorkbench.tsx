@@ -43,7 +43,7 @@ async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> 
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.error ?? "Khong the tai du lieu.");
+    throw new Error(data?.error ?? "Không thể tải dữ liệu.");
   }
 
   return data as T;
@@ -114,7 +114,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
 
       applyPayload(payload);
       setPermissionForm(emptyPermissionForm);
-      setSuccess(permissionForm.id ? "Da cap nhat permission." : "Da tao permission.");
+      setSuccess(permissionForm.id ? "Đã cập nhật quyền." : "Đã tạo quyền.");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -144,7 +144,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
 
       applyPayload(payload);
       setGroupForm(emptyGroupForm);
-      setSuccess(groupForm.id ? "Da cap nhat group." : "Da tao group.");
+      setSuccess(groupForm.id ? "Đã cập nhật nhóm." : "Đã tạo nhóm.");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -164,10 +164,10 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
   return (
     <div className={styles.root}>
       <section className={styles.intro}>
-        <strong>Quyen duoc tao truoc, sau do moi gan vao group hoac user.</strong>
+        <strong>Quyền được tạo trước, sau đó mới gán vào nhóm hoặc người dùng.</strong>
         <p>
-          Dashboard nay tach rieng phan khai bao permission va group. User dashboard se doc cac muc
-          nay de gan truc tiep cho user hoac dua user vao group.
+          Màn hình này tách riêng phần khai báo quyền và nhóm. Khu vực người dùng sẽ đọc các mục
+          này để gán trực tiếp cho người dùng hoặc đưa người dùng vào nhóm.
         </p>
       </section>
 
@@ -178,10 +178,10 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <div>
-              <h3>Permission registry</h3>
-              <p>Tao permission de sau do gan vao group hoac user.</p>
+              <h3>Danh sách quyền</h3>
+              <p>Tạo quyền để sau đó gán vào nhóm hoặc người dùng.</p>
             </div>
-            <span className={styles.count}>{permissions.length} quyen</span>
+            <span className={styles.count}>{permissions.length} quyền</span>
           </div>
 
           <div className={styles.list}>
@@ -201,7 +201,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
               >
                 <strong>{permission.name}</strong>
                 <span>{permission.code}</span>
-                <small>{permission.description ?? "Khong co mo ta"}</small>
+                <small>{permission.description ?? "Không có mô tả"}</small>
               </button>
             ))}
           </div>
@@ -217,16 +217,16 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="permission-name">Ten</label>
+              <label htmlFor="permission-name">Tên</label>
               <input
                 id="permission-name"
                 value={permissionForm.name}
                 onChange={(event) => setPermissionForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Quan ly user"
+                placeholder="Quản lý người dùng"
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="permission-description">Mo ta</label>
+              <label htmlFor="permission-description">Mô tả</label>
               <textarea
                 id="permission-description"
                 value={permissionForm.description}
@@ -237,10 +237,10 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
             </div>
             <div className={styles.actions}>
               <button className={styles.secondaryButton} type="button" onClick={() => setPermissionForm(emptyPermissionForm)}>
-                Dat lai
+                Đặt lại
               </button>
               <button className={styles.primaryButton} type="button" onClick={handlePermissionSubmit} disabled={submitting}>
-                {permissionForm.id ? "Cap nhat permission" : "Tao permission"}
+                {permissionForm.id ? "Cập nhật quyền" : "Tạo quyền"}
               </button>
             </div>
           </div>
@@ -249,10 +249,10 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <div>
-              <h3>Groups</h3>
-              <p>Tao nhom, chon permissions cho nhom, roi gan nhom cho user.</p>
+              <h3>Nhóm quyền</h3>
+              <p>Tạo nhóm, chọn quyền cho nhóm, rồi gán nhóm cho người dùng.</p>
             </div>
-            <span className={styles.count}>{groups.length} nhom</span>
+            <span className={styles.count}>{groups.length} nhóm</span>
           </div>
 
           <div className={styles.list}>
@@ -273,7 +273,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
               >
                 <strong>{group.name}</strong>
                 <span>{group.code}</span>
-                <small>{group.permissions.length} permission dang gan</small>
+                <small>{group.permissions.length} quyền đang gán</small>
               </button>
             ))}
           </div>
@@ -289,16 +289,16 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="group-name">Ten nhom</label>
+              <label htmlFor="group-name">Tên nhóm</label>
               <input
                 id="group-name"
                 value={groupForm.name}
                 onChange={(event) => setGroupForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Administrators"
+                placeholder="Quản trị viên"
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="group-description">Mo ta</label>
+              <label htmlFor="group-description">Mô tả</label>
               <textarea
                 id="group-description"
                 value={groupForm.description}
@@ -306,7 +306,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
               />
             </div>
             <div className={styles.field}>
-              <label>Permissions trong group</label>
+              <label>Quyền trong nhóm</label>
               <div className={styles.selectionGrid}>
                 {sortedPermissions.map((permission) => {
                   const active = groupForm.permission_ids.includes(permission.id);
@@ -319,7 +319,7 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
                     >
                       <strong>{permission.name}</strong>
                       <span>{permission.code}</span>
-                      <small>{permission.description ?? "Khong co mo ta"}</small>
+                      <small>{permission.description ?? "Không có mô tả"}</small>
                     </button>
                   );
                 })}
@@ -327,10 +327,10 @@ export function DatabaseAccessWorkbench({ initialPermissions, initialGroups, onU
             </div>
             <div className={styles.actions}>
               <button className={styles.secondaryButton} type="button" onClick={() => setGroupForm(emptyGroupForm)}>
-                Dat lai
+                Đặt lại
               </button>
               <button className={styles.primaryButton} type="button" onClick={handleGroupSubmit} disabled={submitting}>
-                {groupForm.id ? "Cap nhat group" : "Tao group"}
+                {groupForm.id ? "Cập nhật nhóm" : "Tạo nhóm"}
               </button>
             </div>
           </div>

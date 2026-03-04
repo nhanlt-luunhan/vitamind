@@ -29,11 +29,11 @@ async function resolveSignInIdentifier(identifier: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Khong the kiem tra email luc nay.");
+    throw new Error("Không thể kiểm tra email lúc này.");
   }
 
   const data = (await response.json()) as {
-    mode?: "db" | "unknown";
+    mode?: "db" | "google" | "unknown";
     identifier?: string;
   };
 
@@ -110,6 +110,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [signInSubmitting, setSignInSubmitting] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
+  const [signInSuggestGoogle, setSignInSuggestGoogle] = useState(false);
   const [fullName, setFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
@@ -118,9 +119,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [signInStep, setSignInStep] = useState<"identifier" | "password">("identifier");
   const [resolvedIdentifier, setResolvedIdentifier] = useState("");
+  // sign-up state
+  const [signUpStep, setSignUpStep] = useState<"form" | "verify">("form");
+  const [verifiedToken, setVerifiedToken] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const isGoogleEnabled = Boolean(
     process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true" ||
-      process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "1",
+    process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "1",
   );
 
   useEffect(() => {
@@ -141,9 +149,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
     setMode(nextMode);
     setSignInError(null);
     setSignUpError(null);
+    setSignInSuggestGoogle(false);
     setSignInStep("identifier");
     setResolvedIdentifier("");
     setSignInPassword("");
+    // reset sign-up
+    setSignUpStep("form");
+    setVerifiedToken("");
+    setOtpCode("");
+    setOtpError(null);
+    setResendCooldown(0);
 
     const nextPath = nextMode === "sign-in" ? "/sign-in" : "/sign-up";
     if (pathname !== nextPath) {
@@ -155,19 +170,27 @@ export function AuthSplitDeck({ initialMode }: Props) {
     event.preventDefault();
     setSignInSubmitting(true);
     setSignInError(null);
+    setSignInSuggestGoogle(false);
 
     try {
       const resolved = await resolveSignInIdentifier(signInEmail);
       setResolvedIdentifier(resolved.identifier);
 
+      if (resolved.mode === "google") {
+        // Tài khoản này chỉ dùng Google — redirect ngay
+        window.location.assign("/api/auth/google/start?mode=sign-in");
+        return;
+      }
+
       if (resolved.mode !== "db") {
-        setSignInError("Khong tim thay tai khoan phu hop. Ban co the tao tai khoan moi.");
+        setSignInError("Không tìm thấy tài khoản. Bạn có thể tạo tài khoản mới.");
+        if (isGoogleEnabled) setSignInSuggestGoogle(true);
         return;
       }
 
       setSignInStep("password");
     } catch (error) {
-      setSignInError(getErrorMessage(error, "Khong the kiem tra email luc nay."));
+      setSignInError(getErrorMessage(error, "Không thể kiểm tra email lúc này."));
     } finally {
       setSignInSubmitting(false);
     }
@@ -194,13 +217,13 @@ export function AuthSplitDeck({ initialMode }: Props) {
         | null;
 
       if (!response.ok) {
-        setSignInError(data?.error ?? "Khong the dang nhap luc nay.");
+        setSignInError(data?.error ?? "Không thể đăng nhập lúc này.");
         return;
       }
 
       window.location.assign(data?.destination ?? "/");
     } catch (error) {
-      setSignInError(getErrorMessage(error, "Khong the dang nhap luc nay."));
+      setSignInError(getErrorMessage(error, "Không thể đăng nhập lúc này."));
     } finally {
       setSignInSubmitting(false);
     }
@@ -208,6 +231,116 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSignUpSubmitting(true);
+    setSignUpError(null);
+
+    // Bước 1: gửi mã OTP xác thực email
+    try {
+      const response = await fetch("/api/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signUpEmail }),
+      });
+
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; devCode?: string }
+        | null;
+
+      if (!response.ok) {
+        setSignUpError(data?.error ?? "Không thể gửi mã xác thực lúc này.");
+        return;
+      }
+
+      // Dev mode: tự điền OTP để tiện test
+      if (data?.devCode) {
+        setOtpCode(data.devCode);
+      }
+
+      // Chuyển sang bước nhập OTP
+      setSignUpStep("verify");
+      setOtpError(null);
+      startResendCooldown();
+    } catch (error) {
+      setSignUpError(getErrorMessage(error, "Không thể gửi mã xác thực lúc này."));
+    } finally {
+      setSignUpSubmitting(false);
+    }
+  };
+
+  function startResendCooldown() {
+    setResendCooldown(60);
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setOtpError(null);
+    setOtpSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signUpEmail }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; devCode?: string }
+        | null;
+      if (!response.ok) {
+        setOtpError(data?.error ?? "Không thể gửi lại mã.");
+        return;
+      }
+      if (data?.devCode) setOtpCode(data.devCode);
+      startResendCooldown();
+    } catch (error) {
+      setOtpError(getErrorMessage(error, "Không thể gửi lại mã."));
+    } finally {
+      setOtpSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setOtpSubmitting(true);
+    setOtpError(null);
+
+    try {
+      const response = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signUpEmail, code: otpCode }),
+      });
+
+      const data = (await response.json().catch(() => null)) as
+        | { error?: string; verified_token?: string }
+        | null;
+
+      if (!response.ok) {
+        setOtpError(data?.error ?? "Mã xác thực không đúng.");
+        return;
+      }
+
+      // Lưu verified_token — trực tiếp tạo tài khoản
+      const token = data?.verified_token ?? "";
+      setVerifiedToken(token);
+
+      // Tự động submit tạo tài khoản sau khi OTP hợp lệ
+      await doCreateAccount(token);
+    } catch (error) {
+      setOtpError(getErrorMessage(error, "Không thể xác thực lúc này."));
+    } finally {
+      setOtpSubmitting(false);
+    }
+  };
+
+  const doCreateAccount = async (token: string) => {
     setSignUpSubmitting(true);
     setSignUpError(null);
 
@@ -220,6 +353,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
           email: signUpEmail,
           password: signUpPassword,
           remember: true,
+          verified_token: token,
         }),
       });
 
@@ -228,23 +362,26 @@ export function AuthSplitDeck({ initialMode }: Props) {
         | null;
 
       if (!response.ok) {
-        setSignUpError(data?.error ?? "Khong the tao tai khoan luc nay.");
+        setSignUpError(data?.error ?? "Không thể tạo tài khoản lúc này.");
+        // Nếu lỗi tạo TK, quay lại bước form
+        setSignUpStep("form");
         return;
       }
 
       window.location.assign(data?.destination ?? "/");
     } catch (error) {
-      setSignUpError(getErrorMessage(error, "Khong the tao tai khoan luc nay."));
+      setSignUpError(getErrorMessage(error, "Không thể tạo tài khoản lúc này."));
+      setSignUpStep("form");
     } finally {
       setSignUpSubmitting(false);
     }
   };
 
   const isSignIn = mode === "sign-in";
-  const title = isSignIn ? "Dang nhap" : "Tao tai khoan";
+  const title = isSignIn ? "Đăng nhập" : "Tạo tài khoản";
   const subtitle = isSignIn
-    ? "Dang nhap bang tai khoan noi bo."
-    : "Tao tai khoan email va mat khau de tiep tuc.";
+    ? "Đăng nhập bằng tài khoản nội bộ."
+    : "Tạo tài khoản bằng email và mật khẩu để tiếp tục.";
 
   return (
     <div className={styles.page}>
@@ -279,14 +416,14 @@ export function AuthSplitDeck({ initialMode }: Props) {
             {isSignedIn ? (
               <div className={styles.form} style={{ textAlign: "center" }}>
                 <div className={styles.feedbackSuccess} style={{ marginBottom: "16px" }}>
-                  Dang chuyen huong den khu vuc cua ban...
+                  Đang chuyển hướng đến khu vực của bạn...
                 </div>
                 <Link
                   href="/"
                   className={styles.primaryButton}
                   style={{ textDecoration: "none" }}
                 >
-                  Di ngay
+                  Đi ngay
                 </Link>
                 <button
                   type="button"
@@ -294,7 +431,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   onClick={() => window.location.assign("/logout")}
                   style={{ marginTop: "12px" }}
                 >
-                  Dang xuat tai khoan hien tai
+                  Đăng xuất tài khoản hiện tại
                 </button>
               </div>
             ) : isSignIn ? (
@@ -308,7 +445,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         autoComplete="username"
                         value={signInEmail}
                         onChange={(event) => setSignInEmail(event.target.value)}
-                        placeholder="Nhap dia chi email cua ban"
+                        placeholder="Nhập địa chỉ email của bạn"
                         required
                       />
                     </label>
@@ -316,7 +453,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                     {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
                     <button type="submit" className={styles.primaryButton} disabled={signInSubmitting}>
-                      {signInSubmitting ? "Dang kiem tra..." : "Tiep tuc"}
+                      {signInSubmitting ? "Đang kiểm tra..." : "Tiếp tục"}
                     </button>
 
                     <button
@@ -324,19 +461,21 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       className={styles.textLinkStandalone}
                       onClick={() => router.push("/forgot-password")}
                     >
-                      Quen mat khau?
+                      Quên mật khẩu?
                     </button>
 
-                    {isGoogleEnabled ? (
+                    {isGoogleEnabled || signInSuggestGoogle ? (
                       <>
-                        <p className={styles.divider}>Hoac tiep tuc voi</p>
+                        <p className={styles.divider}>
+                          {signInSuggestGoogle ? "Thử đăng nhập với" : "Hoặc tiếp tục với"}
+                        </p>
 
                         <div className={styles.socialRow}>
                           <button
                             type="button"
                             className={styles.socialButton}
                             onClick={() => window.location.assign("/api/auth/google/start?mode=sign-in")}
-                            aria-label="Dang nhap voi Google"
+                            aria-label="Đăng nhập với Google"
                           >
                             <Image
                               src="/assets/imgs/template/icons/google-icon.png"
@@ -345,7 +484,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                               height={18}
                               className={styles.socialButtonIcon}
                             />
-                            <span className={styles.socialButtonText}>Dang nhap voi Google</span>
+                            <span className={styles.socialButtonText}>Đăng nhập với Google</span>
                           </button>
                         </div>
                       </>
@@ -356,17 +495,17 @@ export function AuthSplitDeck({ initialMode }: Props) {
                 {signInStep === "password" && (
                   <form className={styles.form} onSubmit={handleDbPasswordSignIn}>
                     <p className={styles.subtitle} style={{ marginBottom: 0 }}>
-                      Dang nhap cho: <strong>{resolvedIdentifier}</strong>
+                      Đăng nhập cho: <strong>{resolvedIdentifier}</strong>
                     </p>
 
                     <div className={styles.passwordHead}>
-                      <span>Mat khau</span>
+                      <span>Mật khẩu</span>
                       <button
                         type="button"
                         className={styles.textLink}
                         onClick={() => router.push("/forgot-password")}
                       >
-                        Quen mat khau?
+                        Quên mật khẩu?
                       </button>
                     </div>
 
@@ -376,7 +515,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         autoComplete="current-password"
                         value={signInPassword}
                         onChange={(event) => setSignInPassword(event.target.value)}
-                        placeholder="Nhap mat khau"
+                        placeholder="Nhập mật khẩu"
                         required
                         autoFocus
                       />
@@ -384,7 +523,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         type="button"
                         className={styles.passwordToggle}
                         onClick={() => setShowSignInPassword((value) => !value)}
-                        aria-label={showSignInPassword ? "An mat khau" : "Hien mat khau"}
+                        aria-label={showSignInPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                         aria-pressed={showSignInPassword}
                       >
                         {showSignInPassword ? <EyeClosedMark /> : <EyeOpenMark />}
@@ -397,13 +536,13 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         checked={rememberPassword}
                         onChange={(event) => setRememberPassword(event.target.checked)}
                       />
-                      <span>Luu dang nhap</span>
+                      <span>Lưu đăng nhập</span>
                     </label>
 
                     {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
                     <button type="submit" className={styles.primaryButton} disabled={signInSubmitting}>
-                      {signInSubmitting ? "Dang dang nhap..." : "Dang nhap"}
+                      {signInSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
                     </button>
 
                     <button
@@ -415,21 +554,83 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         setSignInError(null);
                       }}
                     >
-                      ← Dung email khac
+                      ← Dùng email khác
                     </button>
                   </form>
                 )}
               </>
+            ) : signUpStep === "verify" ? (
+              /* --- Bước 2: Nhập OTP --- */
+              <form className={styles.form} onSubmit={handleVerifyOtp}>
+                <div className={styles.otpHeader}>
+                  <p className={styles.subtitle} style={{ marginBottom: 4 }}>
+                    Đã gửi mã xác thực tới
+                  </p>
+                  <strong style={{ color: "var(--page-text)" }}>{signUpEmail}</strong>
+                </div>
+
+                <label className={styles.field}>
+                  <span>Mã xác thực</span>
+                  <input
+                    id="otp-input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(event) => {
+                      const val = event.target.value.replace(/\D/g, "");
+                      setOtpCode(val);
+                    }}
+                    placeholder="6 chữ số"
+                    required
+                    autoFocus
+                  />
+                </label>
+
+                {otpError ? <div className={styles.feedbackError}>{otpError}</div> : null}
+
+                <button
+                  type="submit"
+                  className={styles.primaryButton}
+                  disabled={otpSubmitting || otpCode.length < 6}
+                >
+                  {otpSubmitting ? "Đang xác thực..." : "Xác thực và tạo tài khoản"}
+                </button>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className={styles.textLinkStandalone}
+                    onClick={() => {
+                      setSignUpStep("form");
+                      setOtpCode("");
+                      setOtpError(null);
+                    }}
+                  >
+                    ← Thay đổi thông tin
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.textLinkStandalone}
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0 || otpSubmitting}
+                  >
+                    {resendCooldown > 0 ? `Gửi lại (${resendCooldown}s)` : "Gửi lại mã"}
+                  </button>
+                </div>
+              </form>
             ) : (
               <form className={styles.form} onSubmit={handleCreateAccount}>
                 <label className={styles.field}>
-                  <span>Ho va ten</span>
+                  <span>Họ và tên</span>
                   <input
                     type="text"
                     autoComplete="name"
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
-                    placeholder="Nhap ho va ten"
+                    placeholder="Nhập họ và tên"
                     required
                   />
                 </label>
@@ -441,27 +642,27 @@ export function AuthSplitDeck({ initialMode }: Props) {
                     autoComplete="email"
                     value={signUpEmail}
                     onChange={(event) => setSignUpEmail(event.target.value)}
-                    placeholder="Nhap email"
+                    placeholder="Nhập email"
                     required
                   />
                 </label>
 
                 <div className={styles.field}>
-                  <span>Mat khau</span>
+                  <span>Mật khẩu</span>
                   <div className={styles.passwordField}>
                     <input
                       type={showSignUpPassword ? "text" : "password"}
                       autoComplete="new-password"
                       value={signUpPassword}
                       onChange={(event) => setSignUpPassword(event.target.value)}
-                      placeholder="Tao mat khau"
+                      placeholder="Tạo mật khẩu"
                       required
                     />
                     <button
                       type="button"
                       className={styles.passwordToggle}
                       onClick={() => setShowSignUpPassword((value) => !value)}
-                      aria-label={showSignUpPassword ? "An mat khau" : "Hien mat khau"}
+                      aria-label={showSignUpPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                       aria-pressed={showSignUpPassword}
                     >
                       {showSignUpPassword ? <EyeClosedMark /> : <EyeOpenMark />}
@@ -476,19 +677,19 @@ export function AuthSplitDeck({ initialMode }: Props) {
                   className={styles.primaryButton}
                   disabled={signUpSubmitting}
                 >
-                  {signUpSubmitting ? "Dang tao tai khoan..." : "Tao tai khoan"}
+                  {signUpSubmitting ? "Đang gửi mã..." : "Tiếp tục"}
                 </button>
 
                 {isGoogleEnabled ? (
                   <>
-                    <p className={styles.divider}>Hoac dang ky voi</p>
+                    <p className={styles.divider}>Hoặc đăng ký với</p>
 
                     <div className={styles.socialRow}>
                       <button
                         type="button"
                         className={styles.socialButton}
                         onClick={() => window.location.assign("/api/auth/google/start?mode=sign-up")}
-                        aria-label="Dang ky voi Google"
+                        aria-label="Đăng ký với Google"
                       >
                         <Image
                           src="/assets/imgs/template/icons/google-icon.png"
@@ -497,7 +698,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                           height={18}
                           className={styles.socialButtonIcon}
                         />
-                        <span className={styles.socialButtonText}>Dang ky voi Google</span>
+                        <span className={styles.socialButtonText}>Đăng ký với Google</span>
                       </button>
                     </div>
                   </>
@@ -508,16 +709,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
         </section>
 
         <p className={styles.footerLine}>
-          {isSignIn ? "Ban chua co tai khoan?" : "Da co tai khoan?"}
+          {isSignIn ? "Bạn chưa có tài khoản?" : "Đã có tài khoản?"}
           <button
             type="button"
             className={styles.footerLink}
             onClick={() => switchMode(isSignIn ? "sign-up" : "sign-in")}
           >
-            {isSignIn ? "Tao moi" : "Dang nhap"}
+            {isSignIn ? "Tạo mới" : "Đăng nhập"}
           </button>
         </p>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

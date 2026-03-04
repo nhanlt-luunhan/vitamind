@@ -103,11 +103,12 @@ export async function verifySessionToken(token: string | null | undefined) {
 }
 
 export function getSessionCookieOptions(remember = false) {
+  const maxAge = remember ? REMEMBERED_SESSION_TTL_SECONDS : DEFAULT_SESSION_TTL_SECONDS;
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    ...(remember ? { maxAge: REMEMBERED_SESSION_TTL_SECONDS } : {}),
+    maxAge,
   };
 }
