@@ -25,6 +25,7 @@ loadEnvFile(".env");
 loadEnvFile(".env.local");
 
 const baseUrl =
+  process.env.INTERNAL_CONTAINER_API_BASE_URL ??
   process.env.INTERNAL_API_BASE_URL ??
   process.env.NEXT_PUBLIC_APP_URL ??
   process.env.SITE_URL ??

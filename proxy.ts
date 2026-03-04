@@ -9,7 +9,11 @@ const isAccountRoute = createRouteMatcher(["/account(.*)", "/api/account(.*)"]);
 const isClerkEnabled = hasConfiguredClerkPublishableKey();
 
 function getInternalApiBaseUrl() {
-  return process.env.INTERNAL_API_BASE_URL ?? `http://127.0.0.1:${process.env.PORT ?? "3333"}`;
+  return (
+    process.env.INTERNAL_CONTAINER_API_BASE_URL ??
+    process.env.INTERNAL_API_BASE_URL ??
+    `http://127.0.0.1:${process.env.PORT ?? "3000"}`
+  );
 }
 
 async function handleWithoutClerk(req: NextRequest) {

@@ -18,16 +18,37 @@ Muc tieu:
 2. Production dung `DATABASE_URL` rieng.
 3. Ca hai moi truong co the dung cung `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` va `CLERK_SECRET_KEY`.
 4. Webhook Clerk phai tro vao tung moi truong can sync.
-5. Khi local can lay toan bo user hien co tu Clerk, goi:
+5. Neu local can giong production domain, map hosts:
+
+```txt
+127.0.0.1 app.vitamind.com.vn
+```
+
+va truy cap local qua:
+
+```txt
+http://app.vitamind.com.vn:3333
+```
+
+6. Khi local can lay toan bo user hien co tu Clerk, goi:
 
 ```bash
-curl -X POST http://127.0.0.1:3333/api/internal/clerk-sync \
+curl -X POST http://app.vitamind.com.vn:3333/api/internal/clerk-sync \
   -H "x-internal-secret: <INTERNAL_API_SECRET>"
 ```
 
 Endpoint:
 
 - `POST /api/internal/clerk-sync`
+
+## Clerk dashboard can cho phep
+
+- Redirect / callback URLs:
+  - `https://app.vitamind.com.vn/*`
+  - `http://app.vitamind.com.vn:3333/*`
+- Webhook endpoint:
+  - production: `https://app.vitamind.com.vn/api/webhooks/clerk`
+  - local neu test truc tiep webhook: `http://app.vitamind.com.vn:3333/api/webhooks/clerk`
 
 ## Nhung gi duoc dong bo
 

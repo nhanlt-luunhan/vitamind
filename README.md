@@ -40,6 +40,18 @@ docker compose up --build
 
 Khong can `npm run dev`.
 
+Neu muon local giong domain production:
+
+1. Them hosts entry tren may local:
+```txt
+127.0.0.1 app.vitamind.com.vn
+```
+2. Mo app bang:
+```txt
+http://app.vitamind.com.vn:3333
+```
+3. Neu muon `https://app.vitamind.com.vn` ngay tren local, ban can reverse proxy + TLS local; repo nay khong tu tao chung chi cho may local.
+
 ## Cach chay Synology
 
 ```bash
@@ -79,6 +91,8 @@ Dieu nay giu local va Synology cung mot quy tac boot.
 
 - `NEXT_PUBLIC_APP_URL` la bien URL canonical moi.
 - `SITE_URL` van duoc giu lam fallback de tuong thich code cu.
+- `INTERNAL_API_BASE_URL` la URL cong khai de script tu host goi vao app.
+- `INTERNAL_CONTAINER_API_BASE_URL` la URL noi bo chi danh cho request ben trong container app.
 - Neu can doi domain, key, secret hoac bind port, sua trong `.env` va commit cung code.
 
 ## Tai lieu lien quan

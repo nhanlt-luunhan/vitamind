@@ -81,7 +81,7 @@ Can lam:
 4. Khi can backfill toan bo user vao DB local, goi:
 
 ```bash
-curl -X POST http://127.0.0.1:3333/api/internal/clerk-sync \
+curl -X POST http://app.vitamind.com.vn:3333/api/internal/clerk-sync \
   -H "x-internal-secret: <INTERNAL_API_SECRET>"
 ```
 
