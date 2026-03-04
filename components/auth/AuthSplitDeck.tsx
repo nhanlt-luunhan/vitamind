@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useOptionalSignIn, useOptionalSignUp } from "@/components/auth/useOptionalClerk";
+import { hasClerkPublishableKeyValue } from "@/lib/auth/clerk-config";
 import { useSessionUser } from "./useSessionUser";
 import styles from "./AuthSplitDeck.module.css";
 
@@ -13,7 +15,20 @@ type Props = {
   initialMode: Mode;
 };
 
+const signInRedirectPath = "/auth/continue";
+const signUpRedirectPath = "/auth/continue";
+
 function getErrorMessage(error: unknown, fallback: string) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "errors" in error &&
+    Array.isArray((error as { errors?: Array<{ longMessage?: string }> }).errors) &&
+    (error as { errors: Array<{ longMessage?: string }> }).errors[0]?.longMessage
+  ) {
+    return (error as { errors: Array<{ longMessage?: string }> }).errors[0].longMessage ?? fallback;
+  }
+
   if (error instanceof Error && error.message) {
     return error.message;
   }
@@ -33,7 +48,7 @@ async function resolveSignInIdentifier(identifier: string) {
   }
 
   const data = (await response.json()) as {
-    mode?: "db" | "google" | "unknown";
+    mode?: "clerk" | "db" | "unknown";
     identifier?: string;
   };
 
@@ -101,47 +116,40 @@ function EyeClosedMark() {
 export function AuthSplitDeck({ initialMode }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoaded: isSessionLoaded, isSignedIn, user } = useSessionUser();
+  const { isLoaded: signInLoaded, signIn, setActive: setActiveSignIn } = useOptionalSignIn();
+  const { isLoaded: signUpLoaded, signUp, setActive: setActiveSignUp } = useOptionalSignUp();
+  const { isSignedIn, user } = useSessionUser();
+  const isClerkConfigured = hasClerkPublishableKeyValue(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
   const [mode, setMode] = useState<Mode>(initialMode);
   const [rememberPassword, setRememberPassword] = useState(false);
+
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [signInSubmitting, setSignInSubmitting] = useState(false);
+  const [signInOauthLoading, setSignInOauthLoading] = useState(false);
   const [signInError, setSignInError] = useState<string | null>(null);
-  const [signInSuggestGoogle, setSignInSuggestGoogle] = useState(false);
+
   const [fullName, setFullName] = useState("");
   const [signUpEmail, setSignUpEmail] = useState("");
   const [signUpPassword, setSignUpPassword] = useState("");
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
   const [signUpSubmitting, setSignUpSubmitting] = useState(false);
+  const [signUpOauthLoading, setSignUpOauthLoading] = useState(false);
   const [signUpError, setSignUpError] = useState<string | null>(null);
-  const [signInStep, setSignInStep] = useState<"identifier" | "password">("identifier");
-  const [resolvedIdentifier, setResolvedIdentifier] = useState("");
-  // sign-up state
-  const [signUpStep, setSignUpStep] = useState<"form" | "verify">("form");
-  const [verifiedToken, setVerifiedToken] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [otpSubmitting, setOtpSubmitting] = useState(false);
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const isGoogleEnabled = Boolean(
-    process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true" ||
-    process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "1",
+  const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
+
+  const [signInStep, setSignInStep] = useState<"identifier" | "db-password" | "clerk-oauth">(
+    "identifier",
   );
+  const [resolvedIdentifier, setResolvedIdentifier] = useState("");
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
-
-  useEffect(() => {
-    if (!isSessionLoaded || !isSignedIn || !user) {
-      return;
-    }
-
-    router.replace("/");
-  }, [isSessionLoaded, isSignedIn, router, user]);
 
   const switchMode = (nextMode: Mode) => {
     if (nextMode === mode) return;
@@ -149,16 +157,9 @@ export function AuthSplitDeck({ initialMode }: Props) {
     setMode(nextMode);
     setSignInError(null);
     setSignUpError(null);
-    setSignInSuggestGoogle(false);
-    setSignInStep("identifier");
-    setResolvedIdentifier("");
-    setSignInPassword("");
-    // reset sign-up
-    setSignUpStep("form");
-    setVerifiedToken("");
-    setOtpCode("");
-    setOtpError(null);
-    setResendCooldown(0);
+    setSignUpMessage(null);
+    setVerifying(false);
+    setVerificationCode("");
 
     const nextPath = nextMode === "sign-in" ? "/sign-in" : "/sign-up";
     if (pathname !== nextPath) {
@@ -166,30 +167,40 @@ export function AuthSplitDeck({ initialMode }: Props) {
     }
   };
 
+  const firstName =
+    fullName.trim().split(/\s+/).slice(0, -1).join(" ") || fullName.trim() || undefined;
+  const lastName = fullName.trim().split(/\s+/).slice(-1)[0] || undefined;
+
   const handleResolveIdentifier = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setSignInSubmitting(true);
     setSignInError(null);
-    setSignInSuggestGoogle(false);
 
     try {
       const resolved = await resolveSignInIdentifier(signInEmail);
+
+      if (resolved.mode === "db") {
+        setResolvedIdentifier(resolved.identifier);
+        setSignInStep("db-password");
+        return;
+      }
+
+      if (resolved.mode === "clerk") {
+        setResolvedIdentifier(resolved.identifier);
+        setSignInStep("clerk-oauth");
+        return;
+      }
+
       setResolvedIdentifier(resolved.identifier);
-
-      if (resolved.mode === "google") {
-        // Tài khoản này chỉ dùng Google — redirect ngay
-        window.location.assign("/api/auth/google/start?mode=sign-in");
-        return;
-      }
-
-      if (resolved.mode !== "db") {
-        setSignInError("Không tìm thấy tài khoản. Bạn có thể tạo tài khoản mới.");
-        if (isGoogleEnabled) setSignInSuggestGoogle(true);
-        return;
-      }
-
-      setSignInStep("password");
+      setSignInStep("db-password");
     } catch (error) {
+      const fallbackIdentifier = signInEmail.trim();
+      if (fallbackIdentifier) {
+        setResolvedIdentifier(fallbackIdentifier);
+        setSignInStep("db-password");
+        return;
+      }
       setSignInError(getErrorMessage(error, "Không thể kiểm tra email lúc này."));
     } finally {
       setSignInSubmitting(false);
@@ -198,6 +209,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
 
   const handleDbPasswordSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setSignInSubmitting(true);
     setSignInError(null);
 
@@ -229,159 +241,117 @@ export function AuthSplitDeck({ initialMode }: Props) {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (!isClerkConfigured) {
+      setSignInError("Clerk chưa được cấu hình. Không thể đăng nhập bằng Google.");
+      return;
+    }
+
+    if (!signInLoaded || !signIn) {
+      setSignInError("Google Sign-In đang khởi tạo. Vui lòng thử lại sau ít giây.");
+      return;
+    }
+
+    setSignInOauthLoading(true);
+    setSignInError(null);
+
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sign-in/sso-callback",
+        redirectUrlComplete: signInRedirectPath,
+      });
+    } catch (error) {
+      setSignInOauthLoading(false);
+      setSignInError(getErrorMessage(error, "Không thể kết nối Google Sign-In."));
+    }
+  };
+
   const handleCreateAccount = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!signUpLoaded || !signUp) return;
+
     setSignUpSubmitting(true);
     setSignUpError(null);
+    setSignUpMessage(null);
 
-    // Bước 1: gửi mã OTP xác thực email
     try {
-      const response = await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signUpEmail }),
+      const result = await signUp.create({
+        emailAddress: signUpEmail,
+        password: signUpPassword,
+        firstName,
+        lastName,
       });
 
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string; devCode?: string }
-        | null;
-
-      if (!response.ok) {
-        setSignUpError(data?.error ?? "Không thể gửi mã xác thực lúc này.");
+      if (result.status === "complete") {
+        await setActiveSignUp({ session: result.createdSessionId });
+        window.location.assign(signUpRedirectPath);
         return;
       }
 
-      // Dev mode: tự điền OTP để tiện test
-      if (data?.devCode) {
-        setOtpCode(data.devCode);
-      }
-
-      // Chuyển sang bước nhập OTP
-      setSignUpStep("verify");
-      setOtpError(null);
-      startResendCooldown();
-    } catch (error) {
-      setSignUpError(getErrorMessage(error, "Không thể gửi mã xác thực lúc này."));
-    } finally {
-      setSignUpSubmitting(false);
-    }
-  };
-
-  function startResendCooldown() {
-    setResendCooldown(60);
-    const interval = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-
-  const handleResendOtp = async () => {
-    if (resendCooldown > 0) return;
-    setOtpError(null);
-    setOtpSubmitting(true);
-    try {
-      const response = await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signUpEmail }),
-      });
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string; devCode?: string }
-        | null;
-      if (!response.ok) {
-        setOtpError(data?.error ?? "Không thể gửi lại mã.");
-        return;
-      }
-      if (data?.devCode) setOtpCode(data.devCode);
-      startResendCooldown();
-    } catch (error) {
-      setOtpError(getErrorMessage(error, "Không thể gửi lại mã."));
-    } finally {
-      setOtpSubmitting(false);
-    }
-  };
-
-  const handleVerifyOtp = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setOtpSubmitting(true);
-    setOtpError(null);
-
-    try {
-      const response = await fetch("/api/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signUpEmail, code: otpCode }),
-      });
-
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string; verified_token?: string }
-        | null;
-
-      if (!response.ok) {
-        setOtpError(data?.error ?? "Mã xác thực không đúng.");
-        return;
-      }
-
-      // Lưu verified_token — trực tiếp tạo tài khoản
-      const token = data?.verified_token ?? "";
-      setVerifiedToken(token);
-
-      // Tự động submit tạo tài khoản sau khi OTP hợp lệ
-      await doCreateAccount(token);
-    } catch (error) {
-      setOtpError(getErrorMessage(error, "Không thể xác thực lúc này."));
-    } finally {
-      setOtpSubmitting(false);
-    }
-  };
-
-  const doCreateAccount = async (token: string) => {
-    setSignUpSubmitting(true);
-    setSignUpError(null);
-
-    try {
-      const response = await fetch("/api/auth/db-sign-up", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName,
-          email: signUpEmail,
-          password: signUpPassword,
-          remember: true,
-          verified_token: token,
-        }),
-      });
-
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string; destination?: string }
-        | null;
-
-      if (!response.ok) {
-        setSignUpError(data?.error ?? "Không thể tạo tài khoản lúc này.");
-        // Nếu lỗi tạo TK, quay lại bước form
-        setSignUpStep("form");
-        return;
-      }
-
-      window.location.assign(data?.destination ?? "/");
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setVerifying(true);
+      setSignUpMessage("Mã xác minh đã được gửi tới email của bạn.");
     } catch (error) {
       setSignUpError(getErrorMessage(error, "Không thể tạo tài khoản lúc này."));
-      setSignUpStep("form");
     } finally {
       setSignUpSubmitting(false);
+    }
+  };
+
+  const handleVerifyEmail = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!signUpLoaded || !signUp) return;
+
+    setSignUpSubmitting(true);
+    setSignUpError(null);
+
+    try {
+      const result = await signUp.attemptEmailAddressVerification({ code: verificationCode });
+
+      if (result.status === "complete") {
+        await setActiveSignUp({ session: result.createdSessionId });
+        window.location.assign(signUpRedirectPath);
+        return;
+      }
+
+      setSignUpError("Xác minh chưa hoàn tất. Vui lòng kiểm tra lại mã.");
+    } catch (error) {
+      setSignUpError(getErrorMessage(error, "Không thể xác minh email."));
+    } finally {
+      setSignUpSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    if (!isClerkConfigured) {
+      setSignUpError("Clerk chưa được cấu hình. Không thể đăng ký bằng Google.");
+      return;
+    }
+
+    if (!signUpLoaded || !signUp) {
+      setSignUpError("Google Sign-Up đang khởi tạo. Vui lòng thử lại sau ít giây.");
+      return;
+    }
+
+    setSignUpOauthLoading(true);
+    setSignUpError(null);
+
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: "/sign-up/sso-callback",
+        redirectUrlComplete: signUpRedirectPath,
+      });
+    } catch (error) {
+      setSignUpOauthLoading(false);
+      setSignUpError(getErrorMessage(error, "Không thể kết nối Google Sign-Up."));
     }
   };
 
   const isSignIn = mode === "sign-in";
-  const title = isSignIn ? "Đăng nhập" : "Tạo tài khoản";
-  const subtitle = isSignIn
-    ? "Đăng nhập bằng tài khoản nội bộ."
-    : "Tạo tài khoản bằng email và mật khẩu để tiếp tục.";
+  const title = isSignIn ? "Đăng nhập" : verifying ? "Xác minh email" : "Tạo tài khoản";
+  const subtitle = isSignIn ? "" : verifying ? "Nhập mã xác minh đã được gửi về email của bạn." : "";
 
   return (
     <div className={styles.page}>
@@ -410,20 +380,16 @@ export function AuthSplitDeck({ initialMode }: Props) {
           </div>
 
           <h2 className={styles.title}>{title}</h2>
-          <p className={styles.subtitle}>{subtitle}</p>
+          {subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
 
           <div className={styles.formWrap}>
             {isSignedIn ? (
               <div className={styles.form} style={{ textAlign: "center" }}>
                 <div className={styles.feedbackSuccess} style={{ marginBottom: "16px" }}>
-                  Đang chuyển hướng đến khu vực của bạn...
+                  Bạn đã đăng nhập vào hệ thống.
                 </div>
-                <Link
-                  href="/"
-                  className={styles.primaryButton}
-                  style={{ textDecoration: "none" }}
-                >
-                  Đi ngay
+                <Link href="/" className={styles.primaryButton} style={{ textDecoration: "none" }}>
+                  Quay về trang chủ
                 </Link>
                 <button
                   type="button"
@@ -456,43 +422,36 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       {signInSubmitting ? "Đang kiểm tra..." : "Tiếp tục"}
                     </button>
 
-                    <button
-                      type="button"
-                      className={styles.textLinkStandalone}
-                      onClick={() => router.push("/forgot-password")}
-                    >
-                      Quên mật khẩu?
-                    </button>
+                    <p className={styles.divider}>Hoặc đăng nhập với</p>
 
-                    {isGoogleEnabled || signInSuggestGoogle ? (
-                      <>
-                        <p className={styles.divider}>
-                          {signInSuggestGoogle ? "Thử đăng nhập với" : "Hoặc tiếp tục với"}
-                        </p>
-
-                        <div className={styles.socialRow}>
-                          <button
-                            type="button"
-                            className={styles.socialButton}
-                            onClick={() => window.location.assign("/api/auth/google/start?mode=sign-in")}
-                            aria-label="Đăng nhập với Google"
-                          >
-                            <Image
-                              src="/assets/imgs/template/icons/google-icon.png"
-                              alt=""
-                              width={18}
-                              height={18}
-                              className={styles.socialButtonIcon}
-                            />
-                            <span className={styles.socialButtonText}>Đăng nhập với Google</span>
-                          </button>
-                        </div>
-                      </>
-                    ) : null}
+                    <div className={styles.socialRow}>
+                      <button
+                        type="button"
+                        className={styles.socialButton}
+                        onClick={handleGoogleSignIn}
+                        disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
+                        aria-label="Đăng nhập với Google"
+                      >
+                        <Image
+                          src="/assets/imgs/template/icons/google-icon.png"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={styles.socialButtonIcon}
+                        />
+                        <span className={styles.socialButtonText}>
+                          {signInOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signInLoaded
+                              ? "Đang tải Google Sign-In..."
+                              : "Đăng nhập với Google"}
+                        </span>
+                      </button>
+                    </div>
                   </form>
                 )}
 
-                {signInStep === "password" && (
+                {signInStep === "db-password" && (
                   <form className={styles.form} onSubmit={handleDbPasswordSignIn}>
                     <p className={styles.subtitle} style={{ marginBottom: 0 }}>
                       Đăng nhập cho: <strong>{resolvedIdentifier}</strong>
@@ -522,7 +481,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       <button
                         type="button"
                         className={styles.passwordToggle}
-                        onClick={() => setShowSignInPassword((value) => !value)}
+                        onClick={() => setShowSignInPassword((v) => !v)}
                         aria-label={showSignInPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                         aria-pressed={showSignInPassword}
                       >
@@ -558,137 +517,144 @@ export function AuthSplitDeck({ initialMode }: Props) {
                     </button>
                   </form>
                 )}
-              </>
-            ) : signUpStep === "verify" ? (
-              /* --- Bước 2: Nhập OTP --- */
-              <form className={styles.form} onSubmit={handleVerifyOtp}>
-                <div className={styles.otpHeader}>
-                  <p className={styles.subtitle} style={{ marginBottom: 4 }}>
-                    Đã gửi mã xác thực tới
-                  </p>
-                  <strong style={{ color: "var(--page-text)" }}>{signUpEmail}</strong>
-                </div>
 
-                <label className={styles.field}>
-                  <span>Mã xác thực</span>
-                  <input
-                    id="otp-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(event) => {
-                      const val = event.target.value.replace(/\D/g, "");
-                      setOtpCode(val);
-                    }}
-                    placeholder="6 chữ số"
-                    required
-                    autoFocus
-                  />
-                </label>
+                {signInStep === "clerk-oauth" && (
+                  <div className={styles.form}>
+                    <p className={styles.subtitle} style={{ marginBottom: 0 }}>
+                      Tiếp tục đăng nhập với tài khoản Google cho: <strong>{resolvedIdentifier}</strong>
+                    </p>
 
-                {otpError ? <div className={styles.feedbackError}>{otpError}</div> : null}
+                    {signInError ? <div className={styles.feedbackError}>{signInError}</div> : null}
 
-                <button
-                  type="submit"
-                  className={styles.primaryButton}
-                  disabled={otpSubmitting || otpCode.length < 6}
-                >
-                  {otpSubmitting ? "Đang xác thực..." : "Xác thực và tạo tài khoản"}
-                </button>
+                    <div className={styles.socialRow}>
+                      <button
+                        type="button"
+                        className={styles.socialButton}
+                        onClick={handleGoogleSignIn}
+                        disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
+                        aria-label="Đăng nhập với Google"
+                      >
+                        <Image
+                          src="/assets/imgs/template/icons/google-icon.png"
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={styles.socialButtonIcon}
+                        />
+                        <span className={styles.socialButtonText}>
+                          {signInOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signInLoaded
+                              ? "Đang tải Google Sign-In..."
+                              : "Đăng nhập với Google"}
+                        </span>
+                      </button>
+                    </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                  <button
-                    type="button"
-                    className={styles.textLinkStandalone}
-                    onClick={() => {
-                      setSignUpStep("form");
-                      setOtpCode("");
-                      setOtpError(null);
-                    }}
-                  >
-                    ← Thay đổi thông tin
-                  </button>
-
-                  <button
-                    type="button"
-                    className={styles.textLinkStandalone}
-                    onClick={handleResendOtp}
-                    disabled={resendCooldown > 0 || otpSubmitting}
-                  >
-                    {resendCooldown > 0 ? `Gửi lại (${resendCooldown}s)` : "Gửi lại mã"}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form className={styles.form} onSubmit={handleCreateAccount}>
-                <label className={styles.field}>
-                  <span>Họ và tên</span>
-                  <input
-                    type="text"
-                    autoComplete="name"
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    placeholder="Nhập họ và tên"
-                    required
-                  />
-                </label>
-
-                <label className={styles.field}>
-                  <span>Email</span>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    value={signUpEmail}
-                    onChange={(event) => setSignUpEmail(event.target.value)}
-                    placeholder="Nhập email"
-                    required
-                  />
-                </label>
-
-                <div className={styles.field}>
-                  <span>Mật khẩu</span>
-                  <div className={styles.passwordField}>
-                    <input
-                      type={showSignUpPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={signUpPassword}
-                      onChange={(event) => setSignUpPassword(event.target.value)}
-                      placeholder="Tạo mật khẩu"
-                      required
-                    />
                     <button
                       type="button"
-                      className={styles.passwordToggle}
-                      onClick={() => setShowSignUpPassword((value) => !value)}
-                      aria-label={showSignUpPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      aria-pressed={showSignUpPassword}
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setSignInStep("db-password");
+                        setSignInError(null);
+                      }}
                     >
-                      {showSignUpPassword ? <EyeClosedMark /> : <EyeOpenMark />}
+                      Dùng mật khẩu thay thế
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setSignInStep("identifier");
+                        setSignInError(null);
+                      }}
+                    >
+                      ← Dùng email khác
                     </button>
                   </div>
-                </div>
+                )}
+              </>
+            ) : (
+              <>
+                {!verifying ? (
+                  <form className={styles.form} onSubmit={handleCreateAccount}>
+                    <label className={styles.field}>
+                      <span>Họ và tên</span>
+                      <input
+                        type="text"
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(event) => setFullName(event.target.value)}
+                        placeholder="Nhập họ và tên"
+                        required
+                      />
+                    </label>
 
-                {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
+                    <label className={styles.field}>
+                      <span>Email</span>
+                      <input
+                        type="email"
+                        autoComplete="email"
+                        value={signUpEmail}
+                        onChange={(event) => setSignUpEmail(event.target.value)}
+                        placeholder="Nhập email"
+                        required
+                      />
+                    </label>
 
-                <button
-                  type="submit"
-                  className={styles.primaryButton}
-                  disabled={signUpSubmitting}
-                >
-                  {signUpSubmitting ? "Đang gửi mã..." : "Tiếp tục"}
-                </button>
+                    <div className={styles.field}>
+                      <span>Mật khẩu</span>
+                      <div className={styles.passwordField}>
+                        <input
+                          type={showSignUpPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={signUpPassword}
+                          onChange={(event) => setSignUpPassword(event.target.value)}
+                          placeholder="Tạo mật khẩu"
+                          required
+                        />
+                        <button
+                          type="button"
+                          className={styles.passwordToggle}
+                          onClick={() => setShowSignUpPassword((value) => !value)}
+                          aria-label={showSignUpPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                          aria-pressed={showSignUpPassword}
+                        >
+                          {showSignUpPassword ? <EyeClosedMark /> : <EyeOpenMark />}
+                        </button>
+                      </div>
+                    </div>
 
-                {isGoogleEnabled ? (
-                  <>
+                    <div className={styles.captchaBlock}>
+                      <div
+                        id="clerk-captcha"
+                        className={styles.captchaSlot}
+                        data-cl-theme="light"
+                        data-cl-size="flexible"
+                        data-cl-language="auto"
+                      />
+                    </div>
+
+                    {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
+                    {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
+
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={!signUpLoaded || signUpSubmitting}
+                    >
+                      {signUpSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+                    </button>
+
                     <p className={styles.divider}>Hoặc đăng ký với</p>
 
                     <div className={styles.socialRow}>
                       <button
                         type="button"
                         className={styles.socialButton}
-                        onClick={() => window.location.assign("/api/auth/google/start?mode=sign-up")}
+                        onClick={handleGoogleSignUp}
+                        disabled={signUpOauthLoading || (isClerkConfigured && !signUpLoaded)}
                         aria-label="Đăng ký với Google"
                       >
                         <Image
@@ -698,12 +664,54 @@ export function AuthSplitDeck({ initialMode }: Props) {
                           height={18}
                           className={styles.socialButtonIcon}
                         />
-                        <span className={styles.socialButtonText}>Đăng ký với Google</span>
+                        <span className={styles.socialButtonText}>
+                          {signUpOauthLoading
+                            ? "Đang chuyển sang Google..."
+                            : isClerkConfigured && !signUpLoaded
+                              ? "Đang tải Google Sign-Up..."
+                              : "Đăng ký với Google"}
+                        </span>
                       </button>
                     </div>
-                  </>
-                ) : null}
-              </form>
+                  </form>
+                ) : (
+                  <form className={styles.form} onSubmit={handleVerifyEmail}>
+                    <label className={styles.field}>
+                      <span>Mã xác minh</span>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(event) => setVerificationCode(event.target.value)}
+                        placeholder="Nhập 6 chữ số"
+                        required
+                      />
+                    </label>
+
+                    {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
+                    {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
+
+                    <button
+                      type="submit"
+                      className={styles.primaryButton}
+                      disabled={!signUpLoaded || signUpSubmitting}
+                    >
+                      {signUpSubmitting ? "Đang xác minh..." : "Xác minh và tiếp tục"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className={styles.textLinkStandalone}
+                      onClick={() => {
+                        setVerifying(false);
+                        setVerificationCode("");
+                        setSignUpError(null);
+                      }}
+                    >
+                      Dùng email khác
+                    </button>
+                  </form>
+                )}
+              </>
             )}
           </div>
         </section>
@@ -718,7 +726,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
             {isSignIn ? "Tạo mới" : "Đăng nhập"}
           </button>
         </p>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }

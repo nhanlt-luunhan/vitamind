@@ -1,4 +1,4 @@
-import "swiper/css";
+﻿import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
@@ -9,13 +9,15 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ClerkProvider, RedirectToTasks } from "@clerk/nextjs";
+import { hasConfiguredClerkPublishableKey } from "@/lib/auth/clerk-config";
 import { getSiteUrl } from "@/lib/utils/site-url";
 
 const siteUrl = getSiteUrl();
 const siteName = "VITAMIND";
 const siteTitle = "VITAMIND";
 const siteDescription =
-  "Chia se bai viet, du an Raspberry Pi, tu dong hoa va cac san pham cong nghe thuc te.";
+  "Chia sẻ bài viết, dự án Raspberry Pi, tự động hóa và các sản phẩm công nghệ thực tế.";
 const themeInitScript = `
   try {
     var storageKey = "theme";
@@ -26,8 +28,10 @@ const themeInitScript = `
     document.documentElement.classList.toggle("theme-night", isDark);
     document.documentElement.classList.toggle("theme-day", !isDark);
   } catch (error) {}
+  /* Ensure html is always visible even if script partially fails */
   document.documentElement.style.visibility = "";
 `;
+
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -64,6 +68,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const isClerkEnabled = hasConfiguredClerkPublishableKey();
+
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
@@ -73,7 +79,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        {isClerkEnabled ? (
+          <ClerkProvider
+            taskUrls={{
+              "reset-password": "/tasks/reset-password",
+              "setup-mfa": "/tasks/setup-mfa",
+            }}
+          >
+            <RedirectToTasks />
+            <ThemeProvider>{children}</ThemeProvider>
+          </ClerkProvider>
+        ) : (
+          <ThemeProvider>{children}</ThemeProvider>
+        )}
       </body>
     </html>
   );

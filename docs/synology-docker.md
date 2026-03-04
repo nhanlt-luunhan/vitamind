@@ -4,20 +4,14 @@ Muc tieu moi cua repo la:
 
 - Mac/Win local chay cung mot stack Docker Compose
 - Synology chay cung chinh stack do
-- Cung dung mot mau env, nhung `.env` runtime tren Synology khong commit
+- Cung dung file `.env` duoc commit, khong khac o Dockerfile hay entrypoint
 
 ## File dung tren Synology
 
 - Compose: `compose.yml`
-- Env: `.env` tao tu `.env.synology.example`
+- Env: `.env`
 
 ## Lenh deploy
-
-```bash
-cp .env.synology.example .env
-```
-
-Cap nhat domain, secret, SMTP, OAuth trong `.env`, roi moi deploy:
 
 ```bash
 git pull origin main
@@ -53,7 +47,9 @@ DB se mat neu:
 - `INTERNAL_API_BASE_URL=https://app.vitamind.com.vn`
 - `INTERNAL_CONTAINER_API_BASE_URL=http://127.0.0.1:3000`
 - `POSTGRES_PASSWORD=...`
-- `AUTH_SESSION_SECRET=...`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
+- `CLERK_SECRET_KEY=...`
+- `CLERK_WEBHOOK_SIGNING_SECRET=...`
 - `INTERNAL_API_SECRET=...`
 
 ## pgAdmin
@@ -63,17 +59,3 @@ Stack cung chay `pgadmin`, mac dinh bind:
 - `127.0.0.1:5050`
 
 Neu can expose qua reverse proxy, cau hinh o DSM/Nginx, khong sua code app.
-
-## Shared Postgres cho local dev
-
-Neu muon Mac/Windows chay `npm run dev` nhung dung DB tren cung NAS, khong cho local dung chung DB production.
-
-Dung mo hinh:
-
-- production app tren Synology -> DB `vitamind`
-- local dev Mac/Windows -> DB `vitamind_dev`
-
-Xem them:
-
-- `docs/shared-postgres-dev.md`
-- `docs/create-vitamind-dev.sql.example`

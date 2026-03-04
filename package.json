@@ -6,10 +6,9 @@
   },
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3333",
-    "dev:services": "docker compose up -d db pgadmin",
-    "dev:services:down": "docker compose stop db pgadmin",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
+    "clerk:sync": "node ./scripts/clerk-sync.mjs",
     "db:sync": "node ./scripts/sync-db.mjs",
     "db:sync:docker": "node ./scripts/sync-db.mjs --mode docker",
     "db:sync:url": "node ./scripts/sync-db.mjs --mode url",
@@ -18,10 +17,10 @@
     "check": "npm run typecheck && npm run build"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.38.3",
     "gray-matter": "^4.0.3",
     "marked": "^17.0.3",
     "next": "^16.1.6",
-    "nodemailer": "^8.0.1",
     "papaparse": "^5.5.3",
     "pg": "^8.18.0",
     "react": "^19.2.4",
@@ -30,7 +29,6 @@
   },
   "devDependencies": {
     "@types/node": "^25.2.1",
-    "@types/nodemailer": "^7.0.11",
     "@types/pg": "^8.16.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",

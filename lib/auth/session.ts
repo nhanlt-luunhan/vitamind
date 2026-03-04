@@ -42,6 +42,7 @@ function getSessionSecret() {
   return (
     process.env.AUTH_SESSION_SECRET ??
     process.env.INTERNAL_API_SECRET ??
+    process.env.CLERK_SECRET_KEY ??
     "change-me-session-secret"
   );
 }
@@ -103,12 +104,11 @@ export async function verifySessionToken(token: string | null | undefined) {
 }
 
 export function getSessionCookieOptions(remember = false) {
-  const maxAge = remember ? REMEMBERED_SESSION_TTL_SECONDS : DEFAULT_SESSION_TTL_SECONDS;
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge,
+    ...(remember ? { maxAge: REMEMBERED_SESSION_TTL_SECONDS } : {}),
   };
 }
