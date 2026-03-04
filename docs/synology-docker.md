@@ -4,7 +4,7 @@ Muc tieu moi cua repo la:
 
 - Mac/Win local chay cung mot stack Docker Compose
 - Synology chay cung chinh stack do
-- Cung dung file `.env` duoc commit, khong khac o Dockerfile hay entrypoint
+- Cung dung mot bo bien env ro rang tren tung moi truong, khong commit `.env`
 
 ## File dung tren Synology
 
@@ -46,6 +46,7 @@ DB se mat neu:
 - `NEXT_PUBLIC_APP_URL=https://app.vitamind.com.vn`
 - `INTERNAL_API_BASE_URL=https://app.vitamind.com.vn`
 - `INTERNAL_CONTAINER_API_BASE_URL=http://127.0.0.1:3000`
+- `AUTH_SESSION_SECRET=...`
 - `POSTGRES_PASSWORD=...`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
 - `CLERK_SECRET_KEY=...`

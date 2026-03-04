@@ -7,20 +7,47 @@ export const dynamic = "force-dynamic";
 
 export default function Page() {
   useEffect(() => {
+    let cancelled = false;
+
+    const redirectTo = (destination: string) => {
+      if (!cancelled) {
+        window.location.assign(destination);
+      }
+    };
+
     async function finishLogin() {
       try {
-        const res = await fetch("/api/bootstrap", { cache: "no-store" });
-        if (res.ok) {
-          const data = (await res.json()) as { bootstrap?: BootstrapPayload | null };
-          window.location.assign(data.bootstrap?.redirectTo ?? "/");
+        const continueRes = await fetch("/api/auth/clerk-continue", { cache: "no-store" });
+        if (continueRes.ok) {
+          const data = (await continueRes.json().catch(() => null)) as
+            | { destination?: string }
+            | null;
+          redirectTo(data?.destination ?? "/");
           return;
         }
       } catch {
         // fall through
       }
-      window.location.assign("/");
+
+      try {
+        const bootstrapRes = await fetch("/api/bootstrap", { cache: "no-store" });
+        if (bootstrapRes.ok) {
+          const data = (await bootstrapRes.json()) as { bootstrap?: BootstrapPayload | null };
+          redirectTo(data.bootstrap?.redirectTo ?? "/");
+          return;
+        }
+      } catch {
+        // fall through
+      }
+
+      redirectTo("/");
     }
-    finishLogin();
+
+    void finishLogin();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

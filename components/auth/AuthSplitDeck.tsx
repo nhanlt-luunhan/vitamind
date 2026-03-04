@@ -432,13 +432,15 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
                         aria-label="Đăng nhập với Google"
                       >
-                        <Image
-                          src="/assets/imgs/template/icons/google-icon.png"
-                          alt=""
-                          width={18}
-                          height={18}
-                          className={styles.socialButtonIcon}
-                        />
+                        <span className={styles.socialButtonGlyph}>
+                          <Image
+                            src="/assets/imgs/template/icons/google-icon.png"
+                            alt=""
+                            width={18}
+                            height={18}
+                            className={styles.socialButtonIcon}
+                          />
+                        </span>
                         <span className={styles.socialButtonText}>
                           {signInOauthLoading
                             ? "Đang chuyển sang Google..."
@@ -446,6 +448,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                               ? "Đang tải Google Sign-In..."
                               : "Đăng nhập với Google"}
                         </span>
+                        <span className={styles.socialButtonBalance} aria-hidden="true" />
                       </button>
                     </div>
                   </form>
@@ -534,13 +537,15 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         disabled={signInOauthLoading || (isClerkConfigured && !signInLoaded)}
                         aria-label="Đăng nhập với Google"
                       >
-                        <Image
-                          src="/assets/imgs/template/icons/google-icon.png"
-                          alt=""
-                          width={18}
-                          height={18}
-                          className={styles.socialButtonIcon}
-                        />
+                        <span className={styles.socialButtonGlyph}>
+                          <Image
+                            src="/assets/imgs/template/icons/google-icon.png"
+                            alt=""
+                            width={18}
+                            height={18}
+                            className={styles.socialButtonIcon}
+                          />
+                        </span>
                         <span className={styles.socialButtonText}>
                           {signInOauthLoading
                             ? "Đang chuyển sang Google..."
@@ -548,6 +553,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                               ? "Đang tải Google Sign-In..."
                               : "Đăng nhập với Google"}
                         </span>
+                        <span className={styles.socialButtonBalance} aria-hidden="true" />
                       </button>
                     </div>
 
@@ -626,16 +632,6 @@ export function AuthSplitDeck({ initialMode }: Props) {
                       </div>
                     </div>
 
-                    <div className={styles.captchaBlock}>
-                      <div
-                        id="clerk-captcha"
-                        className={styles.captchaSlot}
-                        data-cl-theme="light"
-                        data-cl-size="flexible"
-                        data-cl-language="auto"
-                      />
-                    </div>
-
                     {signUpMessage ? <div className={styles.feedbackSuccess}>{signUpMessage}</div> : null}
                     {signUpError ? <div className={styles.feedbackError}>{signUpError}</div> : null}
 
@@ -657,13 +653,15 @@ export function AuthSplitDeck({ initialMode }: Props) {
                         disabled={signUpOauthLoading || (isClerkConfigured && !signUpLoaded)}
                         aria-label="Đăng ký với Google"
                       >
-                        <Image
-                          src="/assets/imgs/template/icons/google-icon.png"
-                          alt=""
-                          width={18}
-                          height={18}
-                          className={styles.socialButtonIcon}
-                        />
+                        <span className={styles.socialButtonGlyph}>
+                          <Image
+                            src="/assets/imgs/template/icons/google-icon.png"
+                            alt=""
+                            width={18}
+                            height={18}
+                            className={styles.socialButtonIcon}
+                          />
+                        </span>
                         <span className={styles.socialButtonText}>
                           {signUpOauthLoading
                             ? "Đang chuyển sang Google..."
@@ -671,6 +669,7 @@ export function AuthSplitDeck({ initialMode }: Props) {
                               ? "Đang tải Google Sign-Up..."
                               : "Đăng ký với Google"}
                         </span>
+                        <span className={styles.socialButtonBalance} aria-hidden="true" />
                       </button>
                     </div>
                   </form>
@@ -714,6 +713,23 @@ export function AuthSplitDeck({ initialMode }: Props) {
               </>
             )}
           </div>
+
+          {!isSignedIn ? (
+            <div
+              className={`${styles.captchaBlock} ${
+                !isSignIn && !verifying ? styles.captchaBlockVisible : styles.captchaBlockHidden
+              }`}
+              aria-hidden={isSignIn || verifying}
+            >
+              <div
+                id="clerk-captcha"
+                className={styles.captchaSlot}
+                data-cl-theme="light"
+                data-cl-size="flexible"
+                data-cl-language="auto"
+              />
+            </div>
+          ) : null}
         </section>
 
         <p className={styles.footerLine}>

@@ -6,7 +6,7 @@ Vitamind duoc chuan hoa theo mot luong chay duy nhat:
 - Synology chay bang Docker Compose
 - app luon boot theo kieu production-like: `next build` -> `next start`
 - DB schema luon duoc sync khi container `app` khoi dong
-- `.env` la file env canonical va duoc commit cung repo
+- `.env` la file env runtime tren tung moi truong va khong commit
 
 Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `docker/db-init` va script `scripts/sync-db.mjs`.
 
@@ -23,8 +23,10 @@ Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `dock
 - `docker/Dockerfile`
 - `docker/entrypoint.sh`
 - `docker/db-init/*.sql`
-- `.env`
 - `package-lock.json`
+- `.env.example`
+- `.env.local.example`
+- `.env.synology.example`
 
 ## File khong commit
 
@@ -93,7 +95,8 @@ Dieu nay giu local va Synology cung mot quy tac boot.
 - `SITE_URL` van duoc giu lam fallback de tuong thich code cu.
 - `INTERNAL_API_BASE_URL` la URL cong khai de script tu host goi vao app.
 - `INTERNAL_CONTAINER_API_BASE_URL` la URL noi bo chi danh cho request ben trong container app.
-- Neu can doi domain, key, secret hoac bind port, sua trong `.env` va commit cung code.
+- `AUTH_SESSION_SECRET` nen duoc set rieng, khong nen de session cookie dung chung secret voi Clerk.
+- Neu can doi domain, key, secret hoac bind port, sua trong `.env` tren moi moi truong thay vi commit file `.env`.
 
 ## Tai lieu lien quan
 

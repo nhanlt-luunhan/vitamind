@@ -29,6 +29,8 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/auth/continue
 
 INTERNAL_API_SECRET=change-me
 INTERNAL_API_BASE_URL=https://app.vitamind.com.vn
+INTERNAL_CONTAINER_API_BASE_URL=http://127.0.0.1:3000
+AUTH_SESSION_SECRET=change-me-session-secret
 
 SHARED_CLERK_MODE=false
 PROTECT_SHARED_IDENTITY_FIELDS=true
@@ -103,6 +105,8 @@ Kiem tra lan luot:
 - `CLERK_SECRET_KEY` dung cung project do
 - `NEXT_PUBLIC_APP_URL` dung domain public that
 - `INTERNAL_API_BASE_URL` dung `https://app.vitamind.com.vn`
+- `INTERNAL_CONTAINER_API_BASE_URL` dung `http://127.0.0.1:3000`
+- `AUTH_SESSION_SECRET` da duoc set va giu on dinh qua cac lan deploy
 - redirect URLs trong Clerk da khai bao du
 - webhook secret dung nhau giua Clerk va Synology
 

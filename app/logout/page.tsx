@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect } from "react";
+import { useOptionalClerk } from "@/components/auth/useOptionalClerk";
 
 export default function Page() {
+  const { signOut } = useOptionalClerk();
+
   useEffect(() => {
     const run = async () => {
-      await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => undefined);
+      await Promise.allSettled([
+        fetch("/api/auth/sign-out", { method: "POST" }),
+        signOut(),
+      ]);
       window.location.replace("/");
     };
 
-    run();
-  }, []);
+    void run();
+  }, [signOut]);
 
   return (
     <div

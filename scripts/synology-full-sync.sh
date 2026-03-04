@@ -18,7 +18,7 @@ INTERNAL_API_SECRET="$(sed -n 's/^INTERNAL_API_SECRET=//p' "$ENV_FILE" | tail -n
 POSTGRES_USER="$(sed -n 's/^POSTGRES_USER=//p' "$ENV_FILE" | tail -n 1)"
 POSTGRES_DB="$(sed -n 's/^POSTGRES_DB=//p' "$ENV_FILE" | tail -n 1)"
 
-SITE_URL="${SITE_URL:-https://vitamind.com.vn}"
+SITE_URL="${SITE_URL:-https://app.vitamind.com.vn}"
 INTERNAL_API_BASE_URL="${INTERNAL_API_BASE_URL:-http://127.0.0.1:3333}"
 INTERNAL_API_SECRET="${INTERNAL_API_SECRET:-change-me-now}"
 POSTGRES_USER="${POSTGRES_USER:-vitamind}"

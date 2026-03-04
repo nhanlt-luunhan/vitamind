@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
 export default function Page() {
-  redirect("/sign-in");
+  return <AuthenticateWithRedirectCallback />;
 }
