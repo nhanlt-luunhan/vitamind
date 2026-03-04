@@ -3,7 +3,7 @@ set -eu
 
 PROJECT_DIR="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 COMPOSE_FILE="${COMPOSE_FILE:-compose.yml}"
-ENV_FILE="${ENV_FILE:-.env.synology}"
+ENV_FILE="${ENV_FILE:-.env}"
 
 cd "$PROJECT_DIR"
 

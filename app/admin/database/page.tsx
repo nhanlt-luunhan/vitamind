@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Page() {
   await requireAdmin();
-  const pgAdminPort = process.env.PGADMIN_PORT ?? "35050";
+  const pgAdminPort = process.env.PGADMIN_PORT ?? "5050";
   const [permissionsResult, groupsResult] = await Promise.all([
     fetchAccessPermissions(),
     fetchAccessGroups(),

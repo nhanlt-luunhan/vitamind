@@ -34,9 +34,8 @@
 - Only use non-Vietnamese content when the feature explicitly requires another language, and document that reason in the related PR or implementation note.
 
 ## Clerk Config Rule
-- Không commit secret thực tế vào git.
-- Local Mac/Win dùng `.env.local`; Synology dùng `.env.synology`.
-- Khi thay đổi domain production, phải cập nhật đồng thời `NEXT_PUBLIC_APP_URL`, `SITE_URL`, `INTERNAL_API_BASE_URL`, callback URL và các biến Clerk liên quan trong file env của môi trường đó.
+- Repo nay cho phep commit `.env` cung voi API key/secret de local va Synology chay cung mot cau hinh.
+- Khi thay doi domain production, phai cap nhat dong thoi `NEXT_PUBLIC_APP_URL`, `SITE_URL`, `INTERNAL_API_BASE_URL`, callback URL va cac bien Clerk lien quan trong `.env`.
 
 ## Upload Sync Rule
 - Tất cả file mới phát sinh trong `public/uploads` ở local được xem là dữ liệu vận hành, không phải dữ liệu tạm.

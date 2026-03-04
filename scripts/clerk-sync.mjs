@@ -21,8 +21,8 @@ function loadEnvFile(filename) {
   }
 }
 
-loadEnvFile(".env.local");
 loadEnvFile(".env");
+loadEnvFile(".env.local");
 
 const baseUrl =
   process.env.INTERNAL_API_BASE_URL ??

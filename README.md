@@ -6,6 +6,7 @@ Vitamind duoc chuan hoa theo mot luong chay duy nhat:
 - Synology chay bang Docker Compose
 - app luon boot theo kieu production-like: `next build` -> `next start`
 - DB schema luon duoc sync khi container `app` khoi dong
+- `.env` la file env canonical va duoc commit cung repo
 
 Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `docker/db-init` va script `scripts/sync-db.mjs`.
 
@@ -22,47 +23,28 @@ Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `dock
 - `docker/Dockerfile`
 - `docker/entrypoint.sh`
 - `docker/db-init/*.sql`
+- `.env`
 - `package-lock.json`
 
 ## File khong commit
 
-- `.env.local`
-- `.env.synology`
 - `.next/`
 - `node_modules/`
+- file override tuy chon nhu `.env.local` hoac `.env.synology` neu ban tu tao rieng
 
 ## Cach chay local Mac/Win
 
-1. Tao env local:
-
 ```bash
-cp .env.local.example .env.local
-```
-
-2. Dien Clerk keys va cac secret can thiet trong `.env.local`.
-
-3. Chay toan bo stack:
-
-```bash
-docker compose --env-file .env.local up --build
+docker compose up --build
 ```
 
 Khong can `npm run dev`.
 
 ## Cach chay Synology
 
-1. Tao file env rieng tren NAS:
-
 ```bash
-cp .env.synology.example .env.synology
-```
-
-2. Dien domain, Clerk keys va secret that.
-
-3. Deploy:
-
-```bash
-docker compose --env-file .env.synology up -d --build
+git pull origin main
+docker compose up -d --build
 ```
 
 ## Clerk va dong bo user
@@ -74,13 +56,13 @@ docker compose --env-file .env.synology up -d --build
 - Backfill thu cong:
 
 ```bash
-docker compose --env-file .env.local exec app node ./scripts/clerk-sync.mjs
+docker compose exec app node ./scripts/clerk-sync.mjs
 ```
 
 Hoac tren host:
 
 ```bash
-docker compose --env-file .env.local run --rm app node ./scripts/clerk-sync.mjs
+docker compose run --rm app node ./scripts/clerk-sync.mjs
 ```
 
 ## DB schema
@@ -97,7 +79,7 @@ Dieu nay giu local va Synology cung mot quy tac boot.
 
 - `NEXT_PUBLIC_APP_URL` la bien URL canonical moi.
 - `SITE_URL` van duoc giu lam fallback de tuong thich code cu.
-- Neu local can bind port khac, doi trong `.env.local`, khong sua compose.
+- Neu can doi domain, key, secret hoac bind port, sua trong `.env` va commit cung code.
 
 ## Tai lieu lien quan
 

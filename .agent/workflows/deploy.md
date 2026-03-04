@@ -9,14 +9,14 @@ description: Deploy Vitamind bang Docker compose thong nhat giua local Mac/Win v
 Local Docker (:3333)
   -> Test thu cong tren browser
   -> git commit + git push origin main
-  -> Synology: git pull + docker compose --env-file .env.synology -f compose.yml up -d --build
+  -> Synology: git pull + docker compose up -d --build
 ```
 
 ## Buoc 1: Kiem tra local truoc khi push
 
 1. Dam bao stack Docker local dang chay:
 ```powershell
-docker compose --env-file .env.local -f compose.yml up --build
+docker compose up --build
 ```
 
 2. Kiem tra TypeScript:
@@ -44,28 +44,27 @@ git push origin main
 6. SSH vao Synology va chay:
 ```bash
 git pull origin main
-docker compose --env-file .env.synology -f compose.yml up -d --build
+docker compose up -d --build
 ```
 
 7. Kiem tra 3 buoc bat buoc:
 ```bash
-docker compose --env-file .env.synology -f compose.yml config
-docker compose --env-file .env.synology -f compose.yml build
-docker compose --env-file .env.synology -f compose.yml logs --tail=200 app
+docker compose config
+docker compose build
+docker compose logs --tail=200 app
 ```
 
 ## Loi thuong gap
 
 | Loi | Nguyen nhan | Cach xu ly |
 |---|---|---|
-| `Missing publishableKey` | `.env.local` hoac `.env.synology` thieu `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Them key vao file env dang dung |
+| `Missing publishableKey` | `.env` thieu `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Them key vao `.env` va build lai |
 | `buildx: failed to read commit` | Warning tu buildx, khong phai loi that | Bo qua, doc loi o phan `npm run build` |
-| `EADDRINUSE :3333` | Port dang bi chiem | Tat stack cu hoac doi bind port trong env |
+| `EADDRINUSE :3333` | Port dang bi chiem | Tat stack cu hoac doi bind port trong `.env` |
 | Build thanh cong nhung app loi runtime | Bien env thieu hoac sai | Kiem tra `docker compose logs --tail=200 app` |
 
 ## Luu y quan trong
 
 - Chi dung `compose.yml` lam compose file chuan cho ca local va Synology.
-- Synology dung `.env.synology`; local dung `.env.local`.
-- Khong push `CLERK_SECRET_KEY` hay `INTERNAL_API_SECRET` len git.
+- Chi dung `.env` lam file env canonical.
 - Healthcheck dung `node fetch(...)`, khong dung `wget`.

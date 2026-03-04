@@ -179,8 +179,8 @@ Trang thai hien tai cua repo:
 2. Moi thay doi lien quan deploy phai giu tuong thich voi Docker/Synology.
 3. `allowedDevOrigins` chi dung cho development; khong dua workaround local vao production flow.
 4. Route/feature phu thuoc env phai co fallback an toan va thong diep loi ro rang.
-5. Khong commit secret Clerk that vao git. Local dung `.env.local`, Synology dung `.env.synology`.
-6. Neu thay doi Clerk key, domain hoac callback URL, phai cap nhat dong bo trong file env cua tung moi truong va cac route auth lien quan.
+5. Repo nay cho phep commit `.env` va secret Clerk that vao git de local va Synology chay cung mot cau hinh.
+6. Neu thay doi Clerk key, domain hoac callback URL, phai cap nhat dong bo trong `.env` va cac route auth lien quan.
 
 ### I. Error/loading boundaries
 

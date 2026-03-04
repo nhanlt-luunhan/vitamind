@@ -4,17 +4,18 @@ Muc tieu moi cua repo la:
 
 - Mac/Win local chay cung mot stack Docker Compose
 - Synology chay cung chinh stack do
-- Khac nhau chi o file env, khong khac o Dockerfile hay entrypoint
+- Cung dung file `.env` duoc commit, khong khac o Dockerfile hay entrypoint
 
 ## File dung tren Synology
 
 - Compose: `compose.yml`
-- Env: `.env.synology`
+- Env: `.env`
 
 ## Lenh deploy
 
 ```bash
-docker compose --env-file .env.synology up -d --build
+git pull origin main
+docker compose up -d --build
 ```
 
 ## Nhung gi xay ra khi app boot
@@ -42,8 +43,8 @@ DB se mat neu:
 
 ## Bien env quan trong
 
-- `NEXT_PUBLIC_APP_URL=https://your-domain.example`
-- `INTERNAL_API_BASE_URL=https://your-domain.example`
+- `NEXT_PUBLIC_APP_URL=https://app.vitamind.com.vn`
+- `INTERNAL_API_BASE_URL=https://app.vitamind.com.vn`
 - `POSTGRES_PASSWORD=...`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
 - `CLERK_SECRET_KEY=...`
