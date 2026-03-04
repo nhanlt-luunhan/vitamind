@@ -42,7 +42,6 @@ function getSessionSecret() {
   return (
     process.env.AUTH_SESSION_SECRET ??
     process.env.INTERNAL_API_SECRET ??
-    process.env.CLERK_SECRET_KEY ??
     "change-me-session-secret"
   );
 }

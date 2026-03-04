@@ -448,7 +448,7 @@ function UsersTab({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Xóa user này? Nếu có tài khoản Clerk liên kết, hệ thống cũng sẽ xóa bên Clerk.")) {
+    if (!confirm("Xóa user này?")) {
       return;
     }
     setError(null);

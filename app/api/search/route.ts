@@ -44,7 +44,7 @@ const SITE_PAGES = [
     href: "/sign-in",
     title: "Đăng nhập",
     excerpt: "Truy cập tài khoản để đồng bộ hồ sơ và sử dụng các tính năng cá nhân.",
-    keywords: ["đăng nhập", "tài khoản", "clerk", "truy cập"],
+    keywords: ["đăng nhập", "tài khoản", "truy cập"],
   },
   {
     href: "/sign-up",

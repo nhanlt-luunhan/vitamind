@@ -29,7 +29,6 @@ yarn-debug.log*
 yarn-error.log*
 .env
 .env.*
-!.env
 !docker/entrypoint.sh
 !docker/Dockerfile
 !compose.yml

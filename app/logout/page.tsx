@@ -1,31 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
-import { useOptionalAuth, useOptionalClerk } from "@/components/auth/useOptionalClerk";
 
 export default function Page() {
-  const { isLoaded, isSignedIn } = useOptionalAuth();
-  const { signOut } = useOptionalClerk();
-
   useEffect(() => {
     const run = async () => {
-      // Fire sign-out API silently in background
       await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => undefined);
-
-      if (!isLoaded) return;
-
-      if (isSignedIn) {
-        // signOut then go home — no intermediate page shown
-        await signOut();
-      }
-
       window.location.replace("/");
     };
 
     run();
-  }, [isLoaded, isSignedIn, signOut]);
+  }, []);
 
-  // Minimal full-screen spinner — no header, no footer, no layout shift
   return (
     <div
       style={{

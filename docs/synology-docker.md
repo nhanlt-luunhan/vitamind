@@ -4,14 +4,20 @@ Muc tieu moi cua repo la:
 
 - Mac/Win local chay cung mot stack Docker Compose
 - Synology chay cung chinh stack do
-- Cung dung file `.env` duoc commit, khong khac o Dockerfile hay entrypoint
+- Cung dung mot mau env, nhung `.env` runtime tren Synology khong commit
 
 ## File dung tren Synology
 
 - Compose: `compose.yml`
-- Env: `.env`
+- Env: `.env` tao tu `.env.synology.example`
 
 ## Lenh deploy
+
+```bash
+cp .env.synology.example .env
+```
+
+Cap nhat domain, secret, SMTP, OAuth trong `.env`, roi moi deploy:
 
 ```bash
 git pull origin main
@@ -47,9 +53,7 @@ DB se mat neu:
 - `INTERNAL_API_BASE_URL=https://app.vitamind.com.vn`
 - `INTERNAL_CONTAINER_API_BASE_URL=http://127.0.0.1:3000`
 - `POSTGRES_PASSWORD=...`
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
-- `CLERK_SECRET_KEY=...`
-- `CLERK_WEBHOOK_SIGNING_SECRET=...`
+- `AUTH_SESSION_SECRET=...`
 - `INTERNAL_API_SECRET=...`
 
 ## pgAdmin

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useOptionalAuth, useOptionalUser } from "@/components/auth/useOptionalClerk";
 import type { BootstrapPayload } from "@/lib/auth/bootstrap";
 
 export type ClientSessionUser = {
@@ -19,8 +18,6 @@ export type ClientSessionUser = {
 };
 
 export function useSessionUser() {
-  const { isLoaded: isAuthLoaded, isSignedIn: isClerkSignedIn } = useOptionalAuth();
-  const { isLoaded: isClerkUserLoaded, user: clerkUser } = useOptionalUser();
   const [bootstrapUser, setBootstrapUser] = useState<ClientSessionUser | null>(null);
   const [bootstrapLoaded, setBootstrapLoaded] = useState(false);
 
@@ -59,19 +56,13 @@ export function useSessionUser() {
           setBootstrapUser(null);
         }
       } catch {
-        // Keep the last known Clerk snapshot if bootstrap is temporarily unavailable.
+        // Keep the last known internal snapshot if bootstrap is temporarily unavailable.
       } finally {
         if (!ignore) {
           setBootstrapLoaded(true);
         }
       }
     };
-
-    if (!isAuthLoaded) {
-      return () => {
-        ignore = true;
-      };
-    }
 
     setBootstrapLoaded(false);
     void loadBootstrap();
@@ -88,30 +79,7 @@ export function useSessionUser() {
       ignore = true;
       window.removeEventListener("account-profile-updated", handleRefresh);
     };
-  }, [isAuthLoaded, isClerkSignedIn]);
+  }, []);
 
-  const clerkFallback: ClientSessionUser | null =
-    isClerkSignedIn && clerkUser
-      ? {
-        id: clerkUser.id,
-        email:
-          clerkUser.primaryEmailAddress?.emailAddress ??
-          clerkUser.emailAddresses[0]?.emailAddress ??
-          "",
-        contact_email: null,
-        name: clerkUser.fullName ?? null,
-        display_name: clerkUser.fullName ?? clerkUser.username ?? null,
-        gid: null,
-        phone: null,
-        role: bootstrapUser?.role ?? null,
-        status: bootstrapUser?.status ?? null,
-        avatar_url: bootstrapUser?.avatar_url ?? clerkUser.imageUrl ?? null,
-        updated_at: null,
-      }
-      : null;
-
-  const effectiveUser = bootstrapUser ?? clerkFallback;
-  const isLoaded = isAuthLoaded && (bootstrapLoaded || isClerkUserLoaded);
-
-  return { isLoaded, isSignedIn: Boolean(effectiveUser), user: effectiveUser };
+  return { isLoaded: bootstrapLoaded, isSignedIn: Boolean(bootstrapUser), user: bootstrapUser };
 }

@@ -1,12 +1,16 @@
 # Vitamind
 
-Vitamind duoc chuan hoa theo mot luong chay duy nhat:
+Vitamind ho tro 2 cach chay local:
 
-- local Mac/Win chay bang Docker Compose
+- full Docker Compose cho flow production-like
+- Docker chi chay dich vu phu tro (`db`, `pgadmin`), con app chay bang `npm run dev`
+
+Mac dinh hien tai:
+
 - Synology chay bang Docker Compose
-- app luon boot theo kieu production-like: `next build` -> `next start`
-- DB schema luon duoc sync khi container `app` khoi dong
-- `.env` la file env canonical va duoc commit cung repo
+- app production boot theo kieu `next build` -> `next start`
+- DB schema duoc sync khi container `app` khoi dong
+- `.env` la file env runtime local tren tung may va khong commit
 
 Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `docker/db-init` va script `scripts/sync-db.mjs`.
 
@@ -23,22 +27,56 @@ Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `dock
 - `docker/Dockerfile`
 - `docker/entrypoint.sh`
 - `docker/db-init/*.sql`
-- `.env`
+- `.env.example`
+- `.env.local.example`
+- `.env.synology.example`
 - `package-lock.json`
 
 ## File khong commit
 
+- `.env`
 - `.next/`
 - `node_modules/`
 - file override tuy chon nhu `.env.local` hoac `.env.synology` neu ban tu tao rieng
 
 ## Cach chay local Mac/Win
 
+### Cach 1: Full Docker
+
 ```bash
 docker compose up --build
 ```
 
-Khong can `npm run dev`.
+Dung khi ban muon test gan voi production.
+
+### Cach 2: Docker cho DB + `npm run dev` cho app
+
+```bash
+npm run dev:services
+npm run dev
+```
+
+Mode nay phu hop khi ban code giao dien hoac API va can hot reload.
+
+URL local:
+
+- App: `http://localhost:3333`
+- Postgres: `127.0.0.1:5432`
+- pgAdmin: `http://127.0.0.1:5050`
+
+Dung xong co the tat dich vu phu tro:
+
+```bash
+npm run dev:services:down
+```
+
+Luu y:
+
+- `.env` hien dang dat `DATABASE_URL=postgresql://vitamind:vitamind@127.0.0.1:5432/vitamind`, nen `npm run dev` tren host se noi truc tiep vao Postgres trong Docker.
+- o mode `npm run dev`, schema khong duoc auto-sync nhu container `app`. Neu ban vua doi SQL trong `docker/db-init`, hay chay them script sync phu hop truoc khi test.
+- Auth local hien dung session cookie noi bo va bang `users` trong Postgres.
+- Cloudflare Email Routing chi dung de nhan/forward email vao `support@vitamind.com.vn`; de gui ma quen mat khau, app can `SMTP_*` duoc cau hinh.
+- Tao `.env` local tu `.env.example` hoac `.env.local.example` va giu file do o may ban.
 
 Neu muon local giong domain production:
 
@@ -54,28 +92,26 @@ http://app.vitamind.com.vn:3333
 
 ## Cach chay Synology
 
+Tren NAS, tao `.env` tu file mau truoc:
+
+```bash
+cp .env.synology.example .env
+```
+
+Sau do dien domain, secret, SMTP, va OAuth that.
+
+Lenh deploy:
+
 ```bash
 git pull origin main
 docker compose up -d --build
 ```
 
-## Clerk va dong bo user
+## Auth va nguoi dung
 
-- Clerk la source of truth cho identity.
-- Bang `users` trong Postgres la mirror noi bo.
-- Webhook Clerk:
-  - `POST /api/webhooks/clerk`
-- Backfill thu cong:
-
-```bash
-docker compose exec app node ./scripts/clerk-sync.mjs
-```
-
-Hoac tren host:
-
-```bash
-docker compose run --rm app node ./scripts/clerk-sync.mjs
-```
+- Toan bo auth duoc quan ly noi bo trong Postgres.
+- Session duoc ky bang `AUTH_SESSION_SECRET`.
+- Dang ky va dang nhap dung cac route `db-sign-up` va `db-sign-in`.
 
 ## DB schema
 
@@ -93,10 +129,9 @@ Dieu nay giu local va Synology cung mot quy tac boot.
 - `SITE_URL` van duoc giu lam fallback de tuong thich code cu.
 - `INTERNAL_API_BASE_URL` la URL cong khai de script tu host goi vao app.
 - `INTERNAL_CONTAINER_API_BASE_URL` la URL noi bo chi danh cho request ben trong container app.
-- Neu can doi domain, key, secret hoac bind port, sua trong `.env` va commit cung code.
+- Neu can doi domain, key, secret hoac bind port, sua trong `.env` tren may dang chay app, khong dua secret vao git.
 
 ## Tai lieu lien quan
 
 - `docs/db-sync.md`
-- `docs/auth-topology.md`
 - `docs/synology-docker.md`

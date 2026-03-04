@@ -56,18 +56,11 @@ if ! wait_for_health "$SYNC_BASE_URL" "$HEALTH_WAIT_SECONDS"; then
 fi
 
 if ! wait_for_health "$SYNC_BASE_URL" 10; then
-  echo "App is not reachable for Clerk sync. Tried INTERNAL_API_BASE_URL, localhost, and SITE_URL." >&2
+  echo "App is not reachable. Tried INTERNAL_API_BASE_URL, localhost, and SITE_URL." >&2
   exit 1
 fi
 
-echo "Syncing all Clerk users into Postgres"
-curl -fsS -X POST "$SYNC_BASE_URL/api/internal/clerk-sync" \
-  -H "x-internal-secret: $INTERNAL_API_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-
-echo
 echo "Current users in Postgres"
 docker compose -f "$COMPOSE_FILE" exec -T db \
   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-  -c "select email, role, status, clerk_user_id, avatar_url from users order by created_at desc;"
+  -c "select email, role, status, avatar_url from users order by created_at desc;"

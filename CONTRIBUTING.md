@@ -33,9 +33,9 @@
 - New seeded data, demo data, sample content, admin-created defaults, and newly authored user-facing records must be written in Vietnamese by default.
 - Only use non-Vietnamese content when the feature explicitly requires another language, and document that reason in the related PR or implementation note.
 
-## Clerk Config Rule
-- Repo nay cho phep commit `.env` cung voi API key/secret de local va Synology chay cung mot cau hinh.
-- Khi thay doi domain production, phai cap nhat dong thoi `NEXT_PUBLIC_APP_URL`, `SITE_URL`, `INTERNAL_API_BASE_URL`, callback URL va cac bien Clerk lien quan trong `.env`.
+## Auth Config Rule
+- Khong commit `.env`; chi commit `.env.example`, `.env.local.example`, `.env.synology.example`.
+- Khi thay doi domain production, cap nhat cac file env mau neu can, va sua `.env` tren may dang chay app cho phu hop.
 
 ## Upload Sync Rule
 - Tất cả file mới phát sinh trong `public/uploads` ở local được xem là dữ liệu vận hành, không phải dữ liệu tạm.

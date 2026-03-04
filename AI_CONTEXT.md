@@ -2,7 +2,7 @@
 - Framework: Next.js 16.1.6 App Router
 - Ngôn ngữ: TypeScript
 - UI: Tailwind CSS + CSS token tùy biến + component nội bộ
-- Auth: Clerk + Postgres RBAC/profile
+- Auth: internal DB auth + Postgres RBAC/profile
 - Nguồn dữ liệu blog: `content/posts/*.md`
 
 # Quy tắc code
@@ -149,17 +149,15 @@
 
 # Quy tắc Docker và Synology
 - File compose chuẩn của repo là `compose.yml`.
-- Local Mac/Win va Synology deu dung file `.env` duoc commit trong repo.
-- Mọi biến env bắt buộc cho `next build` phải có sẵn trong `.env`, đặc biệt:
-  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-  - `CLERK_SECRET_KEY`
-  - `CLERK_WEBHOOK_SIGNING_SECRET`
+- Local Mac/Win va Synology deu dung cung bo bien env, nhung `.env` runtime khong duoc commit.
+- Moi bien env bat buoc cho `next build` phai co trong file `.env` tren may dang build, dac biet:
+  - `AUTH_SESSION_SECRET`
   - `INTERNAL_API_SECRET`
   - `DATABASE_URL`
   - `SITE_URL`
 - Docker build không được `source` env bằng shell theo kiểu `set -a && . ./.env.*`; với Alpine/Synology cách này dễ che lỗi thật.
 - Nếu log Docker có warning kiểu `buildx: failed to read current commit information with git rev-parse --is-inside-work-tree`, coi đó là cảnh báo phụ. Phải đọc tiếp lỗi thật ở phần `npm run build`.
-- Nếu `next build` báo `@clerk/clerk-react: Missing publishableKey`, kết luận mặc định là `.env` đang thiếu `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` hoặc đang không được nạp vào build.
+- Neu `next build` bao loi env auth, ket luan mac dinh la `.env` dang thieu `AUTH_SESSION_SECRET` hoac `INTERNAL_API_SECRET`.
 - Healthcheck production không dùng `wget`; dùng `node fetch('http://127.0.0.1:3333/api/health')` để tránh lỗi `wget: can't connect to remote host` hoặc khác biệt tool trên image.
 - Trước khi kết luận lỗi Docker/Synology đã xong, phải kiểm tra đủ 3 bước:
   1. `docker compose config`

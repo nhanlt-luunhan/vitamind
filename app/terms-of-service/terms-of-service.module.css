@@ -1,0 +1,292 @@
+/* ──────────────────────────────────────────
+   Terms of Service Page
+   Mirrors privacy-policy.module.css structure
+   ────────────────────────────────────────── */
+
+.page {
+    min-height: 100vh;
+    background: var(--page-bg);
+    color: var(--page-text);
+    font-family: var(--font-sans);
+}
+
+/* ── Hero ─────────────────────────────────── */
+.hero {
+    background: var(--g-ink);
+    padding: calc(var(--space-8) * 1.5) var(--space-4) var(--space-8);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.heroInner {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.heroIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: var(--space-4);
+}
+
+.heroTitle {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 var(--space-3);
+    line-height: 1.2;
+}
+
+.heroSubtitle {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.7;
+    margin: 0 0 var(--space-5);
+}
+
+.heroMeta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+}
+
+.heroMeta span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px var(--space-3);
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.heroMeta i {
+    font-size: 0.8rem;
+}
+
+/* ── Content ──────────────────────────────── */
+.content {
+    padding: var(--space-8) var(--space-4);
+}
+
+.contentInner {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+/* ── Intro card ───────────────────────────── */
+.introCard {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface-card);
+    border: 1px solid var(--frame-border);
+    border-left: 4px solid var(--c-3);
+    border-radius: var(--radius-2);
+    box-shadow: var(--shadow-1);
+    margin-bottom: var(--space-7);
+}
+
+.introCard i {
+    font-size: 1.2rem;
+    color: var(--c-3);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.introCard p {
+    margin: 0;
+    color: var(--page-text-muted);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+/* ── Sections ─────────────────────────────── */
+.sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.section {
+    background: var(--surface-card);
+    border: 1px solid var(--frame-border);
+    border-radius: var(--radius-3);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.section:hover {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--frame-border);
+    background: var(--surface-panel);
+}
+
+.sectionIconWrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-2);
+    background: var(--g-brand-soft);
+    color: var(--c-2);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.sectionTitle {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--page-heading);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.sectionBody {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.paragraph {
+    margin: 0;
+    color: var(--page-text-muted);
+    line-height: 1.75;
+    font-size: 0.95rem;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.listItem {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--page-text);
+    font-size: 0.93rem;
+    line-height: 1.6;
+}
+
+.listItem i {
+    font-size: 0.8rem;
+    color: var(--c-2);
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: rgba(var(--c-3-rgb, 99, 210, 255), 0.06);
+    border: 1px solid rgba(var(--c-3-rgb, 99, 210, 255), 0.2);
+    border-radius: var(--radius-2);
+}
+
+.note i {
+    font-size: 0.9rem;
+    color: var(--c-3);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.note p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--page-text-muted);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.footerNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    margin-top: var(--space-7);
+    background: var(--surface-card);
+    border: 1px solid var(--frame-border);
+    border-radius: var(--radius-2);
+    box-shadow: var(--shadow-1);
+}
+
+.footerNotice i {
+    font-size: 1.1rem;
+    color: var(--c-2);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.footerNotice p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--page-text-muted);
+    line-height: 1.65;
+}
+
+@media (max-width: 600px) {
+    .hero {
+        padding: var(--space-7) var(--space-3) var(--space-6);
+    }
+
+    .heroMeta {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .sectionHeader {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .sectionBody {
+        padding: var(--space-4);
+    }
+
+    .content {
+        padding: var(--space-6) var(--space-3);
+    }
+}

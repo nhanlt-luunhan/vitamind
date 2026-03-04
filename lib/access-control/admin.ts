@@ -30,7 +30,6 @@ export type UserAuditItem = {
 
 export type AdminAccessUser = {
   id: string;
-  clerk_user_id: string | null;
   email: string;
   contact_email: string | null;
   name: string | null;
@@ -73,7 +72,6 @@ function withCollections<T extends JsonRow>(row: T): AdminAccessUser {
 const userSelect = `
   select
     u.id,
-    u.clerk_user_id,
     u.email,
     u.contact_email,
     u.name,

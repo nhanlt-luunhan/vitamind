@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
-import { clerkClient } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import {
   canManageBlog,
@@ -9,7 +7,6 @@ import {
   canManageUsers,
   normalizeRole,
 } from "@/lib/auth/rbac";
-import { syncClerkUserById } from "@/lib/auth/clerk-sync";
 import {
   createSessionToken,
   getSessionCookieOptions,
@@ -21,7 +18,6 @@ import { hasGidValue } from "@/lib/utils/gid";
 
 export type BootstrapProfile = {
   id: string;
-  clerk_user_id: string | null;
   email: string;
   contact_email: string | null;
   name: string | null;
@@ -41,7 +37,6 @@ export type BootstrapProfile = {
 
 export type BootstrapPayload = {
   userId: string;
-  clerkUserId: string | null;
   profile: {
     gid: string | null;
     phone: string | null;
@@ -75,7 +70,7 @@ export type BootstrapPayload = {
 };
 
 const BOOTSTRAP_PROFILE_SELECT =
-  "id, clerk_user_id, email, contact_email, name, display_name, gid, phone, bio, location, company, website, role, status, avatar_url, created_at, updated_at";
+  "id, email, contact_email, name, display_name, gid, phone, bio, location, company, website, role, status, avatar_url, created_at, updated_at";
 const LEGACY_BOOTSTRAP_PROFILE_SELECT = "id, email, name, role, created_at, updated_at";
 
 function isMissingUsersColumnError(error: string | undefined) {
@@ -90,7 +85,6 @@ function toLegacyBootstrapProfile(row: Record<string, unknown>): BootstrapProfil
 
   return {
     id: String(row.id ?? ""),
-    clerk_user_id: null,
     email,
     contact_email: email || null,
     name,
@@ -141,26 +135,8 @@ async function selectBootstrapProfile(whereClause: string, params: Array<unknown
   return legacy.rows[0] ? toLegacyBootstrapProfile(legacy.rows[0]) : null;
 }
 
-async function fetchBootstrapProfileByClerkId(clerkUserId: string) {
-  return selectBootstrapProfile("clerk_user_id = $1", [clerkUserId]);
-}
-
 async function fetchBootstrapProfileById(userId: string) {
   return selectBootstrapProfile("id = $1", [userId]);
-}
-
-async function fetchBootstrapProfileByEmail(email: string) {
-  return selectBootstrapProfile("lower(email) = lower($1)", [email]);
-}
-
-async function fetchClerkPrimaryEmail(clerkUserId: string) {
-  try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(clerkUserId);
-    return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? null;
-  } catch {
-    return null;
-  }
 }
 
 function isOnboardingComplete(user: BootstrapProfile) {
@@ -176,7 +152,7 @@ function getRedirectTo(payload: Omit<BootstrapPayload, "redirectTo">) {
   if (!payload.accountStatus.onboardingComplete) {
     return "/account";
   }
-  return payload.role === "admin" ? "/admin" : "/";
+  return "/";
 }
 
 function toBootstrapPayload(user: BootstrapProfile): BootstrapPayload {
@@ -188,7 +164,6 @@ function toBootstrapPayload(user: BootstrapProfile): BootstrapPayload {
 
   const payloadBase = {
     userId: user.id,
-    clerkUserId: user.clerk_user_id,
     profile: {
       gid: user.gid,
       phone: user.phone,
@@ -227,34 +202,6 @@ function toBootstrapPayload(user: BootstrapProfile): BootstrapPayload {
 }
 
 export async function getBootstrapProfile() {
-  try {
-    const { userId: clerkUserId } = await auth();
-
-    if (clerkUserId) {
-      let user = await fetchBootstrapProfileByClerkId(clerkUserId);
-      if (!user) {
-        try {
-          await syncClerkUserById(clerkUserId);
-        } catch {
-          // Keep serving the latest DB snapshot if Clerk is temporarily unavailable.
-        }
-        user = await fetchBootstrapProfileByClerkId(clerkUserId);
-      }
-      if (!user) {
-        const clerkEmail = await fetchClerkPrimaryEmail(clerkUserId);
-        if (clerkEmail) {
-          user = await fetchBootstrapProfileByEmail(clerkEmail);
-        }
-      }
-
-      if (user) {
-        return user;
-      }
-    }
-  } catch {
-    // Clerk not configured or unavailable. Fall through to internal session.
-  }
-
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null;
   const claims = await verifySessionToken(token);

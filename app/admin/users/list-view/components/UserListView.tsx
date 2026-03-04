@@ -29,7 +29,6 @@ type UserAuditItem = {
 
 type UserRecord = {
   id: string;
-  clerk_user_id: string | null;
   email: string;
   contact_email: string | null;
   name: string | null;
@@ -486,7 +485,6 @@ export function UserListView() {
                   <h5>{draft.display_name ?? draft.name ?? draft.email}</h5>
                   <p>{draft.email}</p>
                   <div className={styles.summaryMeta}>
-                    <span>Clerk ID: {draft.clerk_user_id ?? "Chưa đồng bộ"}</span>
                     <span>Cập nhật: {formatDate(draft.updated_at ?? draft.created_at)}</span>
                   </div>
                 </div>

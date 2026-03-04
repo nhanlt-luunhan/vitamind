@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { clerkClient } from "@clerk/nextjs/server";
 import { getSessionUser } from "@/lib/auth/admin-auth";
 import { query, withTransaction } from "@/lib/db/admin-db";
 import { logAudit } from "@/lib/audit";
 import { normalizeRole, canManageUsers } from "@/lib/auth/rbac";
-import { processQueuedClerkDeletion, queueClerkUserDeletion } from "@/lib/auth/clerk-sync";
-import { isProtectedSharedClerkMode } from "@/lib/auth/environment";
 import { GID_RULE_MESSAGE, normalizeGid, sanitizeGid } from "@/lib/utils/gid";
 import { fetchDecoratedUserById, fetchUserAudit } from "@/lib/access-control/admin";
 
@@ -13,7 +10,6 @@ export const dynamic = "force-dynamic";
 
 type UserRow = {
   id: string;
-  clerk_user_id: string | null;
   email: string;
   contact_email: string | null;
   name: string | null;
@@ -31,22 +27,13 @@ type UserRow = {
   updated_at: string | null;
 };
 
-const baseSelect = `select id, clerk_user_id, email, contact_email, name, display_name, gid, role, status, phone, bio, location, company, website, avatar_url, created_at, updated_at
+const baseSelect = `select id, email, contact_email, name, display_name, gid, role, status, phone, bio, location, company, website, avatar_url, created_at, updated_at
                     from users`;
 
 const normalizeText = (value: unknown) => {
   if (value === undefined) return undefined;
   const text = String(value ?? "").trim();
   return text.length ? text : null;
-};
-
-const splitName = (value: string | null) => {
-  if (!value) return { firstName: null, lastName: null };
-  const parts = value.split(/\s+/).filter(Boolean);
-  if (!parts.length) return { firstName: null, lastName: null };
-  if (parts.length === 1) return { firstName: parts[0], lastName: null };
-  const lastName = parts.pop() ?? null;
-  return { firstName: parts.join(" "), lastName };
 };
 
 const normalizeStatus = (value: unknown) => {
@@ -59,53 +46,6 @@ const normalizeStatus = (value: unknown) => {
 function normalizeIdArray(value: unknown) {
   if (!Array.isArray(value)) return undefined;
   return value.map((item) => String(item ?? "").trim()).filter(Boolean);
-}
-
-async function syncClerkMetadata({
-  clerkUserId,
-  role,
-  status,
-  name,
-  gid,
-  phone,
-  contactEmail,
-  groupCodes,
-  permissionCodes,
-}: {
-  clerkUserId: string | null;
-  role: string;
-  status: string;
-  name: string | null;
-  gid: string | null;
-  phone: string | null;
-  contactEmail: string | null;
-  groupCodes: string[];
-  permissionCodes: string[];
-}) {
-  if (!clerkUserId) return;
-  try {
-    const client = await clerkClient();
-    const current = await client.users.getUser(clerkUserId);
-    const { firstName, lastName } = splitName(name);
-    const publicMetadata = {
-      ...(current.publicMetadata ?? {}),
-      role,
-      status,
-      gid,
-      phone,
-      contactEmail,
-      groups: groupCodes,
-      permissions: permissionCodes,
-    };
-
-    await client.users.updateUser(clerkUserId, {
-      firstName: firstName ?? undefined,
-      lastName: lastName ?? undefined,
-      publicMetadata,
-    });
-  } catch (error) {
-    console.error("Failed to sync Clerk metadata", error);
-  }
 }
 
 async function loadDecoratedPayload(userId: string) {
@@ -173,13 +113,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   if (rawGid && !gid) {
     return NextResponse.json({ error: GID_RULE_MESSAGE }, { status: 400 });
-  }
-
-  if (isProtectedSharedClerkMode() && (role !== undefined || status !== undefined)) {
-    return NextResponse.json(
-      { error: "Shared Clerk mode is enabled. Role/status changes are blocked in this environment." },
-      { status: 403 },
-    );
   }
 
   const { rows: existingRows } = await query<UserRow>(
@@ -300,18 +233,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: payload.error }, { status: payload.status });
   }
 
-  await syncClerkMetadata({
-    clerkUserId: existing.clerk_user_id,
-    role: nextRole,
-    status: nextStatus,
-    name: nextName,
-    gid: nextGid,
-    phone: nextPhone,
-    contactEmail: nextContactEmail,
-    groupCodes: payload.user.groups.map((group) => group.code),
-    permissionCodes: payload.user.effective_permissions.map((permission) => permission.code),
-  });
-
   return NextResponse.json(payload);
 }
 
@@ -320,13 +241,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const currentUser = await getSessionUser();
   if (!canManageUsers(currentUser)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (isProtectedSharedClerkMode()) {
-    return NextResponse.json(
-      { error: "Shared Clerk mode is enabled. User deletion is blocked in this environment." },
-      { status: 403 },
-    );
   }
 
   if (id === currentUser?.id) {
@@ -347,10 +261,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Khong tim thay user." }, { status: 404 });
   }
 
-  if (existing.clerk_user_id) {
-    await queueClerkUserDeletion(existing.clerk_user_id, existing.email);
-  }
-
   await query(`delete from users where id = $1`, [id]);
 
   await logAudit({
@@ -361,10 +271,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     before: existing,
     after: null,
   });
-
-  if (existing.clerk_user_id) {
-    await processQueuedClerkDeletion(existing.clerk_user_id).catch(() => null);
-  }
 
   return NextResponse.json({ ok: true, deletedId: id });
 }

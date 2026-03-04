@@ -28,7 +28,6 @@ function toLegacyLoginRow(row: Record<string, unknown>): LoginRow {
 
   return {
     id: String(row.id ?? ""),
-    clerk_user_id: null,
     email,
     contact_email: email || null,
     name,
@@ -49,11 +48,11 @@ export async function POST(request: Request) {
   const remember = Boolean(body?.remember);
 
   if (!identifier || !password) {
-    return NextResponse.json({ error: "Thiếu thông tin đăng nhập." }, { status: 400 });
+    return NextResponse.json({ error: "Thieu thong tin dang nhap." }, { status: 400 });
   }
 
   const current = await query<LoginRow>(
-    `select id, clerk_user_id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
+    `select id, email, contact_email, name, display_name, gid, phone, role, status, avatar_url, updated_at
      from users
      where (lower(email) = lower($1) or lower(coalesce(gid, '')) = lower($1))
        and password_hash is not null
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
   let user: LoginRow | null = current.rows[0] ?? null;
   if (current.error) {
     if (!isMissingUsersColumnError(current.error)) {
-      return NextResponse.json({ error: "Không thể xác thực lúc này." }, { status: 500 });
+      return NextResponse.json({ error: "Khong the xac thuc luc nay." }, { status: 500 });
     }
 
     const legacy = await query<Record<string, unknown>>(
@@ -80,14 +79,14 @@ export async function POST(request: Request) {
     );
 
     if (legacy.error) {
-      return NextResponse.json({ error: "Không thể xác thực lúc này." }, { status: 500 });
+      return NextResponse.json({ error: "Khong the xac thuc luc nay." }, { status: 500 });
     }
 
     user = legacy.rows[0] ? toLegacyLoginRow(legacy.rows[0]) : null;
   }
 
   if (!user) {
-    return NextResponse.json({ error: "Email hoặc mật khẩu không đúng." }, { status: 401 });
+    return NextResponse.json({ error: "Email hoac mat khau khong dung." }, { status: 401 });
   }
 
   const token = await createSessionToken(
