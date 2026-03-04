@@ -13,7 +13,6 @@ docker
 scripts
 !scripts/
 !scripts/sync-db.mjs
-!scripts/docker-entrypoint.sh
 server
 tools
 prisma
@@ -33,13 +32,8 @@ yarn-error.log*
 !docker/entrypoint.sh
 !docker/Dockerfile
 !compose.yml
-!docker-compose.yml
-!docker-compose.synology.yml
-!Dockerfile
 !.env.example
 !.env.local.example
 !.env.synology.example
-!.env.dev.docker.example
-!.env.docker.local.example
 references
 Lahomes-Nextjs_v2.0

@@ -28,7 +28,6 @@ Repo nay khong dung Prisma. Migration duoc quan ly bang cac file SQL trong `dock
 
 - `.env.local`
 - `.env.synology`
-- `.env.docker`
 - `.next/`
 - `node_modules/`
 
@@ -81,8 +80,7 @@ docker compose --env-file .env.local exec app node ./scripts/clerk-sync.mjs
 Hoac tren host:
 
 ```bash
-set -a; source .env.local; set +a
-node ./scripts/clerk-sync.mjs
+docker compose --env-file .env.local run --rm app node ./scripts/clerk-sync.mjs
 ```
 
 ## DB schema

@@ -34,9 +34,9 @@
 - Only use non-Vietnamese content when the feature explicitly requires another language, and document that reason in the related PR or implementation note.
 
 ## Clerk Config Rule
-- Theo quy ước vận hành hiện tại của dự án, cấu hình và API key Clerk dùng cho môi trường production được phép commit và đẩy lên git nếu cần cho quy trình deploy.
-- Không tự ý chuyển `.env.docker` hoặc các giá trị Clerk production về placeholder như `CHANGE_ME` nếu chưa có yêu cầu rõ ràng từ chủ dự án.
-- Khi thay đổi domain production, phải cập nhật đồng thời `SITE_URL`, `INTERNAL_API_BASE_URL`, callback URL và các biến Clerk liên quan trong file cấu hình được commit.
+- Không commit secret thực tế vào git.
+- Local Mac/Win dùng `.env.local`; Synology dùng `.env.synology`.
+- Khi thay đổi domain production, phải cập nhật đồng thời `NEXT_PUBLIC_APP_URL`, `SITE_URL`, `INTERNAL_API_BASE_URL`, callback URL và các biến Clerk liên quan trong file env của môi trường đó.
 
 ## Upload Sync Rule
 - Tất cả file mới phát sinh trong `public/uploads` ở local được xem là dữ liệu vận hành, không phải dữ liệu tạm.

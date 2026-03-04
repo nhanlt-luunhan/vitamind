@@ -2,11 +2,9 @@ node_modules
 .next
 .env
 .env.*
-!.env.docker.local.example
 !.env.example
 !.env.local.example
 !.env.synology.example
-!.env.dev.docker.example
 *.log
 npm-debug.log*
 yarn-debug.log*

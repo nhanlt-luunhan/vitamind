@@ -148,18 +148,18 @@
 - Khi tạo component mới, ưu tiên dữ liệu thật từ `content/posts` hoặc API nội bộ
 
 # Quy tắc Docker và Synology
-- File production compose phải luôn giữ tên `docker-compose.yml` để tương thích cách triển khai trên Synology.
-- Production trên Synology hiện dùng trực tiếp `.env.docker`; không được giả định có `.env.local` hoặc `.env.docker.local`.
-- Mọi biến env bắt buộc cho `next build` phải có sẵn ngay trong `.env.docker`, đặc biệt:
+- File compose chuẩn của repo là `compose.yml`.
+- Production trên Synology dùng `.env.synology`; local Mac/Win dùng `.env.local`.
+- Mọi biến env bắt buộc cho `next build` phải có sẵn trong file env đang được truyền vào `docker compose --env-file ...`, đặc biệt:
   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
   - `CLERK_SECRET_KEY`
   - `CLERK_WEBHOOK_SIGNING_SECRET`
   - `INTERNAL_API_SECRET`
   - `DATABASE_URL`
   - `SITE_URL`
-- Docker build không được `source` env bằng shell theo kiểu `set -a && . ./.env.docker`; với Alpine/Synology cách này dễ che lỗi thật. Quy ước hiện tại là copy `.env.docker` sang `.env.production` trước khi chạy `next build`.
+- Docker build không được `source` env bằng shell theo kiểu `set -a && . ./.env.*`; với Alpine/Synology cách này dễ che lỗi thật.
 - Nếu log Docker có warning kiểu `buildx: failed to read current commit information with git rev-parse --is-inside-work-tree`, coi đó là cảnh báo phụ. Phải đọc tiếp lỗi thật ở phần `npm run build`.
-- Nếu `next build` báo `@clerk/clerk-react: Missing publishableKey`, kết luận mặc định là `.env.docker` trên máy đích đang thiếu `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` hoặc đang không được nạp vào build.
+- Nếu `next build` báo `@clerk/clerk-react: Missing publishableKey`, kết luận mặc định là file env đang dùng (`.env.local` hoặc `.env.synology`) đang thiếu `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` hoặc đang không được nạp vào build.
 - Healthcheck production không dùng `wget`; dùng `node fetch('http://127.0.0.1:3333/api/health')` để tránh lỗi `wget: can't connect to remote host` hoặc khác biệt tool trên image.
 - Trước khi kết luận lỗi Docker/Synology đã xong, phải kiểm tra đủ 3 bước:
   1. `docker compose config`
