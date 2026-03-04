@@ -140,6 +140,14 @@ const Footer = () => {
                   <p className="text-base color-white wow animate__animated animate__fadeIn">
                     © 2026 Vitamind. Nội dung và giao diện được phát triển cho hệ thống riêng.
                   </p>
+                  <div className="mt-15 d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
+                    <Link className="color-gray-500" href="/privacy-policy">
+                      Privacy Policy
+                    </Link>
+                    <Link className="color-gray-500" href="/terms-of-service">
+                      Terms of Service
+                    </Link>
+                  </div>
                 </div>
                 <div className="col-lg-7 text-center text-lg-end">
                   <div className="box-socials">
